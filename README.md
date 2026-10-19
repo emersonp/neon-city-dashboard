@@ -27,7 +27,7 @@ Press <kbd>R</kbd> on the Dice tab to roll.
 ## Tests
 
 ```
-node --test tests/dice.test.cjs
+node --test tests/dice.test.cjs tests/discord.test.cjs
 ```
 
 ## What's here
@@ -36,25 +36,33 @@ node --test tests/dice.test.cjs
 | --- | --- |
 | `index.html` | Page shell: header, theme toggle, Dice / Roster / Settings tabs |
 | `styles.css` | Light cyberpunk accents on top of the Web Awesome default theme |
-| `app.js` | Theme, tabs, the roller and result panel, and the Discord style lab |
+| `app.js` | Theme, tabs, the roller and result panel, and posting to Discord |
 | `dice.js` | Dice rules (no page code, so it's testable in Node) |
-| `discord.js` | Discord message styles and the webhook sender |
+| `discord.js` | Builds the Discord message and posts it to the webhook |
+| `emoji/` | Boon and Drawback PNGs to upload as Discord server emoji |
 | `icons.js`, `icons/` | Game icons (advantage die, challenge die, boon, drawback, heat, influence) |
 
-Things remembered in localStorage (all under `ncd.`): theme, the last tab, the target number, the last roll, the chosen message style, and the custom-name toggle.
+Things remembered in localStorage (all under `ncd.`): theme, the last tab, the target number, the last roll, and the custom-name toggle.
 A `ncd.webhook` value, once Settings can save one, takes priority over `config.js`.
 
-## Discord message styles
+## Discord messages
 
-Every roll is posted in whichever style is picked. **Roll and send every style** posts one roll in all six so you can compare them in the channel:
+Every roll posts one message built from Discord's layout components: a container whose accent bar is
+green for success, red for failure, and cyan when there's no target, holding three lines:
 
-- **Plain**: just text.
-- **Markdown**: `-#` subtext and `##` headings give a small / big / small layout. Works on mobile.
-- **Embed**: colored side bar, author line, title, footer, timestamp, and an uploaded thumbnail.
-- **Embed + fields**: inline fields for dice, total, target, boons, drawbacks, and net.
-- **Components**: Discord's newer layout blocks (container, accent color, a section with a thumbnail, divider).
-  This needs `?with_components=true` on the webhook URL.
-- **ANSI color**: a colored code block. Desktop only; mobile shows it uncolored.
+```
+-# Parker rolled against 45 and got
+## Success! 32 · [boon]
+-# Rolled 30 + 2 · Advantage [boon] – [boon] · Challenge [drawback]
+```
 
-The thumbnail is the leftover Boon or Drawback icon (none if nothing is left), drawn onto a canvas and uploaded as a PNG, since Discord doesn't display SVGs.
-Colors: green for success, red for failure, cyan when there's no target.
+### Inline Boon / Drawback icons
+
+The icons are custom server emoji, which is the only way to put an image inline in a Discord message.
+
+1. In Discord: **Server Settings → Emoji → Upload Emoji**, and upload `emoji/ncd_boon.png` and `emoji/ncd_drawback.png`.
+   Keep the names `ncd_boon` and `ncd_drawback`.
+2. In any channel, send `\:ncd_boon:` and `\:ncd_drawback:`. Discord replies with codes like `<:ncd_boon:1234567890>`.
+3. Paste those codes into `emoji` in `config.js`.
+
+Until then, messages use words ("with two boons").

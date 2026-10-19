@@ -67,23 +67,10 @@
           </section>
         </div>
 
-        <wa-card class="lab">
-          <div slot="header" class="lab-header">
-            <h2>Discord style lab</h2>
-            <wa-button id="roll-all" appearance="outlined" size="s">
-              <wa-icon slot="start" name="layer-group"></wa-icon>
-              Roll and send every style
-            </wa-button>
-          </div>
-
-          <wa-radio-group id="style" label="Message style" orientation="horizontal" value="markdown">
-            <!-- filled in from NCD_DISCORD.STYLES -->
-          </wa-radio-group>
-          <p class="style-about" id="style-about"></p>
-
+        <wa-card class="discord-card">
+          <div slot="header" class="card-header"><h2>Discord</h2></div>
           <wa-switch id="custom-name">Post as “Neon City Dashboard” instead of the webhook’s own name</wa-switch>
-
-          <wa-details summary="Payload preview" appearance="filled" class="payload">
+          <wa-details summary="Message preview" appearance="filled" class="payload">
             <pre id="payload"></pre>
           </wa-details>
         </wa-card>

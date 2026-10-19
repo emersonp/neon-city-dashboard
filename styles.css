@@ -202,20 +202,12 @@ wa-tab::part(tab) {
   .reveal > *, .rolling .d10 { animation: none; }
 }
 
-/* ---- style lab ---- */
-.lab { width: 100%; }
-.lab-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--wa-space-s); }
-.lab-header h2 { margin: 0; font-size: var(--wa-font-size-m); letter-spacing: 0.15em; text-transform: uppercase; }
+/* ---- Discord card ---- */
+.discord-card { width: 100%; }
+.card-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--wa-space-s); }
+.card-header h2 { margin: 0; font-size: var(--wa-font-size-m); letter-spacing: 0.15em; text-transform: uppercase; }
 
-.lab wa-radio-group { margin-bottom: var(--wa-space-xs); }
 wa-radio-group::part(form-control-input) { flex-wrap: wrap; gap: var(--wa-space-2xs); }
-
-.style-about {
-  margin: var(--wa-space-s) 0 var(--wa-space-l);
-  color: var(--wa-color-text-quiet);
-  font-size: var(--wa-font-size-s);
-  min-height: 2.6em;
-}
 
 .payload { margin-top: var(--wa-space-l); }
 .payload pre {

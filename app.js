@@ -1,8 +1,8 @@
-// Page wiring: theme toggle, tabs, the dice roller, and the Discord style lab.
+// Page wiring: theme toggle, tabs, the dice roller, and posting rolls to Discord.
 (function () {
   const DICE = window.NCD_DICE;
-  const { STYLES, COLORS, send, stripImage } = window.NCD_DISCORD;
-  const { svg: icon, icons: ICON_DATA } = window.NCD_ICONS;
+  const { buildMessage, send } = window.NCD_DISCORD;
+  const { svg: icon } = window.NCD_ICONS;
   const $ = (id) => document.getElementById(id);
   const PLAYER = "Parker"; // until the Roster tab exists
 
@@ -50,7 +50,7 @@
   };
   targetInput.addEventListener("input", cleanTarget);
   targetInput.addEventListener("wa-clear", () => queueMicrotask(cleanTarget));
-  targetInput.addEventListener("keydown", (e) => { if (e.key === "Enter") rollAndPost([currentStyle()]); });
+  targetInput.addEventListener("keydown", (e) => { if (e.key === "Enter") rollAndPost(); });
   const readTarget = () => (targetInput.value === "" ? null : Number(targetInput.value));
 
   const pools = { adv: $("adv"), chal: $("chal") };
@@ -125,69 +125,26 @@
   try { lastRoll = JSON.parse(store.get("lastRoll")); } catch {}
   if (lastRoll) showResult(lastRoll, false);
 
-  // ---- style lab ----
-  const styleGroup = $("style");
-  for (const [key, style] of Object.entries(STYLES)) {
-    const radio = document.createElement("wa-radio");
-    radio.value = key;
-    radio.setAttribute("appearance", "button");
-    radio.textContent = style.label;
-    styleGroup.append(radio);
-  }
-  styleGroup.setAttribute("value", STYLES[store.get("style")] ? store.get("style") : "markdown");
-
+  // ---- Discord ----
   const customName = $("custom-name");
   if (store.get("customName") === "1") customName.setAttribute("checked", "");
-
-  const currentStyle = () => (STYLES[styleGroup.value] ? styleGroup.value : "markdown");
-  const username = () => (customName.checked ? "Neon City Dashboard" : undefined);
-
-  // The thumbnail is the leftover symbol: a Boon or Drawback icon, or nothing when none are left.
-  const thumbFor = (r) => (r.net > 0 ? "boon" : r.net < 0 ? "drawback" : null);
+  const messageFor = (r) => buildMessage(r, PLAYER, {
+    emoji: window.NCD_CONFIG?.emoji,
+    username: customName.checked ? "Neon City Dashboard" : undefined,
+  });
 
   function renderPreview() {
-    const style = STYLES[currentStyle()];
-    $("style-about").textContent = style.about;
     // Before the first roll, preview an example so there's something to look at.
     const r = lastRoll ?? DICE.roll({ target: 45, advantage: 2, challenge: 1 });
-    const built = style.build(r, PLAYER);
-    const withThumb = built.image && thumbFor(r);
-    const payload = { ...(username() && { username: username() }), ...(withThumb ? built.payload : stripImage(built.payload)) };
-    $("payload").textContent = (lastRoll ? "" : "// example roll; roll to see your own\n")
-      + JSON.stringify(payload, null, 2)
-      + (withThumb ? `\n\n// + result.png (${thumbFor(r)} icon) uploaded as an attachment` : "");
+    $("payload").textContent = (lastRoll ? "" : "// example roll; roll to see your own\n") + JSON.stringify(messageFor(r), null, 2);
   }
-
-  styleGroup.addEventListener("change", () => { store.set("style", currentStyle()); renderPreview(); });
   customName.addEventListener("change", () => { store.set("customName", customName.checked ? "1" : "0"); renderPreview(); });
 
-  // Renders a game icon to a tinted PNG, since Discord can't show SVG and only accepts
-  // images by public URL or upload. Works from file:// because nothing is fetched.
-  async function iconPng(name, size = 160) {
-    const data = ICON_DATA[name];
-    const color = "#" + COLORS[name === "boon" ? "success" : "failure"].toString(16).padStart(6, "0");
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${data.viewBox}" width="${size}" height="${size}">`
-      + `<style>.ink{fill:${color}}.paper{fill:#0d0c1a}.paper-stroke{stroke:#0d0c1a}</style>${data.body}</svg>`;
-    const img = new Image();
-    img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
-    await img.decode();
-    const canvas = document.createElement("canvas");
-    canvas.width = canvas.height = size;
-    canvas.getContext("2d").drawImage(img, 0, 0, size, size);
-    return new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
-  }
-
-  async function postToDiscord(r, styleKeys) {
+  async function postToDiscord(r) {
     const url = webhookUrl();
     if (!url) { toast("Rolled, but no webhook is set. Copy config.example.js to config.js and add one.", "warning"); return; }
     try {
-      const thumb = thumbFor(r);
-      const image = thumb ? await iconPng(thumb).catch(() => null) : null;
-      for (const [i, key] of styleKeys.entries()) {
-        if (i) await new Promise((res) => setTimeout(res, 700)); // stay well under Discord's rate limit
-        await send(url, STYLES[key].build(r, PLAYER), { username: username(), image });
-      }
-      if (styleKeys.length > 1) toast(`Sent ${styleKeys.length} styles to Discord.`, "success");
+      await send(url, messageFor(r));
     } catch (err) {
       console.error(err);
       toast(`Discord: ${err.message}`, "danger");
@@ -196,11 +153,10 @@
 
   // ---- rolling ----
   let rolling = false;
-  async function rollAndPost(styleKeys) {
+  async function rollAndPost() {
     if (rolling) return;
     rolling = true;
-    const buttons = [$("roll"), $("roll-all")];
-    buttons.forEach((b) => { b.loading = true; });
+    $("roll").loading = true;
     try {
       const r = DICE.roll({ target: readTarget(), advantage: pools.adv.value, challenge: pools.chal.value });
       resetPools();
@@ -209,15 +165,14 @@
       lastRoll = r;
       store.set("lastRoll", JSON.stringify(r));
       renderPreview();
-      await postToDiscord(r, styleKeys);
+      await postToDiscord(r);
     } finally {
       rolling = false;
-      buttons.forEach((b) => { b.loading = false; });
+      $("roll").loading = false;
     }
   }
 
-  $("roll").addEventListener("click", () => rollAndPost([currentStyle()]));
-  $("roll-all").addEventListener("click", () => rollAndPost(Object.keys(STYLES)));
+  $("roll").addEventListener("click", rollAndPost);
 
   // R rolls from anywhere on the Dice tab, except while typing or using a control.
   document.addEventListener("keydown", (e) => {
@@ -225,8 +180,8 @@
     if (e.ctrlKey || e.metaKey || e.altKey || tabs.active !== "dice") return;
     if (e.composedPath().some((n) => n.matches?.("input, textarea, wa-input, wa-textarea, [contenteditable]"))) return;
     e.preventDefault();
-    rollAndPost([currentStyle()]);
+    rollAndPost();
   });
 
-  customElements.whenDefined("wa-radio-group").then(renderPreview);
+  renderPreview();
 })();
