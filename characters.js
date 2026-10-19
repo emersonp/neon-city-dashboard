@@ -5,6 +5,49 @@
   const ORIGINS = ["Cybernetic", "Gene-Spliced", "Psionic", "Synthetic"];
   const KEY = "ncd.characters";
 
+  // ---- skills (from the character sheet: the first block is mental, the second physical) ----
+  const slug = (name) => name.toLowerCase().replace(/[^a-z]+/g, "-").replace(/^-|-$/g, "");
+  const MENTAL = ["Analyze Data", "Case the Joint", "Convince Someone", "Cover Your Tracks", "Crash a System",
+    "Distract Someone", "Fix or Modify Something", "Goad Someone", "Gossip with Citizens", "Gossip with Corporates",
+    "Gossip with Criminals", "Heal Someone", "Infiltrate a System", "Intimidate Someone", "Lie to Someone",
+    "Override a System", "Play a Game", "Read the Situation", "Size Someone Up", "Throw Money at the Problem"];
+  const PHYSICAL = ["Break or Destroy Something", "Climb, Jump, or Tumble", "Conceal an Object", "Drive or Pilot Something",
+    "Lift or Move Something", "Run Like Hell", "Shoot Someone", "Slash, Stab, or Strike Someone", "Sneak Around",
+    "Throw Something", "Tough It Out"];
+  const SKILLS = [
+    ...MENTAL.map((name) => ({ id: slug(name), name, type: "mental" })),
+    ...PHYSICAL.map((name) => ({ id: slug(name), name, type: "physical" })),
+  ];
+  const UNTRAINED = 50;              // what a null skill (and "Anything else") rolls at
+  const MIN_VALUE = 55, MAX_VALUE = 95, STEP = 5;
+  const MAX_DICE = 4;
+
+  // A skill's stored state: value is null (untrained) or 55-95; adv/chal are intrinsic dice, 0-4.
+  function skill(character, id) {
+    const s = character?.skills?.[id] ?? {};
+    return { value: s.value ?? null, adv: s.adv ?? 0, chal: s.chal ?? 0 };
+  }
+  const shownValue = (value) => value ?? UNTRAINED;
+  const isNotable = (s) => s.value != null || s.adv > 0 || s.chal > 0;
+
+  function clampValue(v) {
+    if (v === "" || v == null) return null;
+    const n = Math.round(Number(v));
+    return Number.isFinite(n) ? Math.max(MIN_VALUE, Math.min(MAX_VALUE, n)) : null;
+  }
+  const increment = (value) => Math.min(MAX_VALUE, value + STEP);
+  const clampDice = (n) => Math.max(0, Math.min(MAX_DICE, Math.trunc(Number(n) || 0)));
+
+  // Returns a copy of the character with one skill changed. Skills back at the default are dropped.
+  function withSkill(character, id, changes) {
+    const next = { ...skill(character, id), ...changes };
+    next.adv = clampDice(next.adv);
+    next.chal = clampDice(next.chal);
+    const skills = { ...(character?.skills ?? {}) };
+    if (isNotable(next)) skills[id] = next; else delete skills[id];
+    return { ...character, skills };
+  }
+
   const pick = (list, rng = Math.random) => list[Math.floor(rng() * list.length)];
 
   // ---- hacker handles ----
@@ -61,6 +104,7 @@
       name: randomName(),
       archetype: "Assassin",
       origin: "Cybernetic",
+      skills: {},
       createdAt: now,
       updatedAt: now,
     };
@@ -92,5 +136,9 @@
     return { filename: `${base || "character"}.json`, json: JSON.stringify(character, null, 2) };
   }
 
-  root.NCD_CHARACTERS = { ARCHETYPES, ORIGINS, CULTURES, randomHandle, randomName, newCharacter, label, load, save, toExport };
+  root.NCD_CHARACTERS = {
+    ARCHETYPES, ORIGINS, CULTURES, SKILLS, UNTRAINED, MIN_VALUE, MAX_VALUE, MAX_DICE,
+    randomHandle, randomName, newCharacter, label, load, save, toExport,
+    skill, shownValue, isNotable, clampValue, increment, withSkill,
+  };
 })(globalThis);

@@ -73,3 +73,61 @@ test("export is pretty JSON with a filename from the handle", () => {
   assert.deepEqual(JSON.parse(json), c);
   assert.equal(C.toExport({ ...c, handle: "  " }).filename, "character.json");
 });
+
+// ---- skills ----
+
+test("31 skills from the sheet: 20 mental, 11 physical, unique ids", () => {
+  assert.equal(C.SKILLS.length, 31);
+  assert.equal(C.SKILLS.filter((s) => s.type === "mental").length, 20);
+  assert.equal(C.SKILLS.filter((s) => s.type === "physical").length, 11);
+  assert.equal(new Set(C.SKILLS.map((s) => s.id)).size, 31);
+  assert.equal(C.SKILLS[0].name, "Analyze Data");
+  assert.equal(C.SKILLS.find((s) => s.name === "Tough It Out").type, "physical");
+});
+
+test("a skill with no entry is null with no dice, and shows as 50", () => {
+  const s = C.skill({}, "analyze-data");
+  assert.deepEqual(s, { value: null, adv: 0, chal: 0 });
+  assert.equal(C.shownValue(s.value), 50);
+  assert.equal(C.shownValue(70), 70);
+  assert.deepEqual(C.skill({ skills: { "analyze-data": { value: 60 } } }, "analyze-data"), { value: 60, adv: 0, chal: 0 });
+});
+
+test("only skills with a value or intrinsic dice are shown on the sheet", () => {
+  assert.equal(C.isNotable({ value: null, adv: 0, chal: 0 }), false);
+  assert.equal(C.isNotable({ value: 55, adv: 0, chal: 0 }), true);
+  assert.equal(C.isNotable({ value: null, adv: 0, chal: 1 }), true);
+});
+
+test("setting a value clamps to 55-95 and rounds", () => {
+  assert.equal(C.clampValue(40), 55);
+  assert.equal(C.clampValue(120), 95);
+  assert.equal(C.clampValue(72.6), 73);
+  assert.equal(C.clampValue("80"), 80);
+  assert.equal(C.clampValue(""), null);
+  assert.equal(C.clampValue("abc"), null);
+});
+
+test("incrementing goes up by 5 and stops at 95", () => {
+  assert.equal(C.increment(55), 60);
+  assert.equal(C.increment(92), 95);
+  assert.equal(C.increment(95), 95);
+});
+
+test("withSkill updates one skill without touching the original", () => {
+  const c = { skills: { "run-like-hell": { value: 60, adv: 1, chal: 0 } } };
+  const next = C.withSkill(c, "run-like-hell", { value: null });
+  assert.deepEqual(next.skills["run-like-hell"], { value: null, adv: 1, chal: 0 });
+  assert.equal(c.skills["run-like-hell"].value, 60);
+  const dice = C.withSkill({}, "heal-someone", { adv: 9, chal: -1 });
+  assert.deepEqual(dice.skills["heal-someone"], { value: null, adv: 4, chal: 0 });
+});
+
+test("skills that are back to default are dropped from storage", () => {
+  const next = C.withSkill({ skills: { "sneak-around": { value: 55, adv: 0, chal: 0 } } }, "sneak-around", { value: null });
+  assert.equal("sneak-around" in next.skills, false);
+});
+
+test("new characters start with no skills set", () => {
+  assert.deepEqual(C.newCharacter().skills, {});
+});

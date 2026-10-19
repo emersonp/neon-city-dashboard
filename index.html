@@ -83,7 +83,7 @@
           <section class="sheet-column">
             <h2>Boons and Drawbacks</h2>
 
-            <h3 class="boon">1–2 Boons (each)</h3>
+            <h3 class="boon">1-2 Boons (each)</h3>
             <ul>
               <li>Attack that hit and enemy: <b>+10 damage</b></li>
               <li>Progressing an objective: <b>+10 impact</b> <em>(even if failure)</em></li>
@@ -91,7 +91,7 @@
               <li>Restore 10 luck</li>
             </ul>
 
-            <h3 class="boon">3–4 Boons</h3>
+            <h3 class="boon">3-4 Boons</h3>
             <ul>
               <li>Give the player a <b>deep secret about a person</b>, place, or event in the scene</li>
               <li>Give another player in the scene a <b>positive condition</b>, with the condition’s severity equal to the number of boons rolled</li>
@@ -100,7 +100,7 @@
               <li>Allow the player to mark any 1 skill as having been successfully used this session<em>(but not a skill used to make the roll that generated the boon)</em></li>
             </ul>
 
-            <h3 class="drawback">1–2 Drawbacks (each)</h3>
+            <h3 class="drawback">1-2 Drawbacks (each)</h3>
             <ul>
               <li>Add 1 heat <span class="inline-icon" data-icon="heat"></span> to the heat pool</li>
               <li>Lose 10 luck</li>
@@ -108,7 +108,7 @@
               <li>Gear used gets the <b>Damaged</b> condition (or worsens it)</li>
             </ul>
 
-            <h3 class="drawback">3–4 Drawbacks</h3>
+            <h3 class="drawback">3-4 Drawbacks</h3>
             <ul>
               <li>The character gets a <b>negative condition</b> (severity = drawbacks rolled)</li>
               <li>Add a negative condition with severity ×2 to the scene</li>
@@ -144,10 +144,17 @@
               <dt>Archetype</dt><dd data-field="archetype"></dd>
               <dt>Origin</dt><dd data-field="origin"></dd>
             </dl>
-            <wa-button id="character-edit" appearance="outlined">
-              <wa-icon slot="start" name="pen"></wa-icon>
-              Edit
-            </wa-button>
+            <div id="skills-display" class="skills"></div>
+            <div class="character-actions">
+              <wa-button id="character-edit" appearance="outlined">
+                <wa-icon slot="start" name="pen"></wa-icon>
+                Edit
+              </wa-button>
+              <wa-button id="character-run" variant="brand">
+                <wa-icon slot="start" name="play"></wa-icon>
+                Run
+              </wa-button>
+            </div>
           </div>
 
           <!-- Editing -->
@@ -164,6 +171,7 @@
             </wa-input>
             <wa-select name="archetype" label="Archetype"></wa-select>
             <wa-select name="origin" label="Origin"></wa-select>
+            <div id="skills-edit" class="skills editing"></div>
             <wa-button type="submit" variant="brand">
               <wa-icon slot="start" name="floppy-disk"></wa-icon>
               Save
@@ -180,6 +188,16 @@
       </wa-tab-panel>
     </wa-tab-group>
   </main>
+
+  <wa-dialog id="dice-dialog" label="Intrinsic dice" light-dismiss>
+    <wa-radio-group id="dice-adv" class="pool adv" orientation="horizontal">
+      <span slot="label" class="pool-label"><span data-icon="advantage-die"></span>Advantage dice</span>
+    </wa-radio-group>
+    <wa-radio-group id="dice-chal" class="pool chal" orientation="horizontal">
+      <span slot="label" class="pool-label"><span data-icon="challenge-die"></span>Challenge dice</span>
+    </wa-radio-group>
+    <wa-button slot="footer" variant="brand" data-dialog="close">Done</wa-button>
+  </wa-dialog>
 
   <wa-toast id="toast" placement="bottom-center"></wa-toast>
 
