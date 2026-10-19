@@ -312,13 +312,24 @@ wa-tab[hidden] { display: none; }
 .skills.editing .skill-controls > wa-button { width: 100%; }
 .luck-fields { display: flex; flex-wrap: wrap; gap: var(--wa-space-l); }
 .luck-fields wa-input { width: 10rem; }
-#current-luck { width: 7rem; }
+.luck-steps { display: flex; align-items: center; gap: var(--wa-space-2xs); }
+.luck-steps [data-field="currentLuck"] { min-width: 3ch; text-align: center; }
+.luck-steps wa-button { min-width: 2.75rem; }
+@media (max-width: 480px) {
+  .character-fields { column-gap: var(--wa-space-s); }
+  .character-fields dt { letter-spacing: 0.08em; }
+  .luck-steps wa-button { min-width: 0; }
+  .luck-steps wa-button::part(base) { padding-inline: var(--wa-space-xs); }
+}
 .character-fields[hidden], .character-fields [hidden] { display: none; }
 
 /* ---- wounds: four boxes, filled red when marked ---- */
 .wounds { display: flex; align-items: center; gap: var(--wa-space-xs); }
 .wound {
   box-sizing: border-box;
+  display: inline-grid;
+  place-items: center;
+  color: color-mix(in srgb, var(--ncd-bad) 55%, transparent);
   width: 1.75rem;
   height: 1.75rem;
   padding: 0;
@@ -326,7 +337,8 @@ wa-tab[hidden] { display: none; }
   border-radius: var(--wa-border-radius-s);
   background: transparent;
 }
-.wound.on { background: var(--ncd-bad); border-color: var(--ncd-bad); }
+.wound.on { background: var(--ncd-bad); border-color: var(--ncd-bad); color: var(--wa-color-surface-default); }
+.wound wa-icon { font-size: 0.9em; }
 .wa-dark .wound.on { box-shadow: 0 0 8px var(--ncd-bad); }
 button.wound { cursor: pointer; width: 2.25rem; height: 2.25rem; }
 button.wound:hover { border-color: var(--ncd-bad); }

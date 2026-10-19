@@ -109,7 +109,7 @@
     }
   }
 
-  // Handle, name, etc. Current Luck can be changed while running, and is saved right away.
+  // Handle, name, etc. Current Luck and Wounds can be changed while running, and are saved right away.
   function renderFields() {
     const luck = C.luck(current);
     const values = { ...current, maxLuck: luck.max, currentLuck: luck.current };
@@ -118,20 +118,22 @@
       dd.textContent = v == null || v === "" ? "—" : v;
     }
     const editable = state === "running";
-    fields.querySelector('[data-field="currentLuck"]').hidden = editable;
-    currentLuck.hidden = !editable;
-    currentLuck.max = luck.max;
-    currentLuck.value = String(luck.current);
+    for (const button of currentLuck.querySelectorAll("[data-luck]")) {
+      const step = Number(button.dataset.luck);
+      button.hidden = !editable;
+      button.disabled = step < 0 ? luck.current <= 0 : luck.current >= luck.max;
+    }
     woundsFields.innerHTML = woundBoxes(C.wounds(current), editable);
   }
 
+  const SKULL = `<wa-icon name="skull"></wa-icon>`;
   // Four boxes, like the sheet. Editable boxes are buttons: box n marks 1..n.
   function woundBoxes(n, editable) {
     return Array.from({ length: C.MAX_WOUNDS }, (_, i) => {
       const on = i < n ? " on" : "";
       return editable
-        ? `<button type="button" class="wound${on}" data-wound="${i + 1}" aria-pressed="${i < n}" aria-label="Wound ${i + 1}"></button>`
-        : `<span class="wound${on}"></span>`;
+        ? `<button type="button" class="wound${on}" data-wound="${i + 1}" aria-pressed="${i < n}" aria-label="Wound ${i + 1}">${SKULL}</button>`
+        : `<span class="wound${on}">${SKULL}</span>`;
     }).join("") + (editable ? "" : `<span class="visually-hidden">${n} of ${C.MAX_WOUNDS}</span>`);
   }
   const clickedWound = (e) => Number(e.target.closest("[data-wound]")?.dataset.wound) || 0;
@@ -153,8 +155,11 @@
     draft.wounds = C.clickWound(draft.wounds, n);
     woundsEdit.innerHTML = woundBoxes(draft.wounds, true);
   });
-  currentLuck.addEventListener("change", () => {
-    const value = C.clampCurrentLuck(currentLuck.value, C.luck(current).max);
+  currentLuck.addEventListener("click", (e) => {
+    const step = Number(e.target.closest("[data-luck]")?.dataset.luck);
+    if (!step || state !== "running") return;
+    const luck = C.luck(current);
+    const value = C.clampCurrentLuck(luck.current + step, luck.max);
     try {
       current = C.save(storage, { ...current, currentLuck: value });
     } catch (err) {

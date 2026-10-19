@@ -138,9 +138,12 @@
             <dt>Origin</dt><dd data-field="origin"></dd>
             <dt>Max Luck</dt><dd data-field="maxLuck"></dd>
             <dt>Current Luck</dt>
-            <dd>
+            <dd id="current-luck" class="luck-steps">
+              <wa-button size="s" appearance="outlined" data-luck="-5" hidden>−5</wa-button>
+              <wa-button size="s" appearance="outlined" data-luck="-1" hidden>−1</wa-button>
               <span data-field="currentLuck"></span>
-              <wa-input id="current-luck" type="number" size="s" min="0" aria-label="Current Luck" hidden></wa-input>
+              <wa-button size="s" appearance="outlined" data-luck="1" hidden>+1</wa-button>
+              <wa-button size="s" appearance="outlined" data-luck="5" hidden>+5</wa-button>
             </dd>
             <dt>Wounds</dt><dd id="wounds-fields" class="wounds"></dd>
           </dl>
