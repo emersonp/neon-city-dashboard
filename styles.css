@@ -302,6 +302,7 @@ wa-tab[hidden] { display: none; }
 .skill-value { font-family: "Chakra Petch", sans-serif; font-weight: 700; min-width: 3.2ch; text-align: right; }
 .skill-value.untrained { color: var(--wa-color-text-quiet); font-weight: 500; }
 .skill-dice { display: inline-flex; gap: 2px; }
+.skills .used { flex: none; width: 4.5rem; }
 .skill-dice .icon { width: 18px; height: 18px; }
 .skill-controls { display: flex; align-items: center; justify-content: flex-end; gap: var(--wa-space-xs); }
 .skill-controls wa-input { width: 6.5rem; }

@@ -172,3 +172,14 @@ test("clicking a wound box marks up to it; clicking the last marked box unmarks 
   assert.equal(C.clickWound(3, 3), 2);
   assert.equal(C.clickWound(1, 1), 0);
 });
+
+// ---- used ----
+
+test("skills can be marked used and unmarked, without touching the original", () => {
+  const c = { skills: {} };
+  assert.equal(C.isUsed(c, "sneak-around"), false);
+  const used = C.withUsed(c, "sneak-around", true);
+  assert.equal(C.isUsed(used, "sneak-around"), true);
+  assert.equal(C.isUsed(c, "sneak-around"), false);
+  assert.deepEqual(C.withUsed(used, "sneak-around", false).used, {});
+});

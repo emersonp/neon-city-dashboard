@@ -59,6 +59,14 @@
     return { max, current: clampCurrentLuck(character?.currentLuck, max) };
   }
 
+  // ---- used skills: marked while running (by hand, or by rolling the skill) ----
+  const isUsed = (character, id) => Boolean(character?.used?.[id]);
+  function withUsed(character, id, used) {
+    const next = { ...(character?.used ?? {}) };
+    if (used) next[id] = true; else delete next[id];
+    return { ...character, used: next };
+  }
+
   // ---- wounds: 0-4; clicking box n marks boxes 1..n, clicking the last marked box unmarks it ----
   const MAX_WOUNDS = 4;
   const wounds = (character) => Math.max(0, Math.min(MAX_WOUNDS, Math.trunc(Number(character?.wounds) || 0)));
@@ -161,5 +169,6 @@
     skill, shownValue, isNotable, clampValue, increment, withSkill,
     DEFAULT_LUCK, luck, clampMaxLuck, clampCurrentLuck,
     MAX_WOUNDS, wounds, clickWound,
+    isUsed, withUsed,
   };
 })(globalThis);

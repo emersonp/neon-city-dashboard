@@ -194,10 +194,13 @@
       return `<section class="skill-group"><h3>${title}</h3><ul>${items.map(([sk, st]) => `<li>
           ${skillName(sk.id, sk.name, links)}${diceIcons(st)}
           <span class="skill-value${st.value == null ? " untrained" : ""}">${C.shownValue(st.value)}%</span>
+          ${links ? `<wa-checkbox size="s" class="used" data-used="${sk.id}" ${C.isUsed(current, sk.id) ? "checked" : ""}>Used</wa-checkbox>` : ""}
         </li>`).join("")}</ul></section>`;
     }).join("");
+    // "Anything else" can't be marked used; an empty slot keeps its value lined up with the skills above.
     el.innerHTML = groups + `<ul class="anything-else"><li>
-        ${skillName(ANYTHING_ELSE, "Anything else", links)}<span class="skill-value untrained">${C.UNTRAINED}%</span></li></ul>`;
+        ${skillName(ANYTHING_ELSE, "Anything else", links)}<span class="skill-value untrained">${C.UNTRAINED}%</span>
+        ${links ? `<span class="used"></span>` : ""}</li></ul>`;
   }
 
   // Editing: every skill, with set / +5 / Set to 55 / Remove, and a button for intrinsic dice.
@@ -282,12 +285,12 @@
   const rollResult = $("skill-result");
   Object.values(rollPools).forEach(R.fillPool);
   const readRollTarget = R.targetField(rollTarget);
-  let rollSkill = null; // { name, adv, chal }
+  let rollSkill = null; // { id, name, adv, chal }
 
   function openRollDialog(id) {
     const sk = C.SKILLS.find((s) => s.id === id);
     const st = sk ? C.skill(current, id) : { value: null, adv: 0, chal: 0 };
-    rollSkill = { name: sk ? sk.name : "Anything else", adv: st.adv, chal: st.chal };
+    rollSkill = { id, name: sk ? sk.name : "Anything else", adv: st.adv, chal: st.chal };
     rollDialog.label = `Roll ${rollSkill.name}`;
     rollTarget.value = String(C.shownValue(st.value));
     resetRollPools();
@@ -299,6 +302,21 @@
     rollPools.adv.value = String(rollSkill.adv);
     rollPools.chal.value = String(rollSkill.chal);
   };
+
+  // Used is saved right away; rolling a skill marks it used.
+  function setUsed(id, used) {
+    if (id === ANYTHING_ELSE) return;
+    try {
+      current = C.save(storage, C.withUsed(current, id, used));
+    } catch (err) {
+      console.error(err);
+    }
+    if (state === "running") renderSkillsDisplay($("skills-run"), { links: true });
+  }
+  $("skills-run").addEventListener("change", (e) => {
+    const box = e.target.closest("[data-used]");
+    if (box) setUsed(box.dataset.used, box.checked);
+  });
 
   $("skills-run").addEventListener("click", (e) => {
     const link = e.target.closest("[data-roll]");
@@ -321,6 +339,7 @@
       await spinning;
       R.showResult(r, true, rollResult);
       rollResult.scrollIntoView({ block: "nearest" }); // on phones the result is below the fold
+      setUsed(rollSkill.id, true);
       await R.postToDiscord(r, rollSkill.name);
     } finally {
       skillRolling = false;
