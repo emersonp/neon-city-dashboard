@@ -157,6 +157,17 @@
             </div>
           </div>
 
+          <!-- Running -->
+          <div id="character-running" hidden>
+            <div id="skills-run" class="skills running"></div>
+            <div class="character-actions">
+              <wa-button id="character-stop" appearance="outlined">
+                <wa-icon slot="start" name="stop"></wa-icon>
+                Stop
+              </wa-button>
+            </div>
+          </div>
+
           <!-- Editing -->
           <form id="character-form" class="character-form" hidden>
             <wa-input name="handle" label="Handle" autocomplete="off">
@@ -197,6 +208,24 @@
       <span slot="label" class="pool-label"><span data-icon="challenge-die"></span>Challenge dice</span>
     </wa-radio-group>
     <wa-button slot="footer" variant="brand" data-dialog="close">Done</wa-button>
+  </wa-dialog>
+
+  <wa-dialog id="skill-dialog" label="Roll" light-dismiss>
+    <div class="skill-roll">
+      <wa-input id="skill-target" label="Target ≤" placeholder="none" inputmode="numeric" maxlength="3"
+        autocomplete="off" with-clear></wa-input>
+      <wa-radio-group id="skill-adv" class="pool adv" orientation="horizontal" value="0">
+        <span slot="label" class="pool-label"><span data-icon="advantage-die"></span>Advantage dice</span>
+      </wa-radio-group>
+      <wa-radio-group id="skill-chal" class="pool chal" orientation="horizontal" value="0">
+        <span slot="label" class="pool-label"><span data-icon="challenge-die"></span>Challenge dice</span>
+      </wa-radio-group>
+      <section class="result" id="skill-result" aria-live="polite" hidden></section>
+    </div>
+    <wa-button slot="footer" id="skill-roll" variant="brand">
+      <wa-icon slot="start" name="dice-d20"></wa-icon>
+      Roll
+    </wa-button>
   </wa-dialog>
 
   <wa-toast id="toast" placement="bottom-center"></wa-toast>

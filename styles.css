@@ -318,6 +318,12 @@ wa-tab[hidden] { display: none; }
   .skills.editing .skill-controls { justify-content: flex-start; }
 }
 
+a.skill-name { color: var(--wa-color-brand); text-decoration: none; }
+a.skill-name:hover, a.skill-name:focus-visible { text-decoration: underline; }
+#character-running[hidden] { display: none; }
+.skill-roll { display: flex; flex-direction: column; gap: var(--wa-space-l); }
+.skill-roll .result { min-height: 0; padding: var(--wa-space-m); }
+.skill-roll .result[hidden] { display: none; }
 #dice-dialog wa-radio-group + wa-radio-group { margin-top: var(--wa-space-l); }
 
 .settings-card { max-width: 32rem; }

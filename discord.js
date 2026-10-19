@@ -29,19 +29,19 @@
   }
 
   // The three lines: small intro, big result, and a subtle footer.
-  // `luck` is null for the GM, so the footer can end up empty.
-  function lines(r, player, emoji, luck) {
+  // `luck` is null for the GM, so the footer can end up empty. `skill` is the skill's name, if any.
+  function lines(r, player, emoji, luck, skill) {
     const verdict = { success: "Success!", failure: "Failure.", none: "" }[outcomeOf(r)];
     const net = netText(r, emoji);
     return {
-      intro: r.target == null ? `${player} rolled and got` : `${player} rolled against ${r.target} and got`,
+      intro: `${player} rolled${skill ? ` ${skill}` : ""}${r.target == null ? "" : ` against ${r.target}`} and got`,
       result: [verdict, String(r.total)].filter(Boolean).join(" ") + (net ? (net.startsWith("with") ? ` ${net}` : ` · ${net}`) : ""),
       detail: [luck != null && `Luck: ${luck}`, rolledText(r, emoji)].filter(Boolean).join(" · "),
     };
   }
 
-  function buildMessage(r, player, { emoji, username, luck } = {}) {
-    const l = lines(r, player, emoji, luck);
+  function buildMessage(r, player, { emoji, username, luck, skill } = {}) {
+    const l = lines(r, player, emoji, luck, skill);
     return {
       ...(username && { username }),
       flags: 1 << 15, // IS_COMPONENTS_V2

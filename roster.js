@@ -1,5 +1,5 @@
 // Roster tab (the saved characters) and the Character tab, which appears once a character is opened.
-// A character in the Character tab is in one of three states: display, editing, or running (not built yet).
+// A character in the Character tab is in one of three states: display, editing, or running.
 // Skill changes made while editing live in `draft` until Save.
 (function () {
   const C = window.NCD_CHARACTERS;
@@ -12,6 +12,7 @@
   const tab = $("character-tab");
   const rows = $("roster-rows");
   const display = $("character-display");
+  const running = $("character-running");
   const form = $("character-form");
   const field = (name) => form.querySelector(`[name="${name}"]`);
 
@@ -87,9 +88,12 @@
   function render() {
     display.hidden = state !== "display";
     form.hidden = state !== "editing";
+    running.hidden = state !== "running";
     if (state === "display") {
       for (const dd of display.querySelectorAll("[data-field]")) dd.textContent = current[dd.dataset.field] || "—";
-      renderSkillsDisplay();
+      renderSkillsDisplay($("skills-display"));
+    } else if (state === "running") {
+      renderSkillsDisplay($("skills-run"), { links: true });
     } else if (state === "editing") {
       draft = { skills: { ...(current.skills ?? {}) } };
       for (const name of ["handle", "name", "archetype", "origin"]) field(name).value = current[name] ?? "";
@@ -98,7 +102,8 @@
   }
 
   $("character-edit").addEventListener("click", () => { state = "editing"; render(); });
-  $("character-run").addEventListener("click", () => {}); // running comes later
+  $("character-run").addEventListener("click", () => { state = "running"; render(); });
+  $("character-stop").addEventListener("click", () => { state = "display"; render(); });
 
   // ---- skills ----
   const icon = window.NCD_ICONS.svg;
@@ -108,19 +113,24 @@
     : "";
 
   // Display: only skills with a value or intrinsic dice, then "Anything else" at 50%.
-  function renderSkillsDisplay() {
+  // When running, each skill name is a link that opens the roll dialog.
+  const ANYTHING_ELSE = "anything-else";
+  const skillName = (id, name, links) => links
+    ? `<a href="#" class="skill-name" data-roll="${id}">${escapeHTML(name)}</a>`
+    : `<span class="skill-name">${escapeHTML(name)}</span>`;
+  function renderSkillsDisplay(el, { links = false } = {}) {
     const groups = GROUPS.map(([type, title]) => {
       const items = C.SKILLS.filter((sk) => sk.type === type)
         .map((sk) => [sk, C.skill(current, sk.id)])
         .filter(([, st]) => C.isNotable(st));
       if (!items.length) return "";
       return `<section class="skill-group"><h3>${title}</h3><ul>${items.map(([sk, st]) => `<li>
-          <span class="skill-name">${escapeHTML(sk.name)}</span>${diceIcons(st)}
+          ${skillName(sk.id, sk.name, links)}${diceIcons(st)}
           <span class="skill-value${st.value == null ? " untrained" : ""}">${C.shownValue(st.value)}%</span>
         </li>`).join("")}</ul></section>`;
     }).join("");
-    $("skills-display").innerHTML = groups + `<ul class="anything-else"><li>
-        <span class="skill-name">Anything else</span><span class="skill-value untrained">${C.UNTRAINED}%</span></li></ul>`;
+    el.innerHTML = groups + `<ul class="anything-else"><li>
+        ${skillName(ANYTHING_ELSE, "Anything else", links)}<span class="skill-value untrained">${C.UNTRAINED}%</span></li></ul>`;
   }
 
   // Editing: every skill, with set / +5 / Set to 55 / Remove, and a button for intrinsic dice.
@@ -193,6 +203,63 @@
   for (const [kind, group] of Object.entries(dicePools)) {
     group.addEventListener("change", () => { if (diceSkill) updateSkill(diceSkill, { [kind]: Number(group.value) }); });
   }
+
+  // ---- rolling a skill (running) ----
+  // The dialog starts at the skill's value and intrinsic dice; the dice go back to those after each roll.
+  const R = window.NCD_ROLLER;
+  const rollDialog = $("skill-dialog");
+  const rollTarget = $("skill-target");
+  const rollPools = { adv: $("skill-adv"), chal: $("skill-chal") };
+  const rollResult = $("skill-result");
+  Object.values(rollPools).forEach(R.fillPool);
+  const readRollTarget = R.targetField(rollTarget);
+  let rollSkill = null; // { name, adv, chal }
+
+  function openRollDialog(id) {
+    const sk = C.SKILLS.find((s) => s.id === id);
+    const st = sk ? C.skill(current, id) : { value: null, adv: 0, chal: 0 };
+    rollSkill = { name: sk ? sk.name : "Anything else", adv: st.adv, chal: st.chal };
+    rollDialog.label = `Roll ${rollSkill.name}`;
+    rollTarget.value = String(C.shownValue(st.value));
+    resetRollPools();
+    rollResult.hidden = true;
+    rollResult.innerHTML = "";
+    rollDialog.open = true;
+  }
+  const resetRollPools = () => {
+    rollPools.adv.value = String(rollSkill.adv);
+    rollPools.chal.value = String(rollSkill.chal);
+  };
+
+  $("skills-run").addEventListener("click", (e) => {
+    const link = e.target.closest("[data-roll]");
+    if (!link) return;
+    e.preventDefault();
+    openRollDialog(link.dataset.roll);
+  });
+
+  let skillRolling = false;
+  async function rollSkillAndPost() {
+    if (skillRolling || !rollSkill) return;
+    skillRolling = true;
+    $("skill-roll").loading = true;
+    try {
+      const r = window.NCD_DICE.roll({ target: readRollTarget(), advantage: rollPools.adv.value, challenge: rollPools.chal.value });
+      resetRollPools();
+      rollResult.hidden = false;
+      const spinning = R.spin(rollResult);
+      rollResult.scrollIntoView({ block: "nearest" });
+      await spinning;
+      R.showResult(r, true, rollResult);
+      rollResult.scrollIntoView({ block: "nearest" }); // on phones the result is below the fold
+      await R.postToDiscord(r, rollSkill.name);
+    } finally {
+      skillRolling = false;
+      $("skill-roll").loading = false;
+    }
+  }
+  $("skill-roll").addEventListener("click", rollSkillAndPost);
+  rollTarget.addEventListener("keydown", (e) => { if (e.key === "Enter") rollSkillAndPost(); });
 
   form.addEventListener("click", (e) => {
     const button = e.target.closest("[data-reroll]");

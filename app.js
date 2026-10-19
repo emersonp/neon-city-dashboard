@@ -53,18 +53,22 @@
   // Target sticks between rolls (and reloads) until cleared; the dice pools reset after every roll.
   const targetInput = $("target");
   targetInput.value = store.get("target", "");
-  const cleanTarget = () => {
-    const v = String(targetInput.value ?? "").replace(/\D/g, "").slice(0, 3);
-    if (v !== targetInput.value) targetInput.value = v;
-    store.set("target", v);
-  };
-  targetInput.addEventListener("input", cleanTarget);
-  targetInput.addEventListener("wa-clear", () => queueMicrotask(cleanTarget));
+  // Keeps a target box to digits only; onChange gets the cleaned value.
+  function targetField(input, onChange = () => {}) {
+    const clean = () => {
+      const v = String(input.value ?? "").replace(/\D/g, "").slice(0, 3);
+      if (v !== input.value) input.value = v;
+      onChange(v);
+    };
+    input.addEventListener("input", clean);
+    input.addEventListener("wa-clear", () => queueMicrotask(clean));
+    return () => (input.value === "" ? null : Number(input.value));
+  }
+  const readTarget = targetField(targetInput, (v) => store.set("target", v));
   targetInput.addEventListener("keydown", (e) => { if (e.key === "Enter") rollAndPost(); });
-  const readTarget = () => (targetInput.value === "" ? null : Number(targetInput.value));
 
-  const pools = { adv: $("adv"), chal: $("chal") };
-  for (const group of Object.values(pools)) {
+  // Fills a radio group with 0-4 button choices.
+  function fillPool(group) {
     for (let n = 0; n <= DICE.MAX_POOL; n++) {
       const radio = document.createElement("wa-radio");
       radio.value = String(n);
@@ -73,6 +77,8 @@
       group.append(radio);
     }
   }
+  const pools = { adv: $("adv"), chal: $("chal") };
+  Object.values(pools).forEach(fillPool);
   const resetPools = () => { for (const group of Object.values(pools)) group.value = "0"; };
 
   // ---- result panel ----
@@ -109,8 +115,7 @@
     return `<div class="net">${icons ? `<div class="net-icons">${icons}</div>` : ""}<div class="net-label ${label[1]}">${label[0]}</div></div>`;
   }
 
-  function showResult(r, animate) {
-    const el = $("result");
+  function showResult(r, animate, el = $("result")) {
     const verdict = r.success == null ? "" : `<div class="verdict ${r.success ? "success" : "failure"}">${r.success ? "Success" : "Failure"}</div>`;
     el.className = "result" + (animate ? " reveal" : "");
     el.innerHTML = dicePair(DICE.fmtTens(r.tens), r.ones) + `<div class="total">${r.total}</div>` + verdict + facesHTML(r) + netHTML(r);
@@ -118,9 +123,8 @@
 
   const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
   // Spins the d10 faces for a moment before the real result lands.
-  function spin(ms = 650) {
+  function spin(el = $("result"), ms = 650) {
     if (reducedMotion.matches) return Promise.resolve();
-    const el = $("result");
     el.className = "result rolling";
     el.innerHTML = dicePair("–", "–");
     const nums = el.querySelectorAll(".num");
@@ -138,7 +142,8 @@
   // ---- Discord ----
   const customName = $("custom-name");
   if (store.get("customName") === "1") customName.setAttribute("checked", "");
-  const messageFor = (r) => buildMessage(r, playerName(), {
+  const messageFor = (r, skill) => buildMessage(r, playerName(), {
+    skill,
     luck: isGM() ? null : LUCK,
     emoji: window.NCD_CONFIG?.emoji,
     username: customName.checked ? "Neon City Dashboard" : undefined,
@@ -151,11 +156,11 @@
   }
   customName.addEventListener("change", () => { store.set("customName", customName.checked ? "1" : "0"); renderPreview(); });
 
-  async function postToDiscord(r) {
+  async function postToDiscord(r, skill) {
     const url = webhookUrl();
     if (!url) { toast("Rolled, but no webhook is set. Copy config.example.js to config.js and add one.", "warning"); return; }
     try {
-      await send(url, messageFor(r));
+      await send(url, messageFor(r, skill));
     } catch (err) {
       console.error(err);
       toast(`Discord: ${err.message}`, "danger");
@@ -195,4 +200,7 @@
   });
 
   renderPreview();
+
+  // For the character tab's skill rolls (roster.js).
+  window.NCD_ROLLER = { fillPool, targetField, spin, showResult, postToDiscord };
 })();

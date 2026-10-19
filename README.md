@@ -34,7 +34,7 @@ node --test tests/dice.test.cjs tests/discord.test.cjs tests/characters.test.cjs
 
 | File | Purpose |
 | --- | --- |
-| `index.html` | Page shell: header, theme toggle, Dice / Roster / Settings tabs |
+| `index.html` | Page shell: header, theme toggle, tabs, and the dialogs |
 | `styles.css` | Light cyberpunk accents on top of the Web Awesome default theme |
 | `app.js` | Theme, tabs, the roller and result panel, and posting to Discord |
 | `dice.js` | Dice rules (no page code, so it's testable in Node) |
@@ -62,6 +62,9 @@ green for success, red for failure, and cyan when there's no target, holding thr
 The player name comes from **Settings** ("Player" if blank). The footer shows Luck (hardcoded to 50 until the
 Roster tab exists), except for the **Administrator (GM)**, whose rolls leave it out. `Rolled:` lists every Boon and
 Drawback that came up, before cancelling, and is left out when none did. A GM roll with no symbols has no footer.
+
+Skill rolls from a running character (Character tab → **Run**, then click a skill) name the skill:
+`Parker rolled Shoot Someone against 75 and got`. The roll dialog starts at the skill's value and intrinsic dice.
 
 ### Inline Boon / Drawback icons
 
