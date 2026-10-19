@@ -38,6 +38,7 @@
   <main>
     <wa-tab-group id="tabs">
       <wa-tab panel="dice">Dice</wa-tab>
+      <wa-tab panel="cheat-sheet">Cheat Sheet</wa-tab>
       <wa-tab panel="roster">Roster</wa-tab>
       <wa-tab panel="settings">Settings</wa-tab>
 
@@ -65,15 +66,58 @@
           <section class="result" id="result" aria-live="polite">
             <p class="result-empty">No rolls yet</p>
           </section>
-        </div>
 
-        <wa-card class="discord-card">
-          <div slot="header" class="card-header"><h2>Discord</h2></div>
-          <wa-switch id="custom-name">Post as “Neon City Dashboard” instead of the webhook’s own name</wa-switch>
-          <wa-details summary="Message preview" appearance="filled" class="payload">
-            <pre id="payload"></pre>
-          </wa-details>
-        </wa-card>
+          <wa-card class="discord-card">
+            <div slot="header" class="card-header"><h2>Discord</h2></div>
+            <wa-switch id="custom-name">Post as “Neon City Dashboard” instead of the webhook’s own name</wa-switch>
+            <wa-details summary="Message preview" appearance="filled" class="payload">
+              <pre id="payload"></pre>
+            </wa-details>
+          </wa-card>
+        </div>
+      </wa-tab-panel>
+
+      <wa-tab-panel name="cheat-sheet">
+        <div class="cheat-sheet">
+          <section class="sheet-column">
+            <h2>Boons and Drawbacks</h2>
+
+            <h3 class="boon">1–2 Boons (each)</h3>
+            <ul>
+              <li>Attack that hit: +10 damage</li>
+              <li>Progressing an objective: +10 impact</li>
+              <li>Attack on a minion squad: squad size −1</li>
+              <li>Restore 10 luck</li>
+            </ul>
+
+            <h3 class="boon">3–4 Boons</h3>
+            <ul>
+              <li>Player learns a deep secret about a person, place, or event in the scene</li>
+              <li>Another player gets a positive condition (severity = boons rolled)</li>
+              <li>An enemy in the scene gets a negative condition (severity = boons rolled)</li>
+              <li>Player gains 1 influence</li>
+              <li>Mark any 1 skill as used this session (not the one used for this roll)</li>
+            </ul>
+
+            <h3 class="drawback">1–2 Drawbacks (each)</h3>
+            <ul>
+              <li>+1 heat <span class="inline-icon" data-icon="heat"></span> to the heat pool</li>
+              <li>Lose 10 luck</li>
+              <li>Attack that hit: −10 damage</li>
+              <li>Gear used gets the Damaged condition (or worsens it)</li>
+            </ul>
+
+            <h3 class="drawback">3–4 Drawbacks</h3>
+            <ul>
+              <li>Character gets a negative condition (severity = drawbacks rolled)</li>
+              <li>Scene gets a negative condition (severity ×2)</li>
+              <li>New urgent objective, difficulty 50</li>
+              <li>Minor complication enters the scene, no heat spent</li>
+              <li>Each drawback: a major villain in the scene regains 10 luck</li>
+              <li>Destroy or negate an asset the players have or want</li>
+            </ul>
+          </section>
+        </div>
       </wa-tab-panel>
 
       <wa-tab-panel name="roster"></wa-tab-panel>

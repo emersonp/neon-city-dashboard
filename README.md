@@ -1,6 +1,6 @@
 # Neon City Dashboard
 
-A static page for Neon City games: dice rolls posted to Discord, with a roster and settings to come.
+A static page for Neon City games: dice rolls posted to Discord, a rules cheat sheet, and player settings. Roster to come.
 Built with [Web Awesome](https://webawesome.com) (free, from its CDN). No build step.
 
 ## Run it

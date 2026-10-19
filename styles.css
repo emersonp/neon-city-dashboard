@@ -72,7 +72,7 @@ body {
 .chal { --c: var(--ncd-bad); --ink: var(--ncd-bad); }
 
 /* ---- layout ---- */
-main { max-width: 820px; margin: 0 auto; padding: var(--wa-space-l) var(--wa-space-m) var(--wa-space-3xl); }
+main { max-width: 1440px; margin: 0 auto; padding: var(--wa-space-l) var(--wa-space-m) var(--wa-space-3xl); }
 
 wa-tab::part(tab) {
   font-family: "Orbitron", sans-serif;
@@ -82,14 +82,41 @@ wa-tab::part(tab) {
   font-size: var(--wa-font-size-s);
 }
 
+/* roller | result | Discord on wide screens; Discord drops below at medium; one column on phones */
 .dice-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--wa-space-l);
-  align-items: stretch;
-  margin-bottom: var(--wa-space-l);
+  align-items: start;
+}
+.dice-layout > .result { align-self: stretch; }
+@media (max-width: 1100px) {
+  .dice-layout { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dice-layout > .discord-card { grid-column: 1 / -1; }
 }
 @media (max-width: 640px) { .dice-layout { grid-template-columns: minmax(0, 1fr); } }
+
+/* ---- cheat sheet: up to 4 columns ---- */
+.cheat-sheet {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr));
+  gap: var(--wa-space-l);
+  align-items: start;
+}
+.sheet-column {
+  padding: var(--wa-space-l);
+  border: 1px solid var(--wa-color-surface-border);
+  border-radius: var(--wa-border-radius-l);
+  background: color-mix(in srgb, var(--wa-color-surface-raised) 80%, transparent);
+}
+.sheet-column h2 { margin: 0 0 var(--wa-space-m); font-size: var(--wa-font-size-m); letter-spacing: 0.12em; text-transform: uppercase; }
+.sheet-column h3 { margin: var(--wa-space-l) 0 var(--wa-space-xs); font-size: var(--wa-font-size-s); text-transform: uppercase; letter-spacing: 0.06em; }
+.sheet-column h3.boon { color: var(--ncd-good); }
+.sheet-column h3.drawback { color: var(--ncd-bad); }
+.sheet-column ul { margin: 0; padding-left: 1.2em; font-size: var(--wa-font-size-s); line-height: 1.45; }
+.sheet-column li { margin-bottom: var(--wa-space-2xs); }
+.sheet-column li::marker { content: "▶  "; font-size: 0.7em; color: var(--wa-color-brand); }
+.inline-icon .icon { width: 1em; height: 1em; vertical-align: -0.12em; --ink: var(--ncd-bad); }
 
 /* ---- roller ---- */
 .roller::part(body) { display: flex; flex-direction: column; gap: var(--wa-space-l); }
@@ -203,7 +230,6 @@ wa-tab::part(tab) {
 }
 
 /* ---- Discord card ---- */
-.discord-card { width: 100%; }
 .settings-card { max-width: 32rem; }
 .settings-card::part(body) { display: flex; flex-direction: column; gap: var(--wa-space-l); }
 .card-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--wa-space-s); }
@@ -224,6 +250,6 @@ wa-radio-group::part(form-control-input) { flex-wrap: wrap; gap: var(--wa-space-
 
 @media (max-width: 480px) {
   .topbar { padding-inline: var(--wa-space-m); }
-  wa-tab::part(tab) { letter-spacing: 0.08em; padding-inline: var(--wa-space-s); }
+  wa-tab::part(tab) { letter-spacing: 0.04em; font-size: var(--wa-font-size-2xs); padding-inline: var(--wa-space-xs); }
   .brand h1 { font-size: var(--wa-font-size-m); letter-spacing: 0.08em; }
 }
