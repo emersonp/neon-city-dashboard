@@ -142,6 +142,7 @@
               <span data-field="currentLuck"></span>
               <wa-input id="current-luck" type="number" size="s" min="0" aria-label="Current Luck" hidden></wa-input>
             </dd>
+            <dt>Wounds</dt><dd id="wounds-fields" class="wounds"></dd>
           </dl>
 
           <!-- Display -->
@@ -187,6 +188,10 @@
             <div class="luck-fields">
               <wa-input name="maxLuck" label="Max Luck" type="number" min="0"></wa-input>
               <wa-input name="currentLuck" label="Current Luck" type="number" min="0"></wa-input>
+            </div>
+            <div class="wounds-field">
+              <span class="wounds-label" id="wounds-edit-label">Wounds</span>
+              <div id="wounds-edit" class="wounds" role="group" aria-labelledby="wounds-edit-label"></div>
             </div>
             <div id="skills-edit" class="skills editing"></div>
             <wa-button type="submit" variant="brand">

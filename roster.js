@@ -15,6 +15,8 @@
   const running = $("character-running");
   const fields = $("character-fields");
   const currentLuck = $("current-luck");
+  const woundsFields = $("wounds-fields");
+  const woundsEdit = $("wounds-edit");
   const form = $("character-form");
   const field = (name) => form.querySelector(`[name="${name}"]`);
 
@@ -93,11 +95,12 @@
     running.hidden = state !== "running";
     fields.hidden = state === "editing";
     if (state === "editing") {
-      draft = { skills: { ...(current.skills ?? {}) } };
+      draft = { skills: { ...(current.skills ?? {}) }, wounds: C.wounds(current) };
       for (const name of ["handle", "name", "archetype", "origin"]) field(name).value = current[name] ?? "";
       const luck = C.luck(current);
       field("maxLuck").value = String(luck.max);
       field("currentLuck").value = String(luck.current);
+      woundsEdit.innerHTML = woundBoxes(draft.wounds, true);
       renderSkillsEdit();
     } else {
       renderFields();
@@ -119,7 +122,37 @@
     currentLuck.hidden = !editable;
     currentLuck.max = luck.max;
     currentLuck.value = String(luck.current);
+    woundsFields.innerHTML = woundBoxes(C.wounds(current), editable);
   }
+
+  // Four boxes, like the sheet. Editable boxes are buttons: box n marks 1..n.
+  function woundBoxes(n, editable) {
+    return Array.from({ length: C.MAX_WOUNDS }, (_, i) => {
+      const on = i < n ? " on" : "";
+      return editable
+        ? `<button type="button" class="wound${on}" data-wound="${i + 1}" aria-pressed="${i < n}" aria-label="Wound ${i + 1}"></button>`
+        : `<span class="wound${on}"></span>`;
+    }).join("") + (editable ? "" : `<span class="visually-hidden">${n} of ${C.MAX_WOUNDS}</span>`);
+  }
+  const clickedWound = (e) => Number(e.target.closest("[data-wound]")?.dataset.wound) || 0;
+
+  // Running: saved right away. Editing: kept in the draft until Save.
+  woundsFields.addEventListener("click", (e) => {
+    const n = clickedWound(e);
+    if (!n || state !== "running") return;
+    try {
+      current = C.save(storage, { ...current, wounds: C.clickWound(C.wounds(current), n) });
+    } catch (err) {
+      console.error(err);
+    }
+    renderFields();
+  });
+  woundsEdit.addEventListener("click", (e) => {
+    const n = clickedWound(e);
+    if (!n) return;
+    draft.wounds = C.clickWound(draft.wounds, n);
+    woundsEdit.innerHTML = woundBoxes(draft.wounds, true);
+  });
   currentLuck.addEventListener("change", () => {
     const value = C.clampCurrentLuck(currentLuck.value, C.luck(current).max);
     try {
@@ -307,6 +340,7 @@
     for (const name of ["handle", "name", "archetype", "origin"]) edited[name] = String(field(name).value ?? "").trim();
     edited.maxLuck = C.clampMaxLuck(field("maxLuck").value);
     edited.currentLuck = C.clampCurrentLuck(field("currentLuck").value, edited.maxLuck);
+    edited.wounds = draft.wounds;
     edited.skills = draft.skills;
     try {
       current = C.save(storage, edited);

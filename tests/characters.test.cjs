@@ -154,3 +154,21 @@ test("current luck stays between 0 and max", () => {
   assert.equal(C.clampMaxLuck(-3), 0);
   assert.equal(C.clampMaxLuck("abc"), 100);
 });
+
+// ---- wounds ----
+
+test("wounds are 0-4, defaulting to 0", () => {
+  assert.equal(C.newCharacter().wounds, 0);
+  assert.equal(C.wounds({}), 0);
+  assert.equal(C.wounds({ wounds: 3 }), 3);
+  assert.equal(C.wounds({ wounds: 9 }), 4);
+  assert.equal(C.wounds({ wounds: -1 }), 0);
+});
+
+test("clicking a wound box marks up to it; clicking the last marked box unmarks it", () => {
+  assert.equal(C.clickWound(0, 3), 3);
+  assert.equal(C.clickWound(3, 1), 1);
+  assert.equal(C.clickWound(3, 4), 4);
+  assert.equal(C.clickWound(3, 3), 2);
+  assert.equal(C.clickWound(1, 1), 0);
+});

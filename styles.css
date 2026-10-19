@@ -315,6 +315,26 @@ wa-tab[hidden] { display: none; }
 #current-luck { width: 7rem; }
 .character-fields[hidden], .character-fields [hidden] { display: none; }
 
+/* ---- wounds: four boxes, filled red when marked ---- */
+.wounds { display: flex; align-items: center; gap: var(--wa-space-xs); }
+.wound {
+  box-sizing: border-box;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: 2px solid color-mix(in srgb, var(--ncd-bad) 55%, transparent);
+  border-radius: var(--wa-border-radius-s);
+  background: transparent;
+}
+.wound.on { background: var(--ncd-bad); border-color: var(--ncd-bad); }
+.wa-dark .wound.on { box-shadow: 0 0 8px var(--ncd-bad); }
+button.wound { cursor: pointer; width: 2.25rem; height: 2.25rem; }
+button.wound:hover { border-color: var(--ncd-bad); }
+button.wound:focus-visible { outline: 2px solid var(--wa-color-focus); outline-offset: 2px; }
+.wounds-field { display: flex; flex-direction: column; gap: var(--wa-space-xs); }
+.wounds-label { font-weight: var(--wa-form-control-label-font-weight, 600); }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
 /* editing rows: name | controls | a fixed-width dice button, so the controls line up */
 .skills.editing li { display: grid; grid-template-columns: minmax(0, 1fr) auto 3.5rem; }
 .skills.editing li > wa-button[data-action="dice"] { justify-self: end; }

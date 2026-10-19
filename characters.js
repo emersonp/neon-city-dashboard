@@ -59,6 +59,11 @@
     return { max, current: clampCurrentLuck(character?.currentLuck, max) };
   }
 
+  // ---- wounds: 0-4; clicking box n marks boxes 1..n, clicking the last marked box unmarks it ----
+  const MAX_WOUNDS = 4;
+  const wounds = (character) => Math.max(0, Math.min(MAX_WOUNDS, Math.trunc(Number(character?.wounds) || 0)));
+  const clickWound = (current, n) => (n === current ? n - 1 : n);
+
   const pick = (list, rng = Math.random) => list[Math.floor(rng() * list.length)];
 
   // ---- hacker handles ----
@@ -117,6 +122,7 @@
       origin: "Cybernetic",
       maxLuck: DEFAULT_LUCK,
       currentLuck: DEFAULT_LUCK,
+      wounds: 0,
       skills: {},
       createdAt: now,
       updatedAt: now,
@@ -154,5 +160,6 @@
     randomHandle, randomName, newCharacter, label, load, save, toExport,
     skill, shownValue, isNotable, clampValue, increment, withSkill,
     DEFAULT_LUCK, luck, clampMaxLuck, clampCurrentLuck,
+    MAX_WOUNDS, wounds, clickWound,
   };
 })(globalThis);
