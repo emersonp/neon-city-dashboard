@@ -1,5 +1,5 @@
-// Copy this file to config.js (which git ignores) and paste your Discord webhook URL.
-// Once the Settings tab can save a webhook, that saved value takes priority over this one.
+// Copy this file to config.js (which git ignores). The Discord webhook can go here or in Settings;
+// one saved in Settings takes priority over this one.
 window.NCD_CONFIG = {
   webhookUrl: "https://discord.com/api/webhooks/<id>/<token>",
   // Where the site is published (like https://you.github.io/neon-city-dashboard/). Discord loads character

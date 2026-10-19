@@ -1,7 +1,7 @@
 // Page wiring: theme toggle, tabs, the dice roller, and posting rolls to Discord.
 (function () {
   const DICE = window.NCD_DICE;
-  const { buildMessage, influenceMessage, send } = window.NCD_DISCORD;
+  const { buildMessage, influenceMessage, isWebhookUrl, send } = window.NCD_DISCORD;
   const { svg: icon } = window.NCD_ICONS;
   const $ = (id) => document.getElementById(id);
 
@@ -11,8 +11,8 @@
     set(key, value) { try { localStorage.setItem(`ncd.${key}`, value); } catch {} },
   };
 
-  // A webhook saved from Settings (later) wins over the hardcoded one in config.js.
-  const webhookUrl = () => store.get("webhook") || window.NCD_CONFIG?.webhookUrl || "";
+  // A webhook saved in Settings wins over the one in config.js.
+  const webhookUrl = () => String(store.get("webhook") ?? "").trim() || window.NCD_CONFIG?.webhookUrl || "";
 
   document.querySelectorAll("[data-icon]").forEach((el) => { el.innerHTML = icon(el.dataset.icon); });
 
@@ -30,9 +30,19 @@
   syncThemeIcon();
 
   // ---- tabs ----
+  // Start on Settings until there's a player name and a working webhook.
   const tabs = $("tabs");
-  customElements.whenDefined("wa-tab-group").then(() => { tabs.active = store.get("tab", "dice"); });
-  tabs.addEventListener("wa-tab-show", (e) => store.set("tab", e.detail.name));
+  const needsSetup = () => !String(store.get("playerName") ?? "").trim() || !isWebhookUrl(webhookUrl());
+  let forced = false; // a forced trip to Settings isn't remembered as the last tab
+  customElements.whenDefined("wa-tab-group").then(() => {
+    forced = needsSetup();
+    tabs.active = forced ? "settings" : store.get("tab", "dice");
+  });
+  tabs.addEventListener("wa-tab-show", (e) => {
+    if (forced && e.detail.name === "settings") return;
+    forced = false;
+    store.set("tab", e.detail.name);
+  });
 
   // ---- settings ----
   const playerInput = $("player-name");
@@ -42,6 +52,14 @@
   const playerName = () => String(playerInput.value ?? "").trim() || "Player";
   const isGM = () => gmSwitch.checked;
   playerInput.addEventListener("input", () => store.set("playerName", playerInput.value));
+  const webhookInput = $("webhook");
+  webhookInput.value = store.get("webhook", "");
+  webhookInput.placeholder = window.NCD_CONFIG?.webhookUrl ? "Using the one in config.js" : "https://discord.com/api/webhooks/…";
+  // Flags a mistyped address; blank is fine when config.js has one.
+  const checkWebhook = () => customElements.whenDefined("wa-input").then(() =>
+    webhookInput.setCustomValidity(isWebhookUrl(webhookUrl()) ? "" : "Not a Discord webhook address"));
+  webhookInput.addEventListener("input", () => { store.set("webhook", String(webhookInput.value ?? "").trim()); checkWebhook(); });
+  checkWebhook();
   gmSwitch.addEventListener("change", () => store.set("gm", gmSwitch.checked ? "1" : "0"));
 
   // ---- toasts ----
@@ -169,7 +187,7 @@
 
   async function post(payload, what) {
     const url = webhookUrl();
-    if (!url) { toast(`${what}, but no webhook is set. Copy config.example.js to config.js and add one.`, "warning"); return; }
+    if (!isWebhookUrl(url)) { toast(`${what}, but there's no Discord webhook. Add one in Settings.`, "warning"); return; }
     try {
       await send(url, payload);
     } catch (err) {

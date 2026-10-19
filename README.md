@@ -5,8 +5,9 @@ Built with [Web Awesome](https://webawesome.com) (free, from its CDN). No build 
 
 ## Run it
 
-1. Copy `config.example.js` to `config.js` and paste in your Discord webhook URL.
+1. Copy `config.example.js` to `config.js` and paste in your Discord webhook URL, or paste it into **Settings** instead.
    `config.js` is git-ignored, so the webhook never ends up in the repo.
+   Until there's a player name and a valid webhook, the page opens on **Settings**.
 2. Open `index.html` in a browser, or serve the folder (for example `npx serve` or `python -m http.server`).
 
 Anyone who has the webhook URL can post to that channel. Don't host a copy online with the URL baked in.
@@ -45,8 +46,8 @@ node --test tests/dice.test.cjs tests/discord.test.cjs tests/characters.test.cjs
 | `emoji/` | Boon and Drawback PNGs to upload as Discord server emoji |
 | `icons.js`, `icons/` | Game icons (advantage die, challenge die, boon, drawback, heat, influence) |
 
-Things remembered in localStorage (all under `ncd.`): characters, the open character, player name, GM toggle, theme, the last tab, the target number, and the last roll.
-A `ncd.webhook` value, once Settings can save one, takes priority over `config.js`.
+Things remembered in localStorage (all under `ncd.`): characters, the open character, player name, GM toggle, webhook, theme, the last tab, the target number, and the last roll.
+A webhook saved in Settings takes priority over `config.js`.
 
 ## Discord messages
 

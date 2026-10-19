@@ -80,6 +80,10 @@
     };
   }
 
+  // A Discord webhook address: https://discord.com/api/webhooks/<id>/<token> (discordapp.com, ptb. and canary. work too).
+  const isWebhookUrl = (value) =>
+    /^https:\/\/(?:(?:ptb|canary)\.)?discord(?:app)?\.com\/api\/(?:v\d+\/)?webhooks\/\d+\/[\w-]+\/?$/.test(String(value ?? "").trim());
+
   async function send(webhookUrl, payload) {
     const url = new URL(webhookUrl);
     url.searchParams.set("wait", "true");
@@ -96,5 +100,5 @@
     return res.json();
   }
 
-  root.NCD_DISCORD = { COLORS, lines, buildMessage, influenceMessage, send };
+  root.NCD_DISCORD = { COLORS, lines, buildMessage, influenceMessage, isWebhookUrl, send };
 })(globalThis);

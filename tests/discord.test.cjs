@@ -4,7 +4,14 @@ const assert = require("node:assert/strict");
 require("../dice.js");
 require("../discord.js");
 const { roll } = globalThis.NCD_DICE;
-const { lines, buildMessage } = globalThis.NCD_DISCORD;
+const { lines, buildMessage, isWebhookUrl } = globalThis.NCD_DISCORD;
+
+test("webhook addresses", () => {
+  assert.ok(isWebhookUrl("https://discord.com/api/webhooks/123/abc_DEF-9"));
+  assert.ok(isWebhookUrl("  https://canary.discordapp.com/api/v10/webhooks/123/abc  "));
+  for (const bad of ["", null, "https://discord.com/api/webhooks/<id>/<token>", "http://discord.com/api/webhooks/1/a",
+    "https://evil.com/api/webhooks/1/a", "https://discord.com/api/webhooks/1"]) assert.ok(!isWebhookUrl(bad), String(bad));
+});
 
 const seq = (...values) => () => values.shift();
 const EMOJI = { boon: "<:ncd_boon:1>", drawback: "<:ncd_drawback:2>" };
