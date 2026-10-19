@@ -23,7 +23,7 @@
   function rolledText(r, emoji) {
     if (!r.boons && !r.drawbacks) return "";
     const symbols = hasEmoji(emoji)
-      ? emoji.boon.repeat(r.boons) + emoji.drawback.repeat(r.drawbacks)
+      ? [...Array(r.boons).fill(emoji.boon), ...Array(r.drawbacks).fill(emoji.drawback)].join(" ") // thin space
       : [r.boons && count(r.boons, "boon"), r.drawbacks && count(r.drawbacks, "drawback")].filter(Boolean).join(", ");
     return `Rolled: ${symbols}`;
   }

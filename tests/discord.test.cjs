@@ -22,14 +22,14 @@ test("inline emoji for leftover symbols and each pool die", () => {
   const r = roll({ target: 45, advantage: 2, challenge: 2 }, seq(7, 8, 1, 0, 3, 0));
   const l = lines(r, "Parker", EMOJI, 50);
   assert.equal(l.result, "Failure. 78 · <:ncd_drawback:2>");
-  assert.equal(l.detail, "Luck: 50 · Rolled: <:ncd_boon:1><:ncd_drawback:2><:ncd_drawback:2>");
+  assert.equal(l.detail, "Luck: 50 · Rolled: <:ncd_boon:1> <:ncd_drawback:2> <:ncd_drawback:2>");
 });
 
 test("cancelled symbols and no target", () => {
   const r = roll({ advantage: 1, challenge: 1 }, seq(0, 0, 0, 0));
   assert.equal(lines(r, "Parker", EMOJI, 50).result, "100 · all symbols cancelled");
   assert.equal(lines(r, "Parker", undefined, 50).intro, "Parker rolled and got");
-  assert.equal(lines(r, "Parker", EMOJI, 50).detail, "Luck: 50 · Rolled: <:ncd_boon:1><:ncd_drawback:2>");
+  assert.equal(lines(r, "Parker", EMOJI, 50).detail, "Luck: 50 · Rolled: <:ncd_boon:1> <:ncd_drawback:2>");
 });
 
 test("no symbols rolled means no Rolled part, even with dice in the pool", () => {
