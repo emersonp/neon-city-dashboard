@@ -45,7 +45,7 @@ node --test tests/dice.test.cjs tests/discord.test.cjs tests/characters.test.cjs
 | `emoji/` | Boon and Drawback PNGs to upload as Discord server emoji |
 | `icons.js`, `icons/` | Game icons (advantage die, challenge die, boon, drawback, heat, influence) |
 
-Things remembered in localStorage (all under `ncd.`): characters, the open character, player name, GM toggle, theme, the last tab, the target number, the last roll, and the custom-name toggle.
+Things remembered in localStorage (all under `ncd.`): characters, the open character, player name, GM toggle, theme, the last tab, the target number, and the last roll.
 A `ncd.webhook` value, once Settings can save one, takes priority over `config.js`.
 
 ## Discord messages
@@ -61,7 +61,8 @@ green for success, red for failure, and cyan when there's no target, holding thr
 
 The player name comes from **Settings** ("Player" if blank). The footer shows the Current Luck of the character
 open in the Character tab (none if no character is open), except for the **Administrator (GM)**, whose rolls leave it
-out. With the custom-name switch on, messages post as that character's handle, or as "Administrator" for the GM. `Rolled:` lists every Boon and
+out. Messages post as that character's handle, as "Administrator" for the GM, or as "Neon City Dashboard" with no
+character open. `Rolled:` lists every Boon and
 Drawback that came up, before cancelling, and is left out when none did. A GM roll with no symbols has no footer.
 
 Skill rolls from a running character (Character tab → **Run**, then click a skill) name the skill:

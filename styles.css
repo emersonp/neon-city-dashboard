@@ -82,7 +82,7 @@ wa-tab::part(tab) {
   font-size: var(--wa-font-size-s);
 }
 
-/* roller | result | Discord on wide screens; Discord drops below at medium; one column on phones */
+/* roller | result | (empty for now) on wide screens; two columns at medium; one column on phones */
 .dice-layout {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -92,7 +92,6 @@ wa-tab::part(tab) {
 .dice-layout > .result { align-self: stretch; }
 @media (max-width: 1100px) {
   .dice-layout { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .dice-layout > .discord-card { grid-column: 1 / -1; }
 }
 @media (max-width: 640px) { .dice-layout { grid-template-columns: minmax(0, 1fr); } }
 
@@ -342,17 +341,6 @@ a.skill-name:hover, a.skill-name:focus-visible { text-decoration: underline; }
 .card-header h2 { margin: 0; font-size: var(--wa-font-size-m); letter-spacing: 0.15em; text-transform: uppercase; }
 
 wa-radio-group::part(form-control-input) { flex-wrap: wrap; gap: var(--wa-space-2xs); }
-
-.payload { margin-top: var(--wa-space-l); }
-.payload pre {
-  margin: 0;
-  max-height: 22rem;
-  overflow: auto;
-  font-family: var(--wa-font-family-code);
-  font-size: var(--wa-font-size-xs);
-  white-space: pre-wrap;
-  word-break: break-word;
-}
 
 @media (max-width: 480px) {
   .topbar { padding-inline: var(--wa-space-m); }

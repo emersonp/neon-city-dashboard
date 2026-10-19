@@ -41,8 +41,8 @@
   if (store.get("gm") === "1") gmSwitch.setAttribute("checked", "");
   const playerName = () => String(playerInput.value ?? "").trim() || "Player";
   const isGM = () => gmSwitch.checked;
-  playerInput.addEventListener("input", () => { store.set("playerName", playerInput.value); renderPreview(); });
-  gmSwitch.addEventListener("change", () => { store.set("gm", gmSwitch.checked ? "1" : "0"); renderPreview(); });
+  playerInput.addEventListener("input", () => store.set("playerName", playerInput.value));
+  gmSwitch.addEventListener("change", () => store.set("gm", gmSwitch.checked ? "1" : "0"));
 
   // ---- toasts ----
   const toast = (message, variant = "neutral") =>
@@ -139,10 +139,8 @@
   if (lastRoll) showResult(lastRoll, false);
 
   // ---- Discord ----
-  const customName = $("custom-name");
-  if (store.get("customName") === "1") customName.setAttribute("checked", "");
   // Luck and the posting name come from the character open in the Character tab (roster.js).
-  // With no character open, Luck is left out and the webhook's own name is used.
+  // The GM posts as Administrator; with no character open, Luck is left out.
   function messageFor(r, skill) {
     const character = window.NCD_ACTIVE_CHARACTER?.();
     const handle = String(character?.handle ?? "").trim();
@@ -150,16 +148,9 @@
       skill,
       luck: isGM() || !character ? null : window.NCD_CHARACTERS.luck(character).current,
       emoji: window.NCD_CONFIG?.emoji,
-      username: customName.checked ? (isGM() ? "Administrator" : handle || undefined) : undefined,
+      username: isGM() ? "Administrator" : handle || "Neon City Dashboard",
     });
   }
-
-  function renderPreview() {
-    // Before the first roll, preview an example so there's something to look at.
-    const r = lastRoll ?? DICE.roll({ target: 45, advantage: 2, challenge: 1 });
-    $("payload").textContent = (lastRoll ? "" : "// example roll; roll to see your own\n") + JSON.stringify(messageFor(r), null, 2);
-  }
-  customName.addEventListener("change", () => { store.set("customName", customName.checked ? "1" : "0"); renderPreview(); });
 
   async function postToDiscord(r, skill) {
     const url = webhookUrl();
@@ -185,7 +176,6 @@
       showResult(r, true);
       lastRoll = r;
       store.set("lastRoll", JSON.stringify(r));
-      renderPreview();
       await postToDiscord(r);
     } finally {
       rolling = false;
@@ -204,8 +194,6 @@
     rollAndPost();
   });
 
-  renderPreview();
-
   // For the character tab's skill rolls (roster.js).
-  window.NCD_ROLLER = { fillPool, targetField, spin, showResult, postToDiscord, renderPreview };
+  window.NCD_ROLLER = { fillPool, targetField, spin, showResult, postToDiscord };
 })();

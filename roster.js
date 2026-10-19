@@ -104,7 +104,6 @@
       if (state === "display") renderSkillsDisplay($("skills-display"));
       else renderSkillsDisplay($("skills-run"), { links: true });
     }
-    window.NCD_ROLLER.renderPreview(); // the Discord preview uses this character's handle and luck
   }
 
   // Handle, name, etc. Current Luck can be changed while running, and is saved right away.
@@ -129,7 +128,6 @@
       console.error(err);
     }
     renderFields();
-    window.NCD_ROLLER.renderPreview();
   });
 
   $("character-edit").addEventListener("click", () => { state = "editing"; render(); });
