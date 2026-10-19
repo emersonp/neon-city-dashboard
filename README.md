@@ -60,9 +60,10 @@ green for success, red for failure, and cyan when there's no target, holding thr
 
 The icons are custom server emoji, which is the only way to put an image inline in a Discord message.
 
-1. In Discord: **Server Settings → Emoji → Upload Emoji**, and upload `emoji/ncd_boon.png` and `emoji/ncd_drawback.png`.
-   Keep the names `ncd_boon` and `ncd_drawback`.
-2. In any channel, send `\:ncd_boon:` and `\:ncd_drawback:`. Discord replies with codes like `<:ncd_boon:1234567890>`.
+1. Have a Boon and a Drawback emoji on the server. Any names work; `emoji/` has PNGs to upload
+   (**Server Settings → Emoji → Upload Emoji**) if you need them.
+2. In any channel, send the emoji names with a backslash, like `\:boon:` and `\:drawback:`.
+   Discord replies with codes like `<:boon:1234567890>`.
 3. Paste those codes into `emoji` in `config.js`.
 
 Until then, messages use words ("with two boons").
