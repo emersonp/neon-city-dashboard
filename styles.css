@@ -354,6 +354,24 @@ wa-tab[hidden] { display: none; }
 .character-form[hidden] { display: none; }
 .character-form > wa-button[type="submit"] { align-self: flex-start; }
 
+/* ---- gear: a ruled list under the skills ---- */
+.gear { margin-bottom: var(--wa-space-l); }
+.gear-head { display: flex; align-items: center; justify-content: space-between; gap: var(--wa-space-s); margin-bottom: var(--wa-space-xs); }
+.gear-head h3 { margin: 0; }
+.gear-list { list-style: none; margin: 0; padding: 0; }
+.gear-list li {
+  display: flex;
+  align-items: center;
+  gap: var(--wa-space-2xs);
+  min-height: 2.4rem;
+  padding: var(--wa-space-3xs) 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--wa-color-surface-border) 60%, transparent);
+}
+.gear-text { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.gear-kind, .gear-empty { color: var(--wa-color-text-quiet); }
+.gear-empty { margin: 0; }
+.gear-form { display: flex; flex-direction: column; gap: var(--wa-space-l); }
+
 /* ---- skills: Mental and Physical side by side when there's room ---- */
 .skills {
   display: grid;
@@ -363,7 +381,7 @@ wa-tab[hidden] { display: none; }
   margin-bottom: var(--wa-space-l);
 }
 .skills.editing { grid-template-columns: repeat(auto-fit, minmax(min(100%, 30rem), 1fr)); }
-.skill-group h3 {
+.skill-group h3, .gear h3 {
   margin: 0 0 var(--wa-space-xs);
   font-size: var(--wa-font-size-xs);
   letter-spacing: 0.2em;

@@ -108,7 +108,7 @@
     fields.hidden = state === "editing";
     fields.dataset.state = state;
     if (state === "editing") {
-      draft = { skills: { ...(current.skills ?? {}) }, wounds: C.wounds(current) };
+      draft = { skills: { ...(current.skills ?? {}) }, wounds: C.wounds(current), gear: C.gear(current) };
       for (const name of ["handle", "name", "archetype", "origin"]) field(name).value = current[name] ?? "";
       const luck = C.luck(current);
       field("maxLuck").value = String(luck.max);
@@ -128,13 +128,18 @@
       const look = C.appearance(current);
       for (const name of ["pronouns", "physical", "network"]) field(name).value = look[name];
       renderSkillsEdit();
+      renderGear($("gear-edit"), draft, { editable: true });
     } else {
       renderFields();
       if (state === "display") {
         renderAppearance($("appearance-display"));
         renderSkillsDisplay($("skills-display"));
+        $("gear-display-section").hidden = !C.gear(current).length;
+        renderGear($("gear-display"), current);
+      } else {
+        renderSkillsDisplay($("skills-run"), { links: true });
+        renderGear($("gear-run"), current);
       }
-      else renderSkillsDisplay($("skills-run"), { links: true });
     }
   }
 
@@ -245,6 +250,66 @@
     dialog.label = `Appearance: ${C.label(current)}`;
     renderAppearance(dialog.querySelector(".appearance"));
     dialog.open = true;
+  });
+
+  // ---- gear: props for now, each shown as "description [prop]" ----
+  // Run can add gear (saved right away, never Starter). Edit can add, change, or remove gear and set Starter; kept in the draft until Save.
+  function renderGear(el, character, { editable = false } = {}) {
+    const items = C.gear(character);
+    el.innerHTML = items.length
+      ? `<ul class="gear-list">${items.map((g) => `<li data-gear="${escapeHTML(g.id)}">
+          <span class="gear-text">${escapeHTML(g.description)} <span class="gear-kind">[${escapeHTML(g.kind)}]</span></span>
+          ${editable ? `<wa-button size="s" appearance="plain" data-gear-action="edit" title="Change">
+              <wa-icon name="pen" label="Change"></wa-icon></wa-button>
+            <wa-button size="s" appearance="plain" variant="danger" data-gear-action="remove" title="Remove">
+              <wa-icon name="trash" label="Remove"></wa-icon></wa-button>` : ""}
+        </li>`).join("")}</ul>`
+      : `<p class="gear-empty">None</p>`;
+  }
+
+  const gearDialog = $("gear-dialog");
+  const gearDescription = $("gear-description");
+  const gearStarter = $("gear-starter");
+  let gearChanging = null; // the item being changed in Edit, or null for new gear
+  function openGearDialog(item = null) {
+    gearChanging = item;
+    gearDialog.label = item ? "Change gear" : "New gear";
+    gearDescription.value = item?.description ?? "";
+    gearStarter.checked = item?.starter ?? false;
+    gearStarter.hidden = state !== "editing";
+    gearDialog.open = true;
+  }
+  function saveGear() {
+    const description = String(gearDescription.value ?? "").trim();
+    if (!description) { gearDescription.focus(); return; }
+    if (state === "editing") {
+      const starter = gearStarter.checked;
+      draft = C.withGear(draft, gearChanging ? { ...gearChanging, description, starter } : C.newProp(description, starter));
+      renderGear($("gear-edit"), draft, { editable: true });
+    } else if (state === "running") {
+      try {
+        current = C.save(storage, C.withGear(current, C.newProp(description)));
+      } catch (err) {
+        console.error(err);
+      }
+      renderGear($("gear-run"), current);
+    }
+    gearDialog.open = false;
+  }
+  $("gear-save").addEventListener("click", saveGear);
+  gearDescription.addEventListener("keydown", (e) => { if (e.key === "Enter") saveGear(); });
+  for (const el of [running, form]) {
+    el.addEventListener("click", (e) => { if (e.target.closest("[data-add-gear]")) openGearDialog(); });
+  }
+  $("gear-edit").addEventListener("click", (e) => {
+    const button = e.target.closest("[data-gear-action]");
+    const id = button?.closest("[data-gear]")?.dataset.gear;
+    if (!id) return;
+    if (button.dataset.gearAction === "edit") openGearDialog(draft.gear.find((g) => g.id === id));
+    else {
+      draft = C.withoutGear(draft, id);
+      renderGear($("gear-edit"), draft, { editable: true });
+    }
   });
 
   // ---- XP: the editor shows the total as Available and Spent change ----
@@ -467,6 +532,7 @@
       physical: String(field("physical").value ?? "").trim(), network: String(field("network").value ?? "").trim() };
     edited.knows = [...knowsEdit.querySelectorAll("wa-checkbox")].filter((box) => box.checked).map((box) => box.value);
     edited.skills = draft.skills;
+    edited.gear = draft.gear;
     try {
       current = C.save(storage, edited);
     } catch (err) {

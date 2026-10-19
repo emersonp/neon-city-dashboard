@@ -2,6 +2,24 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 require("../characters.js");
+
+test("gear: props with a description, Starter off unless set", () => {
+  const C = globalThis.NCD_CHARACTERS;
+  assert.deepEqual(C.gear({}), []);
+  assert.deepEqual(C.newCharacter().gear, []);
+  const coat = C.newProp("  Street clothes and a duster or leather jacket ");
+  assert.equal(coat.kind, "prop");
+  assert.equal(coat.description, "Street clothes and a duster or leather jacket");
+  assert.equal(coat.starter, false);
+  assert.equal(C.newProp("Deck", true).starter, true);
+  let c = C.withGear({ id: "c" }, coat);
+  c = C.withGear(c, C.newProp("Burner phone"));
+  assert.deepEqual(C.gear(c).map((g) => g.description), ["Street clothes and a duster or leather jacket", "Burner phone"]);
+  c = C.withGear(c, { ...coat, description: "Duster", starter: true });
+  assert.deepEqual(C.gear(c).map((g) => [g.description, g.starter]), [["Duster", true], ["Burner phone", false]]);
+  assert.deepEqual(C.gear(C.withoutGear(c, coat.id)).map((g) => g.description), ["Burner phone"]);
+  assert.deepEqual(C.gear({ gear: [null, { id: 1, description: "Old" }] }), [{ id: 1, kind: "prop", description: "Old", starter: false }]);
+});
 const C = globalThis.NCD_CHARACTERS;
 
 // A storage stand-in with the localStorage methods the module uses.

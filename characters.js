@@ -100,6 +100,21 @@
   // The checked ones, in sheet order; anything not on the list is dropped.
   const knows = (character) => KNOWLEDGE.filter((k) => Array.isArray(character?.knows) && character.knows.includes(k));
 
+  // ---- gear: everything a character carries ----
+  // For now every item is a prop (just a description). Other kinds, with rules attached, come later,
+  // so each item records its kind. Starter marks gear the character began play with.
+  const gear = (character) => (Array.isArray(character?.gear) ? character.gear : [])
+    .filter((item) => item && typeof item === "object" && item.id != null)
+    .map((item) => ({ ...item, kind: item.kind || "prop", description: String(item.description ?? "").trim(), starter: item.starter === true }));
+  const newProp = (description, starter = false) =>
+    ({ id: newId(), kind: "prop", description: String(description ?? "").trim(), starter: starter === true });
+  // Replaces the item with the same id, or adds it at the end.
+  function withGear(character, item) {
+    const list = gear(character);
+    return { ...character, gear: list.some((g) => g.id === item.id) ? list.map((g) => (g.id === item.id ? item : g)) : [...list, item] };
+  }
+  const withoutGear = (character, id) => ({ ...character, gear: gear(character).filter((g) => g.id !== id) });
+
   // ---- used skills: marked while running (by hand, or by rolling the skill) ----
   // Only trained skills (a value above 50) can be used; dice alone don't count.
   const canBeUsed = (character, id) => skill(character, id).value != null;
@@ -178,6 +193,7 @@
       wounds: 0,
       portrait: null,
       knows: [],
+      gear: [],
       xpSpent: 0,
       xpAvailable: 0,
       appearance: { pronouns: "", physical: "", network: "" },
@@ -222,6 +238,7 @@
     MAX_WOUNDS, wounds, clickWound,
     canBeUsed, isUsed, withUsed,
     KNOWLEDGE, knows, xp, clampXp, appearance,
+    gear, newProp, withGear, withoutGear,
     DEFAULT_PORTRAIT, PORTRAIT_DIR, availablePortraits, portraitFile, portraitLabel,
   };
 })(globalThis);

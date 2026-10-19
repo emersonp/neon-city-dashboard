@@ -178,6 +178,12 @@
           <div id="character-display">
             <dl id="appearance-display" class="appearance"></dl>
             <div id="skills-display" class="skills"></div>
+            <section class="gear" id="gear-display-section">
+              <div class="gear-head">
+                <h3>Gear</h3>
+              </div>
+              <div id="gear-display"></div>
+            </section>
             <div class="character-actions">
               <wa-button id="character-edit" appearance="outlined">
                 <wa-icon slot="start" name="pen"></wa-icon>
@@ -193,6 +199,16 @@
           <!-- Running -->
           <div id="character-running" hidden>
             <div id="skills-run" class="skills running"></div>
+            <section class="gear">
+              <div class="gear-head">
+                <h3>Gear</h3>
+                <wa-button size="s" appearance="outlined" data-add-gear>
+                  <wa-icon slot="start" name="plus"></wa-icon>
+                  Add gear
+                </wa-button>
+              </div>
+              <div id="gear-run"></div>
+            </section>
             <div class="character-actions">
               <wa-button id="character-appearance" appearance="outlined">
                 <wa-icon slot="start" name="user"></wa-icon>
@@ -266,6 +282,16 @@
               <wa-textarea name="network" label="Network Default" rows="3" resize="auto"></wa-textarea>
             </div>
             <div id="skills-edit" class="skills editing"></div>
+            <section class="gear">
+              <div class="gear-head">
+                <h3>Gear</h3>
+                <wa-button size="s" appearance="outlined" data-add-gear>
+                  <wa-icon slot="start" name="plus"></wa-icon>
+                  Add gear
+                </wa-button>
+              </div>
+              <div id="gear-edit"></div>
+            </section>
             <wa-button type="submit" variant="brand">
               <wa-icon slot="start" name="floppy-disk"></wa-icon>
               Save
@@ -292,6 +318,18 @@
       <span slot="label" class="pool-label"><span data-icon="challenge-die"></span>Challenge dice</span>
     </wa-radio-group>
     <wa-button slot="footer" variant="brand" data-dialog="close">Done</wa-button>
+  </wa-dialog>
+
+  <!-- New gear (Run and Edit) and changing gear (Edit). Only props for now. Starter is shown only in Edit. -->
+  <wa-dialog id="gear-dialog" label="New gear" light-dismiss>
+    <div class="gear-form">
+      <wa-input id="gear-description" label="Description" autocomplete="off" autofocus></wa-input>
+      <wa-switch id="gear-starter">Starter</wa-switch>
+    </div>
+    <wa-button slot="footer" id="gear-save" variant="brand">
+      <wa-icon slot="start" name="floppy-disk"></wa-icon>
+      Save
+    </wa-button>
   </wa-dialog>
 
   <wa-dialog id="appearance-dialog" label="Appearance" light-dismiss>
