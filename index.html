@@ -193,31 +193,46 @@
 
           <!-- Editing -->
           <form id="character-form" class="character-form" hidden>
-            <wa-input name="handle" label="Handle" autocomplete="off">
-              <wa-button slot="end" appearance="plain" size="s" data-reroll="handle" title="New random handle">
-                <wa-icon name="dice" label="New random handle"></wa-icon>
-              </wa-button>
-            </wa-input>
-            <wa-input name="name" label="Name" autocomplete="off">
-              <wa-button slot="end" appearance="plain" size="s" data-reroll="name" title="New random name">
-                <wa-icon name="dice" label="New random name"></wa-icon>
-              </wa-button>
-            </wa-input>
-            <wa-select name="archetype" label="Archetype"></wa-select>
-            <wa-select name="origin" label="Origin"></wa-select>
-            <div class="portrait-field">
-              <img id="portrait-preview" class="portrait" alt="">
-              <wa-select name="portrait" label="Portrait"></wa-select>
-            </div>
-            <div class="stat-fields">
-              <wa-input name="maxLuck" label="Max Luck" type="number" min="0"></wa-input>
-              <wa-input name="currentLuck" label="Current Luck" type="number" min="0"></wa-input>
-              <wa-input name="startingInfluence" label="Starting Influence" type="number" min="0"></wa-input>
-              <wa-input name="currentInfluence" label="Current Influence" type="number" min="0"></wa-input>
-            </div>
-            <div class="wounds-field">
-              <span class="wounds-label" id="wounds-edit-label">Wounds</span>
-              <div id="wounds-edit" class="wounds" role="group" aria-labelledby="wounds-edit-label"></div>
+            <!-- Same layout as the sheet above: portrait and identity on the left, stat boxes on the right -->
+            <div class="sheet-head">
+              <div class="sheet-who">
+                <div class="portrait-pick">
+                  <img id="portrait-preview" class="portrait" alt="">
+                  <wa-select name="portrait" label="Portrait" size="s"></wa-select>
+                </div>
+                <div class="sheet-identity">
+                  <wa-input class="wide" name="handle" label="Handle" autocomplete="off">
+                    <wa-button slot="end" appearance="plain" size="s" data-reroll="handle" title="New random handle">
+                      <wa-icon name="dice" label="New random handle"></wa-icon>
+                    </wa-button>
+                  </wa-input>
+                  <wa-input class="wide" name="name" label="Name" autocomplete="off">
+                    <wa-button slot="end" appearance="plain" size="s" data-reroll="name" title="New random name">
+                      <wa-icon name="dice" label="New random name"></wa-icon>
+                    </wa-button>
+                  </wa-input>
+                  <wa-select name="archetype" label="Archetype"></wa-select>
+                  <wa-select name="origin" label="Origin"></wa-select>
+                </div>
+              </div>
+              <div class="sheet-stats">
+                <div class="stat"><wa-input name="maxLuck" label="Max Luck" type="number" min="0"></wa-input></div>
+                <div class="stat"><wa-input name="currentLuck" label="Current Luck" type="number" min="0"></wa-input></div>
+                <div class="stat">
+                  <wa-input name="startingInfluence" label="Starting Influence" type="number" min="0">
+                    <span slot="end" class="stat-icon" data-icon="influence"></span>
+                  </wa-input>
+                </div>
+                <div class="stat">
+                  <wa-input name="currentInfluence" label="Current Influence" type="number" min="0">
+                    <span slot="end" class="stat-icon" data-icon="influence"></span>
+                  </wa-input>
+                </div>
+                <div class="stat stat-wounds">
+                  <span class="sheet-label" id="wounds-edit-label">Wounds</span>
+                  <div id="wounds-edit" class="wounds" role="group" aria-labelledby="wounds-edit-label"></div>
+                </div>
+              </div>
             </div>
             <div id="skills-edit" class="skills editing"></div>
             <wa-button type="submit" variant="brand">
