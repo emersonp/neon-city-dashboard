@@ -170,7 +170,13 @@ wa-tab::part(tab) {
 
 .faces { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--wa-space-2xs); margin-top: var(--wa-space-xs); }
 .faces .icon { width: 26px; height: 26px; }
-.faces .blank { opacity: 0.28; filter: grayscale(1); }
+.faces .blank {
+  width: 20px;
+  height: 20px;
+  margin: 3px;
+  border: 2px dashed color-mix(in srgb, var(--c) 45%, transparent);
+  border-radius: var(--wa-border-radius-s);
+}
 .faces .gap { width: var(--wa-space-s); }
 
 .net { display: flex; flex-direction: column; align-items: center; gap: var(--wa-space-2xs); }

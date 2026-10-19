@@ -74,10 +74,13 @@
       <text class="num" x="50" y="44">${n}</text></svg></div>`;
   const dicePair = (tens, ones) => `<div class="d10s">${D10("tens", tens)}${D10("ones", ones)}</div>`;
 
-  // Each pool die shows what it landed on: a Boon / Drawback, or the (greyed) die for a blank.
+  // Each pool die shows what it landed on: a Boon / Drawback, or an empty slot for a blank face.
+  const face = (kind, hit) => hit
+    ? `<span class="${kind}" title="${kind === "adv" ? "Boon" : "Drawback"}">${icon(kind === "adv" ? "boon" : "drawback")}</span>`
+    : `<span class="${kind} blank" title="Blank"></span>`;
   function facesHTML(r) {
-    const adv = r.adv.map((hit) => `<span class="adv${hit ? "" : " blank"}" title="${hit ? "Boon" : "Blank"}">${icon(hit ? "boon" : "advantage-die")}</span>`);
-    const chal = r.chal.map((hit) => `<span class="chal${hit ? "" : " blank"}" title="${hit ? "Drawback" : "Blank"}">${icon(hit ? "drawback" : "challenge-die")}</span>`);
+    const adv = r.adv.map((hit) => face("adv", hit));
+    const chal = r.chal.map((hit) => face("chal", hit));
     if (!adv.length && !chal.length) return "";
     return `<div class="faces">${adv.join("")}${adv.length && chal.length ? `<span class="gap"></span>` : ""}${chal.join("")}</div>`;
   }
