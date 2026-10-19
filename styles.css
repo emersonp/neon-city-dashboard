@@ -295,6 +295,9 @@ wa-tab[hidden] { display: none; }
 /* the editor uses the same sheet layout, with inputs in place of values */
 .character-form .sheet-head { margin: 0; }
 .character-form .sheet-identity > .wide { grid-column: 1 / -1; }
+.knows-edit { display: flex; flex-direction: column; gap: var(--wa-space-s); padding-bottom: var(--wa-space-s); border-bottom: 1px solid color-mix(in srgb, var(--ncd-cyan) 35%, transparent); }
+.knows-boxes { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--wa-space-xs) var(--wa-space-l); }
+@media (max-width: 480px) { .knows-boxes { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .portrait-pick { display: flex; flex-direction: column; gap: var(--wa-space-xs); }
 .portrait-pick wa-select::part(form-control-label) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 .character-form .stat wa-input::part(form-control-label) { margin-bottom: var(--wa-space-2xs); }

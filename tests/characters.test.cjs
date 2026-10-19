@@ -225,3 +225,12 @@ test("portrait labels come from the file name", () => {
   assert.equal(C.portraitLabel("default.png"), "Default");
   assert.equal(C.portraitLabel("street-samurai_2.jpg"), "Street Samurai 2");
 });
+
+// ---- knows something about ----
+
+test("known topics come back in sheet order, ignoring unknown ones", () => {
+  assert.equal(C.KNOWLEDGE.length, 16);
+  assert.deepEqual(C.knows({ knows: ["Weapons", "Citizens", "Cooking"] }), ["Citizens", "Weapons"]);
+  assert.deepEqual(C.knows({}), []);
+  assert.deepEqual(C.newCharacter().knows, []);
+});

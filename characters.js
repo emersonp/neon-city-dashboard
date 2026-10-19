@@ -79,6 +79,12 @@
   // "street-samurai.png" -> "Street Samurai"
   const portraitLabel = (file) => file.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ").replace(/\b\w/g, (ch) => ch.toUpperCase());
 
+  // ---- things the character knows something about (checkboxes on the sheet) ----
+  const KNOWLEDGE = ["Citizens", "Computers", "Corporations", "Criminals", "Cybernetics", "Executives", "Genetics", "Government",
+    "Medicine", "Military", "Network", "Psionics", "Robotics", "Security", "Vehicles", "Weapons"];
+  // The checked ones, in sheet order; anything not on the list is dropped.
+  const knows = (character) => KNOWLEDGE.filter((k) => Array.isArray(character?.knows) && character.knows.includes(k));
+
   // ---- used skills: marked while running (by hand, or by rolling the skill) ----
   // Only trained skills (a value above 50) can be used; dice alone don't count.
   const canBeUsed = (character, id) => skill(character, id).value != null;
@@ -156,6 +162,7 @@
       currentInfluence: DEFAULT_INFLUENCE,
       wounds: 0,
       portrait: null,
+      knows: [],
       skills: {},
       createdAt: now,
       updatedAt: now,
@@ -196,6 +203,7 @@
     DEFAULT_INFLUENCE, influence, clampInfluence,
     MAX_WOUNDS, wounds, clickWound,
     canBeUsed, isUsed, withUsed,
+    KNOWLEDGE, knows,
     DEFAULT_PORTRAIT, PORTRAIT_DIR, availablePortraits, portraitFile, portraitLabel,
   };
 })(globalThis);

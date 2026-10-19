@@ -139,6 +139,7 @@
                 <div class="sheet-field wide"><dt>Name</dt><dd data-field="name"></dd></div>
                 <div class="sheet-field"><dt>Archetype</dt><dd data-field="archetype"></dd></div>
                 <div class="sheet-field"><dt>Origin</dt><dd data-field="origin"></dd></div>
+                <div class="sheet-field wide" id="knows-field"><dt>Knows something about…</dt><dd id="knows"></dd></div>
               </dl>
             </div>
             <dl class="sheet-stats">
@@ -233,6 +234,10 @@
                   <div id="wounds-edit" class="wounds" role="group" aria-labelledby="wounds-edit-label"></div>
                 </div>
               </div>
+            </div>
+            <div class="knows-edit" role="group" aria-labelledby="knows-edit-label">
+              <span class="sheet-label" id="knows-edit-label">Knows something about…</span>
+              <div id="knows-edit" class="knows-boxes"></div>
             </div>
             <div id="skills-edit" class="skills editing"></div>
             <wa-button type="submit" variant="brand">

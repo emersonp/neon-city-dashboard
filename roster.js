@@ -18,6 +18,13 @@
   const currentInfluence = $("current-influence");
   const woundsFields = $("wounds-fields");
   const woundsEdit = $("wounds-edit");
+  const knowsEdit = $("knows-edit");
+  for (const k of C.KNOWLEDGE) {
+    const box = document.createElement("wa-checkbox");
+    box.value = k;
+    box.textContent = k;
+    knowsEdit.append(box);
+  }
   const form = $("character-form");
   const field = (name) => form.querySelector(`[name="${name}"]`);
 
@@ -112,6 +119,8 @@
       field("portrait").value = C.portraitFile(current, portraits);
       $("portrait-preview").src = portraitSrc(field("portrait").value);
       woundsEdit.innerHTML = woundBoxes(draft.wounds, true);
+      const known = C.knows(current);
+      for (const box of knowsEdit.querySelectorAll("wa-checkbox")) box.checked = known.includes(box.value);
       renderSkillsEdit();
     } else {
       renderFields();
@@ -127,6 +136,9 @@
     const luck = C.luck(current);
     const inf = C.influence(current);
     const values = { ...current, maxLuck: luck.max, currentLuck: luck.current, startingInfluence: inf.starting, currentInfluence: inf.current };
+    const known = C.knows(current);
+    $("knows-field").hidden = !known.length;
+    $("knows").textContent = known.join(", ");
     for (const dd of fields.querySelectorAll("[data-field]")) {
       const v = values[dd.dataset.field];
       dd.textContent = v == null || v === "" ? "—" : v;
@@ -409,6 +421,7 @@
     // The default is stored as null, so a character follows it if default.png ever changes.
     edited.portrait = field("portrait").value === C.DEFAULT_PORTRAIT ? null : field("portrait").value;
     edited.wounds = draft.wounds;
+    edited.knows = [...knowsEdit.querySelectorAll("wa-checkbox")].filter((box) => box.checked).map((box) => box.value);
     edited.skills = draft.skills;
     try {
       current = C.save(storage, edited);
