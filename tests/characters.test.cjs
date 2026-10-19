@@ -183,3 +183,10 @@ test("skills can be marked used and unmarked, without touching the original", ()
   assert.equal(C.isUsed(c, "sneak-around"), false);
   assert.deepEqual(C.withUsed(used, "sneak-around", false).used, {});
 });
+
+test("only trained skills can be marked used", () => {
+  const c = { skills: { "shoot-someone": { value: 60, adv: 0, chal: 0 }, "heal-someone": { value: null, adv: 2, chal: 0 } } };
+  assert.equal(C.canBeUsed(c, "shoot-someone"), true);
+  assert.equal(C.canBeUsed(c, "heal-someone"), false);
+  assert.equal(C.canBeUsed(c, "anything-else"), false);
+});

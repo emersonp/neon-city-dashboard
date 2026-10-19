@@ -194,10 +194,12 @@
       return `<section class="skill-group"><h3>${title}</h3><ul>${items.map(([sk, st]) => `<li>
           ${skillName(sk.id, sk.name, links)}${diceIcons(st)}
           <span class="skill-value${st.value == null ? " untrained" : ""}">${C.shownValue(st.value)}%</span>
-          ${links ? `<wa-checkbox size="s" class="used" data-used="${sk.id}" ${C.isUsed(current, sk.id) ? "checked" : ""}>Used</wa-checkbox>` : ""}
+          ${!links ? "" : C.canBeUsed(current, sk.id)
+            ? `<wa-checkbox size="s" class="used" data-used="${sk.id}" ${C.isUsed(current, sk.id) ? "checked" : ""}>Used</wa-checkbox>`
+            : `<span class="used"></span>`}
         </li>`).join("")}</ul></section>`;
     }).join("");
-    // "Anything else" can't be marked used; an empty slot keeps its value lined up with the skills above.
+    // Untrained skills and "Anything else" can't be marked used; an empty slot keeps the values lined up.
     el.innerHTML = groups + `<ul class="anything-else"><li>
         ${skillName(ANYTHING_ELSE, "Anything else", links)}<span class="skill-value untrained">${C.UNTRAINED}%</span>
         ${links ? `<span class="used"></span>` : ""}</li></ul>`;
@@ -305,7 +307,7 @@
 
   // Used is saved right away; rolling a skill marks it used.
   function setUsed(id, used) {
-    if (id === ANYTHING_ELSE) return;
+    if (!C.canBeUsed(current, id)) return; // also covers "Anything else", which isn't a skill
     try {
       current = C.save(storage, C.withUsed(current, id, used));
     } catch (err) {

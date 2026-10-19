@@ -60,6 +60,8 @@
   }
 
   // ---- used skills: marked while running (by hand, or by rolling the skill) ----
+  // Only trained skills (a value above 50) can be used; dice alone don't count.
+  const canBeUsed = (character, id) => skill(character, id).value != null;
   const isUsed = (character, id) => Boolean(character?.used?.[id]);
   function withUsed(character, id, used) {
     const next = { ...(character?.used ?? {}) };
@@ -169,6 +171,6 @@
     skill, shownValue, isNotable, clampValue, increment, withSkill,
     DEFAULT_LUCK, luck, clampMaxLuck, clampCurrentLuck,
     MAX_WOUNDS, wounds, clickWound,
-    isUsed, withUsed,
+    canBeUsed, isUsed, withUsed,
   };
 })(globalThis);
