@@ -77,10 +77,11 @@ test("export is pretty JSON with a filename from the handle", () => {
 // ---- skills ----
 
 test("31 skills from the sheet: 20 mental, 11 physical, unique ids", () => {
-  assert.equal(C.SKILLS.length, 31);
+  assert.equal(C.SKILLS.length, 33);
   assert.equal(C.SKILLS.filter((s) => s.type === "mental").length, 20);
   assert.equal(C.SKILLS.filter((s) => s.type === "physical").length, 11);
-  assert.equal(new Set(C.SKILLS.map((s) => s.id)).size, 31);
+  assert.equal(C.SKILLS.filter((s) => s.type === "initiative").length, 2);
+  assert.equal(new Set(C.SKILLS.map((s) => s.id)).size, 33);
   assert.equal(C.SKILLS[0].name, "Analyze Data");
   assert.equal(C.SKILLS.find((s) => s.name === "Tough It Out").type, "physical");
 });
@@ -233,4 +234,23 @@ test("known topics come back in sheet order, ignoring unknown ones", () => {
   assert.deepEqual(C.knows({ knows: ["Weapons", "Citizens", "Cooking"] }), ["Citizens", "Weapons"]);
   assert.deepEqual(C.knows({}), []);
   assert.deepEqual(C.newCharacter().knows, []);
+});
+
+// ---- XP and appearance ----
+
+test("XP total is spent plus available, both whole and never negative", () => {
+  assert.deepEqual(C.xp(C.newCharacter()), { spent: 0, available: 0, total: 0 });
+  assert.deepEqual(C.xp({ xpSpent: 8, xpAvailable: "4" }), { spent: 8, available: 4, total: 12 });
+  assert.deepEqual(C.xp({ xpSpent: -3 }), { spent: 0, available: 0, total: 0 });
+});
+
+test("appearance fields default to empty text", () => {
+  assert.deepEqual(C.appearance({}), { pronouns: "", physical: "", network: "" });
+  assert.equal(C.appearance({ appearance: { pronouns: "they/them" } }).pronouns, "they/them");
+});
+
+test("initiatives are rolled like skills", () => {
+  const c = C.withSkill({}, "initiative-in-the-world", { value: 60 });
+  assert.equal(C.skill(c, "initiative-in-the-world").value, 60);
+  assert.ok(C.canBeUsed(c, "initiative-in-the-world"));
 });

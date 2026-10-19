@@ -5,7 +5,7 @@
   const ORIGINS = ["Cybernetic", "Gene-Spliced", "Psionic", "Synthetic"];
   const KEY = "ncd.characters";
 
-  // ---- skills (from the character sheet: the first block is mental, the second physical) ----
+  // ---- skills (from the character sheet: mental, physical, and the two initiatives) ----
   const slug = (name) => name.toLowerCase().replace(/[^a-z]+/g, "-").replace(/^-|-$/g, "");
   const MENTAL = ["Analyze Data", "Case the Joint", "Convince Someone", "Cover Your Tracks", "Crash a System",
     "Distract Someone", "Fix or Modify Something", "Goad Someone", "Gossip with Citizens", "Gossip with Corporates",
@@ -14,9 +14,11 @@
   const PHYSICAL = ["Break or Destroy Something", "Climb, Jump, or Tumble", "Conceal an Object", "Drive or Pilot Something",
     "Lift or Move Something", "Run Like Hell", "Shoot Someone", "Slash, Stab, or Strike Someone", "Sneak Around",
     "Throw Something", "Tough It Out"];
+  const INITIATIVE = ["Initiative in the World", "Initiative in the Network"];
   const SKILLS = [
     ...MENTAL.map((name) => ({ id: slug(name), name, type: "mental" })),
     ...PHYSICAL.map((name) => ({ id: slug(name), name, type: "physical" })),
+    ...INITIATIVE.map((name) => ({ id: slug(name), name, type: "initiative" })),
   ];
   const UNTRAINED = 50;              // what a null skill (and "Anything else") rolls at
   const MIN_VALUE = 55, MAX_VALUE = 95, STEP = 5;
@@ -78,6 +80,19 @@
     available.includes(character?.portrait) ? character.portrait : DEFAULT_PORTRAIT;
   // "street-samurai.png" -> "Street Samurai"
   const portraitLabel = (file) => file.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ").replace(/\b\w/g, (ch) => ch.toUpperCase());
+
+  // ---- XP: total = spent + available ----
+  const clampXp = (v) => Math.max(0, toInt(v) ?? 0);
+  function xp(character) {
+    const spent = clampXp(character?.xpSpent), available = clampXp(character?.xpAvailable);
+    return { spent, available, total: spent + available };
+  }
+
+  // ---- appearance: free text ----
+  const appearance = (character) => {
+    const a = character?.appearance ?? {};
+    return { pronouns: String(a.pronouns ?? ""), physical: String(a.physical ?? ""), network: String(a.network ?? "") };
+  };
 
   // ---- things the character knows something about (checkboxes on the sheet) ----
   const KNOWLEDGE = ["Citizens", "Computers", "Corporations", "Criminals", "Cybernetics", "Executives", "Genetics", "Government",
@@ -163,6 +178,9 @@
       wounds: 0,
       portrait: null,
       knows: [],
+      xpSpent: 0,
+      xpAvailable: 0,
+      appearance: { pronouns: "", physical: "", network: "" },
       skills: {},
       createdAt: now,
       updatedAt: now,
@@ -203,7 +221,7 @@
     DEFAULT_INFLUENCE, influence, clampInfluence,
     MAX_WOUNDS, wounds, clickWound,
     canBeUsed, isUsed, withUsed,
-    KNOWLEDGE, knows,
+    KNOWLEDGE, knows, xp, clampXp, appearance,
     DEFAULT_PORTRAIT, PORTRAIT_DIR, availablePortraits, portraitFile, portraitLabel,
   };
 })(globalThis);

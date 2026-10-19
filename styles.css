@@ -267,7 +267,7 @@ wa-tab[hidden] { display: none; }
 }
 .sheet-head[hidden], .sheet-head [hidden] { display: none; }
 .sheet-head dl { margin: 0; }
-.sheet-head dt, .sheet-label, .sheet-head ::part(form-control-label) {
+.sheet-head dt, .sheet-label, .sheet-head ::part(form-control-label), .appearance dt, .appearance-edit ::part(form-control-label) {
   font-family: "Orbitron", sans-serif;
   font-size: var(--wa-font-size-2xs);
   letter-spacing: 0.15em;
@@ -329,7 +329,20 @@ wa-tab[hidden] { display: none; }
   border-radius: var(--wa-border-radius-s);
 }
 .stat dd { display: flex; align-items: center; min-height: 2.25rem; font-family: "Chakra Petch", sans-serif; font-size: var(--wa-font-size-xl); }
-.stat-wounds { grid-column: 1 / -1; }
+.stat-wounds, .stat-xp { grid-column: 1 / -1; }
+/* XP: Total | Available | Spent, each with its own small label */
+.xp { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--wa-space-s); align-items: end; }
+.stat dd.xp { display: grid; }
+.xp-part { display: flex; flex-direction: column; gap: var(--wa-space-3xs); font-family: "Chakra Petch", sans-serif; font-size: var(--wa-font-size-xl); font-weight: 700; }
+.xp-part > [data-field], #xp-total-edit { min-height: 2.25rem; display: flex; align-items: center; }
+.character-form .stat-xp wa-input::part(form-control-label) { font-size: var(--wa-font-size-2xs); }
+
+/* appearance: written-in fields across the sheet, stacked in the dialog and on phones */
+.appearance { display: grid; grid-template-columns: minmax(8rem, 1fr) 3fr 3fr; gap: var(--wa-space-m) var(--wa-space-l); margin: 0 0 var(--wa-space-xl); }
+.appearance dd { margin: 0; white-space: pre-line; overflow-wrap: anywhere; }
+.appearance.stacked { grid-template-columns: minmax(0, 1fr); margin: 0; }
+.appearance-edit { margin: 0; align-items: start; }
+@media (max-width: 800px) { .appearance { grid-template-columns: minmax(0, 1fr); } }
 .stat-icon { margin-left: auto; display: inline-flex; }
 .stat-icon .icon { width: 2rem; height: 2rem; --ink: var(--wa-color-brand); }
 .wa-dark .stat-icon .icon { filter: drop-shadow(0 0 4px var(--ncd-glow)); }
@@ -358,6 +371,7 @@ wa-tab[hidden] { display: none; }
   color: var(--wa-color-text-quiet);
 }
 .skills ul { list-style: none; margin: 0; padding: 0; }
+.skill-column { display: flex; flex-direction: column; gap: var(--wa-space-l); min-width: 0; }
 .skills li {
   display: flex;
   align-items: center;
@@ -444,4 +458,24 @@ wa-radio-group::part(form-control-input) { flex-wrap: wrap; gap: var(--wa-space-
   .topbar { padding-inline: var(--wa-space-m); }
   wa-tab::part(tab) { letter-spacing: 0.04em; font-size: var(--wa-font-size-2xs); padding-inline: var(--wa-space-xs); }
   .brand h1 { font-size: var(--wa-font-size-m); letter-spacing: 0.08em; }
+}
+
+/* ---- cut corners: everything square, then the top-left and bottom-right corners bevelled ----
+   corner-shape keeps borders and glows on the bevel; browsers without it (like OBS's) get a clip-path instead. */
+:root { --wa-border-radius-scale: 0; }
+wa-card, .result, .sheet-column, wa-dialog::part(dialog) { --cut: 18px; }
+.stat, .portrait { --cut: 10px; }
+wa-button::part(base), wa-input::part(base), wa-textarea::part(base), wa-select::part(combobox), wa-select::part(listbox), wa-radio, .wound { --cut: 7px; }
+@supports (corner-shape: bevel) {
+  wa-card, .result, .sheet-column, wa-dialog::part(dialog), .stat, .portrait,
+  wa-button::part(base), wa-input::part(base), wa-textarea::part(base), wa-select::part(combobox), wa-select::part(listbox), wa-radio, .wound {
+    border-radius: var(--cut) 0;
+    corner-shape: bevel;
+  }
+}
+@supports not (corner-shape: bevel) {
+  wa-card, .result, .sheet-column, wa-dialog::part(dialog), .stat, .portrait,
+  wa-button::part(base), wa-input::part(base), wa-textarea::part(base), wa-select::part(combobox), wa-select::part(listbox), wa-radio, .wound {
+    clip-path: polygon(var(--cut) 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%, 0 var(--cut));
+  }
 }

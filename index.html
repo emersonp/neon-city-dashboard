@@ -163,11 +163,18 @@
                   <span class="stat-icon" data-icon="influence"></span>
                 </dd></div>
               <div class="stat stat-wounds"><dt>Wounds</dt><dd id="wounds-fields" class="wounds"></dd></div>
+              <div class="stat stat-xp" id="xp-stat"><dt>XP</dt>
+                <dd class="xp">
+                  <span class="xp-part"><span class="sheet-label">Total</span><span data-field="xpTotal"></span></span>
+                  <span class="xp-part"><span class="sheet-label">Available</span><span data-field="xpAvailable"></span></span>
+                  <span class="xp-part"><span class="sheet-label">Spent</span><span data-field="xpSpent"></span></span>
+                </dd></div>
             </dl>
           </div>
 
           <!-- Display -->
           <div id="character-display">
+            <dl id="appearance-display" class="appearance"></dl>
             <div id="skills-display" class="skills"></div>
             <div class="character-actions">
               <wa-button id="character-edit" appearance="outlined">
@@ -185,6 +192,10 @@
           <div id="character-running" hidden>
             <div id="skills-run" class="skills running"></div>
             <div class="character-actions">
+              <wa-button id="character-appearance" appearance="outlined">
+                <wa-icon slot="start" name="user"></wa-icon>
+                Appearance
+              </wa-button>
               <wa-button id="character-stop" appearance="outlined">
                 <wa-icon slot="start" name="stop"></wa-icon>
                 Stop
@@ -233,11 +244,24 @@
                   <span class="sheet-label" id="wounds-edit-label">Wounds</span>
                   <div id="wounds-edit" class="wounds" role="group" aria-labelledby="wounds-edit-label"></div>
                 </div>
+                <div class="stat stat-xp">
+                  <span class="sheet-label">XP</span>
+                  <div class="xp">
+                    <span class="xp-part"><span class="sheet-label">Total</span><span id="xp-total-edit"></span></span>
+                    <wa-input name="xpAvailable" label="Available" type="number" min="0"></wa-input>
+                    <wa-input name="xpSpent" label="Spent" type="number" min="0"></wa-input>
+                  </div>
+                </div>
               </div>
             </div>
             <div class="knows-edit" role="group" aria-labelledby="knows-edit-label">
               <span class="sheet-label" id="knows-edit-label">Knows something about…</span>
               <div id="knows-edit" class="knows-boxes"></div>
+            </div>
+            <div class="appearance appearance-edit">
+              <wa-input name="pronouns" label="Pronouns" autocomplete="off"></wa-input>
+              <wa-textarea name="physical" label="Physical Appearance" rows="3" resize="auto"></wa-textarea>
+              <wa-textarea name="network" label="Network Default" rows="3" resize="auto"></wa-textarea>
             </div>
             <div id="skills-edit" class="skills editing"></div>
             <wa-button type="submit" variant="brand">
@@ -265,6 +289,10 @@
       <span slot="label" class="pool-label"><span data-icon="challenge-die"></span>Challenge dice</span>
     </wa-radio-group>
     <wa-button slot="footer" variant="brand" data-dialog="close">Done</wa-button>
+  </wa-dialog>
+
+  <wa-dialog id="appearance-dialog" label="Appearance" light-dismiss>
+    <dl class="appearance stacked"></dl>
   </wa-dialog>
 
   <wa-dialog id="skill-dialog" label="Roll" light-dismiss>

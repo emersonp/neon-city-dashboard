@@ -121,10 +121,19 @@
       woundsEdit.innerHTML = woundBoxes(draft.wounds, true);
       const known = C.knows(current);
       for (const box of knowsEdit.querySelectorAll("wa-checkbox")) box.checked = known.includes(box.value);
+      const xp = C.xp(current);
+      field("xpAvailable").value = String(xp.available);
+      field("xpSpent").value = String(xp.spent);
+      showXpTotal();
+      const look = C.appearance(current);
+      for (const name of ["pronouns", "physical", "network"]) field(name).value = look[name];
       renderSkillsEdit();
     } else {
       renderFields();
-      if (state === "display") renderSkillsDisplay($("skills-display"));
+      if (state === "display") {
+        renderAppearance($("appearance-display"));
+        renderSkillsDisplay($("skills-display"));
+      }
       else renderSkillsDisplay($("skills-run"), { links: true });
     }
   }
@@ -135,7 +144,9 @@
     $("portrait").alt = `Portrait of ${C.label(current)}`;
     const luck = C.luck(current);
     const inf = C.influence(current);
-    const values = { ...current, maxLuck: luck.max, currentLuck: luck.current, startingInfluence: inf.starting, currentInfluence: inf.current };
+    const xp = C.xp(current);
+    const values = { ...current, maxLuck: luck.max, currentLuck: luck.current, startingInfluence: inf.starting, currentInfluence: inf.current,
+      xpTotal: xp.total, xpAvailable: xp.available, xpSpent: xp.spent };
     const known = C.knows(current);
     $("knows-field").hidden = !known.length;
     $("knows").textContent = known.join(", ");
@@ -147,6 +158,7 @@
     // Running shows only the current luck and influence, labelled plainly.
     $("max-luck").hidden = editable;
     $("starting-influence").hidden = editable;
+    $("xp-stat").hidden = editable;
     $("luck-label").textContent = editable ? "Luck" : "Current Luck";
     $("influence-label").textContent = editable ? "Influence" : "Current Influence";
     for (const button of currentLuck.querySelectorAll("[data-luck]")) {
@@ -221,9 +233,32 @@
   $("character-run").addEventListener("click", () => { state = "running"; render(); });
   $("character-stop").addEventListener("click", () => { state = "display"; render(); });
 
+  // ---- appearance: shown in full on the sheet, and in a dialog while running ----
+  const APPEARANCE = [["pronouns", "Pronouns"], ["physical", "Physical Appearance"], ["network", "Network Default"]];
+  function renderAppearance(el) {
+    const look = C.appearance(current);
+    el.innerHTML = APPEARANCE.map(([key, title]) =>
+      `<div class="sheet-field"><dt>${title}</dt><dd>${escapeHTML(look[key].trim() || "—")}</dd></div>`).join("");
+  }
+  $("character-appearance").addEventListener("click", () => {
+    const dialog = $("appearance-dialog");
+    dialog.label = `Appearance: ${C.label(current)}`;
+    renderAppearance(dialog.querySelector(".appearance"));
+    dialog.open = true;
+  });
+
+  // ---- XP: the editor shows the total as Available and Spent change ----
+  function showXpTotal() {
+    $("xp-total-edit").textContent = C.clampXp(field("xpAvailable").value) + C.clampXp(field("xpSpent").value);
+  }
+
   // ---- skills ----
   const icon = window.NCD_ICONS.svg;
-  const GROUPS = [["mental", "Mental"], ["physical", "Physical"]];
+  const GROUPS = { mental: "Mental", physical: "Physical", initiative: "Initiative" };
+  // Mental fills the first column; Physical and the (short) Initiative group share the second.
+  const COLUMNS = [["mental"], ["physical", "initiative"]];
+  const columns = (groupHTML) => COLUMNS.map((types) => types.map(groupHTML).join(""))
+    .filter(Boolean).map((html) => `<div class="skill-column">${html}</div>`).join("");
   const diceIcons = (st) => (st.adv || st.chal)
     ? `<span class="skill-dice">${`<span class="adv">${icon("advantage-die")}</span>`.repeat(st.adv)}${`<span class="chal">${icon("challenge-die")}</span>`.repeat(st.chal)}</span>`
     : "";
@@ -235,7 +270,8 @@
     ? `<a href="#" class="skill-name" data-roll="${id}">${escapeHTML(name)}</a>`
     : `<span class="skill-name">${escapeHTML(name)}</span>`;
   function renderSkillsDisplay(el, { links = false } = {}) {
-    const groups = GROUPS.map(([type, title]) => {
+    const groups = columns((type) => {
+      const title = GROUPS[type];
       const items = C.SKILLS.filter((sk) => sk.type === type)
         .map((sk) => [sk, C.skill(current, sk.id)])
         .filter(([, st]) => C.isNotable(st));
@@ -247,11 +283,14 @@
             ? `<wa-checkbox size="s" class="used" data-used="${sk.id}" ${C.isUsed(current, sk.id) ? "checked" : ""}>Used</wa-checkbox>`
             : `<span class="used"></span>`}
         </li>`).join("")}</ul></section>`;
-    }).join("");
+    });
     // Untrained skills and "Anything else" can't be marked used; an empty slot keeps the values lined up.
     el.innerHTML = groups + `<ul class="anything-else"><li>
         ${skillName(ANYTHING_ELSE, "Anything else", links)}<span class="skill-value untrained">${C.UNTRAINED}%</span>
         ${links ? `<span class="used"></span>` : ""}</li></ul>`;
+    // "Anything else" goes at the bottom of the last column
+    const last = el.querySelector(".skill-column:last-of-type");
+    if (last) last.append(el.querySelector(".anything-else"));
   }
 
   // Editing: every skill, with set / +5 / Set to 55 / Remove, and a button for intrinsic dice.
@@ -275,8 +314,8 @@
   }
 
   function renderSkillsEdit() {
-    $("skills-edit").innerHTML = GROUPS.map(([type, title]) => `<section class="skill-group"><h3>${title}</h3><ul>${
-      C.SKILLS.filter((sk) => sk.type === type).map((sk) => editRow(sk, C.skill(draft, sk.id))).join("")}</ul></section>`).join("");
+    $("skills-edit").innerHTML = columns((type) => `<section class="skill-group"><h3>${GROUPS[type]}</h3><ul>${
+      C.SKILLS.filter((sk) => sk.type === type).map((sk) => editRow(sk, C.skill(draft, sk.id))).join("")}</ul></section>`);
   }
 
   const updateSkill = (id, changes) => { draft = C.withSkill(draft, id, changes); renderSkillsEdit(); };
@@ -408,6 +447,7 @@
     if (name === "handle") setLabel(field("handle").value);
   });
   field("handle").addEventListener("input", () => setLabel(field("handle").value));
+  for (const name of ["xpAvailable", "xpSpent"]) field(name).addEventListener("input", showXpTotal);
   field("portrait").addEventListener("change", () => { $("portrait-preview").src = portraitSrc(field("portrait").value); });
 
   form.addEventListener("submit", (e) => {
@@ -421,6 +461,10 @@
     // The default is stored as null, so a character follows it if default.png ever changes.
     edited.portrait = field("portrait").value === C.DEFAULT_PORTRAIT ? null : field("portrait").value;
     edited.wounds = draft.wounds;
+    edited.xpAvailable = C.clampXp(field("xpAvailable").value);
+    edited.xpSpent = C.clampXp(field("xpSpent").value);
+    edited.appearance = { pronouns: String(field("pronouns").value ?? "").trim(),
+      physical: String(field("physical").value ?? "").trim(), network: String(field("network").value ?? "").trim() };
     edited.knows = [...knowsEdit.querySelectorAll("wa-checkbox")].filter((box) => box.checked).map((box) => box.value);
     edited.skills = draft.skills;
     try {
