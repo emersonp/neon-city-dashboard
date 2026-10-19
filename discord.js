@@ -1,38 +1,35 @@
-// Discord webhook message builders. Each style turns the same roll into a different
-// Discord payload so the formatting options can be compared side by side in a channel.
+// Discord webhook message builders. Each style turns the same roll (from NCD_DICE.roll)
+// into a different Discord payload so the formatting options can be compared in a channel.
 // Plain script (no modules) so the page also works when opened straight from disk.
 (function (root) {
-  const COLORS = { crit: 0xf5ff3b, success: 0x00f0ff, failure: 0xff2bd6 };
+  const COLORS = { success: 0x3dffb0, failure: 0xff3b5c, none: 0x00f0ff };
   const WORDS = ["no", "one", "two", "three", "four", "five"];
-  const plural = (n, word) => `${WORDS[n] ?? n} ${word}${n === 1 ? "" : "s"}`;
-  const rand = (lo, hi) => lo + Math.floor(Math.random() * (hi - lo + 1));
+  const count = (n, one, many = one + "s") => `${WORDS[n] ?? n} ${n === 1 ? one : many}`;
+  const fmtTens = (tens) => (tens === 0 ? "00" : String(tens * 10));
 
-  // Made-up numbers so every style has something realistic to show. Not real rules.
-  function sampleRoll(player = "Parker") {
-    const base = rand(1, 100);
-    const mod = [0, 10, 20, 30][rand(0, 3)];
-    const total = base + mod;
-    const outcome = total >= 100 ? "crit" : total >= 60 ? "success" : "failure";
-    return {
-      player,
-      skill: ["Hacking", "Athletics", "Persuasion", "Stealth"][rand(0, 3)],
-      base, mod, total, outcome,
-      advantage: rand(0, 3),
-      boons: rand(0, 3),
-      drawbacks: rand(0, 1),
-    };
+  const outcomeOf = (r) => (r.success == null ? "none" : r.success ? "success" : "failure");
+
+  // Leftover symbols after Boons and Drawbacks cancel, e.g. "two boons".
+  function netText(r) {
+    if (r.net > 0) return count(r.net, "boon");
+    if (r.net < 0) return count(-r.net, "drawback");
+    return r.cancelled ? "all symbols cancelled" : "";
   }
 
   // The three lines of the target layout: small intro, big result, subtle breakdown.
-  function lines(r) {
-    const verdict = { crit: "Critical!", success: "Success!", failure: "Failure." }[r.outcome];
-    const extras = [r.boons && plural(r.boons, "boon"), r.drawbacks && plural(r.drawbacks, "drawback")]
-      .filter(Boolean).join(" and ");
-    const detail = [`Roll ${r.base} with +${r.mod}`, r.advantage && `rolled ${plural(r.advantage, "advantage die")}`]
-      .filter(Boolean).join(", ").replace("advantage dies", "advantage dice");
+  function lines(r, player) {
+    const verdict = { success: "Success!", failure: "Failure.", none: "" }[outcomeOf(r)];
+    const net = netText(r);
+    const result = [verdict, String(r.total)].filter(Boolean).join(" ")
+      + (net ? (r.net ? ` with ${net}` : ` · ${net}`) : "");
+    const detail = [
+      `Rolled ${fmtTens(r.tens)} + ${r.ones}`,
+      r.adv.length && `${count(r.adv.length, "advantage die", "advantage dice")}: ${count(r.boons, "boon")}`,
+      r.chal.length && `${count(r.chal.length, "challenge die", "challenge dice")}: ${count(r.drawbacks, "drawback")}`,
+    ].filter(Boolean).join(" · ");
     return {
-      intro: `${r.player} rolled ${r.skill} and got a`,
-      result: `${verdict} ${r.total}${extras ? ` with ${extras}` : ""}`,
+      intro: r.target == null ? `${player} rolled and got` : `${player} rolled against ${r.target} and got`,
+      result,
       detail,
     };
   }
@@ -42,38 +39,38 @@
   const STYLES = {
     plain: {
       label: "Plain",
-      about: "Just text. Exactly what the app sent at first.",
-      build: (r) => ({ payload: { content: `${r.player} rolled.` } }),
+      about: "Just text, on one line.",
+      build(r, player) {
+        const net = netText(r);
+        const verdict = r.success == null ? "" : ` against ${r.target}: ${r.success ? "success" : "failure"}`;
+        return { payload: { content: `${player} rolled ${r.total}${verdict}${net ? `, ${net}` : ""}.` } };
+      },
     },
 
     markdown: {
       label: "Markdown",
       about: "Text only, using -# subtext and ## headings to get the small / big / small layout. Works everywhere, including mobile.",
-      build(r) {
-        const l = lines(r);
-        return {
-          payload: {
-            content: `-# **${r.player}** rolled **${r.skill}** and got a\n## ${l.result}\n-# ${l.detail}`,
-          },
-        };
+      build(r, player) {
+        const l = lines(r, player);
+        return { payload: { content: `-# ${l.intro}\n## ${l.result}\n-# ${l.detail}` } };
       },
     },
 
     embed: {
       label: "Embed",
-      about: "A card with a colored side bar. Author line (small), title (big), footer (small) with a timestamp, plus an uploaded thumbnail.",
-      build(r) {
-        const l = lines(r);
+      about: "A card with a colored side bar. Author line (small), title (big), footer (small) with a timestamp, plus the boon or drawback icon when symbols are left over.",
+      build(r, player) {
+        const l = lines(r, player);
         return {
           image: true,
           payload: {
             embeds: [{
-              color: COLORS[r.outcome],
+              color: COLORS[outcomeOf(r)],
               author: { name: l.intro },
               title: l.result,
               thumbnail: { url: `attachment://${THUMB}` },
               footer: { text: l.detail },
-              timestamp: new Date().toISOString(),
+              timestamp: new Date(r.at).toISOString(),
             }],
           },
         };
@@ -82,28 +79,30 @@
 
     fields: {
       label: "Embed + fields",
-      about: "Embed with a description and inline fields, laid out like a small stat table.",
-      build(r) {
-        const l = lines(r);
+      about: "Embed with inline fields, laid out like a small stat table.",
+      build(r, player) {
+        const l = lines(r, player);
+        const net = r.net > 0 ? `+${r.net} boon${r.net > 1 ? "s" : ""}`
+          : r.net < 0 ? `+${-r.net} drawback${r.net < -1 ? "s" : ""}`
+          : r.cancelled ? "cancelled" : "–";
         return {
           image: true,
           payload: {
             embeds: [{
-              color: COLORS[r.outcome],
+              color: COLORS[outcomeOf(r)],
               author: { name: l.intro },
               title: l.result,
-              description: `> *${r.skill}* check against **60**`,
               thumbnail: { url: `attachment://${THUMB}` },
               fields: [
-                { name: "Roll", value: `\`${r.base}\``, inline: true },
-                { name: "Modifier", value: `\`+${r.mod}\``, inline: true },
+                { name: "Dice", value: `\`${fmtTens(r.tens)}\` + \`${r.ones}\``, inline: true },
                 { name: "Total", value: `**${r.total}**`, inline: true },
-                { name: "Advantage", value: String(r.advantage), inline: true },
-                { name: "Boons", value: String(r.boons), inline: true },
-                { name: "Drawbacks", value: String(r.drawbacks), inline: true },
+                { name: "Target", value: r.target == null ? "none" : `≤ ${r.target}`, inline: true },
+                { name: "Boons", value: `${r.boons} of ${r.adv.length}`, inline: true },
+                { name: "Drawbacks", value: `${r.drawbacks} of ${r.chal.length}`, inline: true },
+                { name: "Net", value: net, inline: true },
               ],
               footer: { text: "Neon City Dashboard" },
-              timestamp: new Date().toISOString(),
+              timestamp: new Date(r.at).toISOString(),
             }],
           },
         };
@@ -112,9 +111,9 @@
 
     components: {
       label: "Components",
-      about: "Discord's newer layout blocks: a container with an accent bar, markdown text beside a thumbnail, and a divider. Webhooks can send these without interactive buttons.",
-      build(r) {
-        const l = lines(r);
+      about: "Discord's newer layout blocks: a container with an accent bar, markdown text beside the symbol icon, and a divider. Webhooks can send these without interactive buttons.",
+      build(r, player) {
+        const l = lines(r, player);
         return {
           image: true,
           query: "with_components=true", // webhooks only render components when asked
@@ -122,7 +121,7 @@
             flags: 1 << 15, // IS_COMPONENTS_V2
             components: [{
               type: 17, // container
-              accent_color: COLORS[r.outcome],
+              accent_color: COLORS[outcomeOf(r)],
               components: [
                 {
                   type: 9, // section
@@ -141,10 +140,10 @@
     ansi: {
       label: "ANSI color",
       about: "A colored code block. Shows real text colors on desktop. Mobile shows it uncolored.",
-      build(r) {
-        const l = lines(r);
+      build(r, player) {
+        const l = lines(r, player);
         const e = "\u001b[";
-        const tone = { crit: "1;33", success: "1;36", failure: "1;35" }[r.outcome];
+        const tone = { success: "1;32", failure: "1;31", none: "1;36" }[outcomeOf(r)];
         return {
           payload: {
             content: "```ansi\n" +
@@ -199,5 +198,5 @@
     return p;
   }
 
-  root.NCD_DISCORD = { STYLES, COLORS, sampleRoll, lines, send };
+  root.NCD_DISCORD = { STYLES, COLORS, lines, send, stripImage };
 })(globalThis);

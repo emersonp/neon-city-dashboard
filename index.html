@@ -27,7 +27,7 @@
 <body>
   <header class="topbar">
     <div class="brand">
-      <span class="brand-icon" id="brand-icon"></span>
+      <span class="brand-icon" data-icon="advantage-die"></span>
       <h1>Neon City <span>Dashboard</span></h1>
     </div>
     <wa-button id="theme-toggle" appearance="plain" size="s" title="Toggle light/dark">
@@ -42,21 +42,38 @@
       <wa-tab panel="settings">Settings</wa-tab>
 
       <wa-tab-panel name="dice">
-        <section class="roll-zone">
-          <wa-button id="roll" variant="brand" size="xl" class="roll-button">
-            <wa-icon slot="start" name="dice-d20"></wa-icon>
-            Roll
-          </wa-button>
-          <wa-button id="roll-all" appearance="outlined" size="s">
-            <wa-icon slot="start" name="layer-group"></wa-icon>
-            Send one of every style
-          </wa-button>
-        </section>
+        <div class="dice-layout">
+          <wa-card class="roller">
+            <wa-input id="target" label="Target ≤" placeholder="none" inputmode="numeric" maxlength="3"
+              autocomplete="off" with-clear hint="Optional. At or under the target succeeds."></wa-input>
+
+            <wa-radio-group id="adv" class="pool adv" orientation="horizontal" value="0">
+              <span slot="label" class="pool-label"><span data-icon="advantage-die"></span>Advantage dice</span>
+            </wa-radio-group>
+
+            <wa-radio-group id="chal" class="pool chal" orientation="horizontal" value="0">
+              <span slot="label" class="pool-label"><span data-icon="challenge-die"></span>Challenge dice</span>
+            </wa-radio-group>
+
+            <wa-button id="roll" variant="brand" size="l" class="roll-button">
+              <wa-icon slot="start" name="dice-d20"></wa-icon>
+              Roll d100
+            </wa-button>
+            <p class="keys">or press <kbd>R</kbd></p>
+          </wa-card>
+
+          <section class="result" id="result" aria-live="polite">
+            <p class="result-empty">No rolls yet</p>
+          </section>
+        </div>
 
         <wa-card class="lab">
           <div slot="header" class="lab-header">
             <h2>Discord style lab</h2>
-            <wa-badge variant="neutral" appearance="outlined">sample rolls</wa-badge>
+            <wa-button id="roll-all" appearance="outlined" size="s">
+              <wa-icon slot="start" name="layer-group"></wa-icon>
+              Roll and send every style
+            </wa-button>
           </div>
 
           <wa-radio-group id="style" label="Message style" orientation="horizontal" value="markdown">
@@ -81,6 +98,7 @@
 
   <script src="config.js" onerror="window.NCD_CONFIG = window.NCD_CONFIG || {}"></script>
   <script src="icons.js"></script>
+  <script src="dice.js"></script>
   <script src="discord.js"></script>
   <script src="app.js"></script>
 </body>
