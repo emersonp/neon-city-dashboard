@@ -88,12 +88,12 @@ test("a skill roll names the skill, in italics, in the intro", () => {
 
 test("influence message: gained or spent, with the icon when configured", () => {
   const { influenceMessage } = globalThis.NCD_DISCORD;
-  assert.deepEqual(influenceMessage("Parker", 1, { username: "NullJack" }), {
+  assert.deepEqual(influenceMessage("Parker", 1, 3, { username: "NullJack" }), {
     username: "NullJack",
     allowed_mentions: { parse: [] },
-    content: "Parker gained an Influence.",
+    content: "Parker gained an Influence. 3 remaining.",
   });
-  assert.equal(influenceMessage("Parker", -1, { emoji: { influence: "<:influence:9>" } }).content, "Parker spent an Influence. <:influence:9>");
+  assert.equal(influenceMessage("Parker", -1, 0, { emoji: { influence: "<:influence:9>" } }).content, "Parker spent an Influence. <:influence:9> 0 remaining.");
 });
 
 test("messages never ping anyone", () => {
@@ -121,5 +121,5 @@ test("an avatar link is sent only when given", () => {
   assert.equal(buildMessage(r, "Parker", { avatarUrl: "https://x.test/portraits/default.png" }).avatar_url, "https://x.test/portraits/default.png");
   assert.equal("avatar_url" in buildMessage(r, "Parker"), false);
   const { influenceMessage } = globalThis.NCD_DISCORD;
-  assert.equal(influenceMessage("Parker", 1, { avatarUrl: "https://x.test/a.png" }).avatar_url, "https://x.test/a.png");
+  assert.equal(influenceMessage("Parker", 1, 2, { avatarUrl: "https://x.test/a.png" }).avatar_url, "https://x.test/a.png");
 });

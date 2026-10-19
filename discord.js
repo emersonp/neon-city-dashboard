@@ -69,13 +69,14 @@
   }
 
   // A plain one-line message for spending or gaining Influence while running a character.
-  function influenceMessage(player, delta, { emoji, username, avatarUrl } = {}) {
+  // `remaining` is the character's Influence after the change.
+  function influenceMessage(player, delta, remaining, { emoji, username, avatarUrl } = {}) {
     const icon = emoji?.influence ? ` ${emoji.influence}` : "";
     return {
       ...(username && { username }),
       ...(avatarUrl && { avatar_url: avatarUrl }),
       allowed_mentions: NO_PINGS,
-      content: `${player} ${delta > 0 ? "gained" : "spent"} an Influence.${icon}`,
+      content: `${player} ${delta > 0 ? "gained" : "spent"} an Influence.${icon} ${remaining} remaining.`,
     };
   }
 

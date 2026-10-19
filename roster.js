@@ -214,7 +214,7 @@
       console.error(err);
     }
     renderFields();
-    window.NCD_ROLLER.postInfluence(after - before); // only while running; changes in Edit aren't posted
+    window.NCD_ROLLER.postInfluence(after - before, after); // only while running; changes in Edit aren't posted
   });
 
   $("character-edit").addEventListener("click", () => { state = "editing"; render(); });

@@ -69,7 +69,7 @@ Skill rolls from a running character (Character tab → **Run**, then click a sk
 `Parker rolled *Shoot Someone* against 75 and got a` (the skill in italics). The roll dialog starts at the skill's value and intrinsic dice.
 
 Changing Influence with the −1 / +1 buttons while running posts a one-line message, like
-`Parker gained an Influence.` or `Parker spent an Influence.`, followed by the Influence emoji if one is set.
+`Parker gained an Influence.` or `Parker spent an Influence.`, followed by the Influence emoji if one is set, then how much is left (`2 remaining.`).
 Changes made in Edit aren't posted. No message ever pings anyone.
 
 ### Character portraits

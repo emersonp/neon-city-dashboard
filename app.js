@@ -179,8 +179,8 @@
   }
   const postToDiscord = (r, skill) => post(messageFor(r, skill), "Rolled");
   // delta is +1 (gained) or -1 (spent).
-  const postInfluence = (delta) => post(
-    influenceMessage(playerName(), delta, { emoji: window.NCD_CONFIG?.emoji, username: postingName(), avatarUrl: avatarUrl() }),
+  const postInfluence = (delta, remaining) => post(
+    influenceMessage(playerName(), delta, remaining, { emoji: window.NCD_CONFIG?.emoji, username: postingName(), avatarUrl: avatarUrl() }),
     "Influence changed");
 
   // ---- rolling ----
