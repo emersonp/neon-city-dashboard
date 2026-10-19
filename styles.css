@@ -298,6 +298,9 @@ wa-tab[hidden] { display: none; }
 }
 .stat dd { display: flex; align-items: center; min-height: 2.25rem; font-family: "Chakra Petch", sans-serif; font-size: var(--wa-font-size-xl); }
 .stat-wounds { grid-column: 1 / -1; }
+.stat-icon { margin-left: auto; display: inline-flex; }
+.stat-icon .icon { width: 2rem; height: 2rem; --ink: var(--wa-color-brand); }
+.wa-dark .stat-icon .icon { filter: drop-shadow(0 0 4px var(--ncd-glow)); }
 .stat dd.wounds { font-size: var(--wa-font-size-m); }
 @media (max-width: 800px) {
   .sheet-head { grid-template-columns: minmax(0, 1fr); gap: var(--wa-space-l); }
@@ -347,8 +350,10 @@ wa-tab[hidden] { display: none; }
 .stat-fields { display: flex; flex-wrap: wrap; gap: var(--wa-space-l); }
 .stat-fields wa-input { width: 10rem; }
 .luck-steps { gap: var(--wa-space-2xs); }
-.luck-steps [data-field="currentLuck"] { min-width: 3ch; text-align: center; }
+.luck-steps [data-field] { min-width: 3ch; text-align: center; }
+.sheet-head:not([data-state="running"]) .luck-steps [data-field] { min-width: 0; text-align: left; }
 .sheet-head[data-state="running"] .luck-steps [data-field="currentLuck"] { flex: 1; }
+.luck-steps .stat-icon { margin-left: auto; }
 .luck-steps wa-button { font-family: var(--wa-font-family-body); }
 .luck-steps wa-button::part(base) { padding-inline: var(--wa-space-xs); }
 /* on phones the luck controls get the whole row while running */

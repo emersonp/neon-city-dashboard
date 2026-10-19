@@ -15,6 +15,7 @@
   const running = $("character-running");
   const fields = $("character-fields");
   const currentLuck = $("current-luck");
+  const currentInfluence = $("current-influence");
   const woundsFields = $("wounds-fields");
   const woundsEdit = $("wounds-edit");
   const form = $("character-form");
@@ -113,7 +114,7 @@
     }
   }
 
-  // Handle, name, etc. Current Luck and Wounds can be changed while running, and are saved right away.
+  // Handle, name, etc. Current Luck, Current Influence, and Wounds can be changed while running, and are saved right away.
   function renderFields() {
     const luck = C.luck(current);
     const inf = C.influence(current);
@@ -132,6 +133,10 @@
       const step = Number(button.dataset.luck);
       button.hidden = !editable;
       button.disabled = step < 0 ? luck.current <= 0 : luck.current >= luck.max;
+    }
+    for (const button of currentInfluence.querySelectorAll("[data-influence]")) {
+      button.hidden = !editable;
+      button.disabled = Number(button.dataset.influence) < 0 && inf.current <= 0;
     }
     woundsFields.innerHTML = woundBoxes(C.wounds(current), editable);
   }
@@ -172,6 +177,16 @@
     const value = C.clampCurrentLuck(luck.current + step, luck.max);
     try {
       current = C.save(storage, { ...current, currentLuck: value });
+    } catch (err) {
+      console.error(err);
+    }
+    renderFields();
+  });
+  currentInfluence.addEventListener("click", (e) => {
+    const step = Number(e.target.closest("[data-influence]")?.dataset.influence);
+    if (!step || state !== "running") return;
+    try {
+      current = C.save(storage, { ...current, currentInfluence: C.clampInfluence(C.influence(current).current + step) });
     } catch (err) {
       console.error(err);
     }

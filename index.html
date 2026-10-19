@@ -150,8 +150,14 @@
                   <wa-button size="s" appearance="outlined" data-luck="5" hidden>+5</wa-button>
                 </dd>
               </div>
-              <div class="stat" id="starting-influence"><dt>Starting Influence</dt><dd data-field="startingInfluence"></dd></div>
-              <div class="stat"><dt id="influence-label">Current Influence</dt><dd data-field="currentInfluence"></dd></div>
+              <div class="stat" id="starting-influence"><dt>Starting Influence</dt><dd><span data-field="startingInfluence"></span><span class="stat-icon" data-icon="influence"></span></dd></div>
+              <div class="stat"><dt id="influence-label">Current Influence</dt>
+                <dd id="current-influence" class="luck-steps">
+                  <wa-button size="s" appearance="outlined" data-influence="-1" hidden>−1</wa-button>
+                  <span data-field="currentInfluence"></span>
+                  <wa-button size="s" appearance="outlined" data-influence="1" hidden>+1</wa-button>
+                  <span class="stat-icon" data-icon="influence"></span>
+                </dd></div>
               <div class="stat stat-wounds"><dt>Wounds</dt><dd id="wounds-fields" class="wounds"></dd></div>
             </dl>
           </div>
