@@ -40,6 +40,7 @@
       <wa-tab panel="dice">Dice</wa-tab>
       <wa-tab panel="cheat-sheet">Cheat Sheet</wa-tab>
       <wa-tab panel="roster">Roster</wa-tab>
+      <wa-tab panel="character" id="character-tab" hidden>Character</wa-tab>
       <wa-tab panel="settings">Settings</wa-tab>
 
       <wa-tab-panel name="dice">
@@ -120,7 +121,56 @@
         </div>
       </wa-tab-panel>
 
-      <wa-tab-panel name="roster"></wa-tab-panel>
+      <wa-tab-panel name="roster">
+        <div class="roster-bar">
+          <wa-button id="new-character" variant="brand">
+            <wa-icon slot="start" name="user-plus"></wa-icon>
+            New character
+          </wa-button>
+        </div>
+        <table class="roster">
+          <thead><tr><th>Handle</th><th>Archetype</th><th>Origin</th><th></th></tr></thead>
+          <tbody id="roster-rows"></tbody>
+        </table>
+      </wa-tab-panel>
+
+      <wa-tab-panel name="character">
+        <wa-card class="character-card">
+          <!-- Display -->
+          <div id="character-display">
+            <dl class="character-fields">
+              <dt>Handle</dt><dd data-field="handle"></dd>
+              <dt>Name</dt><dd data-field="name"></dd>
+              <dt>Archetype</dt><dd data-field="archetype"></dd>
+              <dt>Origin</dt><dd data-field="origin"></dd>
+            </dl>
+            <wa-button id="character-edit" appearance="outlined">
+              <wa-icon slot="start" name="pen"></wa-icon>
+              Edit
+            </wa-button>
+          </div>
+
+          <!-- Editing -->
+          <form id="character-form" class="character-form" hidden>
+            <wa-input name="handle" label="Handle" autocomplete="off">
+              <wa-button slot="end" appearance="plain" size="s" data-reroll="handle" title="New random handle">
+                <wa-icon name="dice" label="New random handle"></wa-icon>
+              </wa-button>
+            </wa-input>
+            <wa-input name="name" label="Name" autocomplete="off">
+              <wa-button slot="end" appearance="plain" size="s" data-reroll="name" title="New random name">
+                <wa-icon name="dice" label="New random name"></wa-icon>
+              </wa-button>
+            </wa-input>
+            <wa-select name="archetype" label="Archetype"></wa-select>
+            <wa-select name="origin" label="Origin"></wa-select>
+            <wa-button type="submit" variant="brand">
+              <wa-icon slot="start" name="floppy-disk"></wa-icon>
+              Save
+            </wa-button>
+          </form>
+        </wa-card>
+      </wa-tab-panel>
       <wa-tab-panel name="settings">
         <wa-card class="settings-card">
           <div slot="header" class="card-header"><h2>Player</h2></div>
@@ -137,6 +187,8 @@
   <script src="icons.js"></script>
   <script src="dice.js"></script>
   <script src="discord.js"></script>
+  <script src="characters.js"></script>
   <script src="app.js"></script>
+  <script src="roster.js"></script>
 </body>
 </html>

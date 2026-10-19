@@ -230,6 +230,48 @@ wa-tab::part(tab) {
 }
 
 /* ---- Discord card ---- */
+/* WA tabs set their own display, which would override the hidden attribute */
+wa-tab[hidden] { display: none; }
+
+/* ---- roster ---- */
+.roster-bar { display: flex; justify-content: flex-end; margin-bottom: var(--wa-space-m); }
+.roster { width: 100%; border-collapse: collapse; }
+.roster th {
+  text-align: left;
+  font-family: "Orbitron", sans-serif;
+  font-size: var(--wa-font-size-xs);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--wa-color-text-quiet);
+  padding: var(--wa-space-s) var(--wa-space-m);
+  border-bottom: 1px solid var(--wa-color-surface-border);
+}
+.roster td { padding: var(--wa-space-s) var(--wa-space-m); border-bottom: 1px solid var(--wa-color-surface-border); vertical-align: middle; }
+.roster td a { font-weight: 700; color: var(--wa-color-brand); }
+.roster .actions { text-align: right; white-space: nowrap; }
+.roster .empty { color: var(--wa-color-text-quiet); text-align: center; padding: var(--wa-space-xl); }
+@media (max-width: 640px) {
+  .roster th:nth-child(3), .roster td:nth-child(3) { display: none; }
+  .roster th, .roster td { padding-inline: var(--wa-space-xs); }
+}
+
+/* ---- character ---- */
+.character-card { max-width: 32rem; }
+.character-fields { display: grid; grid-template-columns: max-content 1fr; gap: var(--wa-space-s) var(--wa-space-l); margin: 0 0 var(--wa-space-l); }
+.character-fields dt {
+  font-family: "Orbitron", sans-serif;
+  font-size: var(--wa-font-size-xs);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--wa-color-text-quiet);
+  align-self: center;
+}
+.character-fields dd { margin: 0; font-weight: 700; }
+.character-fields dd[data-field="handle"] { color: var(--wa-color-brand); font-size: var(--wa-font-size-l); }
+.character-form { display: flex; flex-direction: column; gap: var(--wa-space-l); }
+.character-form[hidden] { display: none; }
+.character-form > wa-button[type="submit"] { align-self: flex-start; }
+
 .settings-card { max-width: 32rem; }
 .settings-card::part(body) { display: flex; flex-direction: column; gap: var(--wa-space-l); }
 .card-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--wa-space-s); }

@@ -1,6 +1,6 @@
 # Neon City Dashboard
 
-A static page for Neon City games: dice rolls posted to Discord, a rules cheat sheet, and player settings. Roster to come.
+A static page for Neon City games: dice rolls posted to Discord, a rules cheat sheet, a character roster, and player settings.
 Built with [Web Awesome](https://webawesome.com) (free, from its CDN). No build step.
 
 ## Run it
@@ -27,7 +27,7 @@ Press <kbd>R</kbd> on the Dice tab to roll.
 ## Tests
 
 ```
-node --test tests/dice.test.cjs tests/discord.test.cjs
+node --test tests/dice.test.cjs tests/discord.test.cjs tests/characters.test.cjs
 ```
 
 ## What's here
@@ -38,11 +38,14 @@ node --test tests/dice.test.cjs tests/discord.test.cjs
 | `styles.css` | Light cyberpunk accents on top of the Web Awesome default theme |
 | `app.js` | Theme, tabs, the roller and result panel, and posting to Discord |
 | `dice.js` | Dice rules (no page code, so it's testable in Node) |
+| `characters.js` | Archetypes, origins, random handles and names, saving characters (testable in Node) |
+| `roster.js` | Roster tab and the Character tab |
+| `docs/character-sheet.md` | Markdown version of the paper character sheet |
 | `discord.js` | Builds the Discord message and posts it to the webhook |
 | `emoji/` | Boon and Drawback PNGs to upload as Discord server emoji |
 | `icons.js`, `icons/` | Game icons (advantage die, challenge die, boon, drawback, heat, influence) |
 
-Things remembered in localStorage (all under `ncd.`): player name, GM toggle, theme, the last tab, the target number, the last roll, and the custom-name toggle.
+Things remembered in localStorage (all under `ncd.`): characters, the open character, player name, GM toggle, theme, the last tab, the target number, the last roll, and the custom-name toggle.
 A `ncd.webhook` value, once Settings can save one, takes priority over `config.js`.
 
 ## Discord messages
