@@ -53,8 +53,11 @@ green for success, red for failure, and cyan when there's no target, holding thr
 ```
 -# Parker rolled against 45 and got
 ## Success! 32 · [boon]
--# Rolled 30 + 2 · Advantage [boon] – [boon] · Challenge [drawback]
+-# Luck: 50 · Rolled: [boon][boon][drawback]
 ```
+
+The footer always shows Luck (hardcoded to 50 until the Roster tab exists). `Rolled:` lists every Boon and
+Drawback that came up, before cancelling, and is left out when none did.
 
 ### Inline Boon / Drawback icons
 

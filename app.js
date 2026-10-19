@@ -4,7 +4,9 @@
   const { buildMessage, send } = window.NCD_DISCORD;
   const { svg: icon } = window.NCD_ICONS;
   const $ = (id) => document.getElementById(id);
-  const PLAYER = "Parker"; // until the Roster tab exists
+  // Until the Roster tab exists.
+  const PLAYER = "Parker";
+  const LUCK = 50;
 
   // localStorage can be missing or throw (private windows, blocked storage); never let that break the page.
   const store = {
@@ -129,6 +131,7 @@
   const customName = $("custom-name");
   if (store.get("customName") === "1") customName.setAttribute("checked", "");
   const messageFor = (r) => buildMessage(r, PLAYER, {
+    luck: LUCK,
     emoji: window.NCD_CONFIG?.emoji,
     username: customName.checked ? "Neon City Dashboard" : undefined,
   });

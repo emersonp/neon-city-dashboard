@@ -7,7 +7,6 @@
   const COLORS = { success: 0x3dffb0, failure: 0xff3b5c, none: 0x00f0ff };
   const WORDS = ["no", "one", "two", "three", "four", "five"];
   const count = (n, one, many = one + "s") => `${WORDS[n] ?? n} ${n === 1 ? one : many}`;
-  const fmtTens = (tens) => (tens === 0 ? "00" : String(tens * 10));
   const outcomeOf = (r) => (r.success == null ? "none" : r.success ? "success" : "failure");
 
   // emoji: { boon: "<:ncd_boon:123>", drawback: "<:ncd_drawback:456>" }, both or neither.
@@ -20,31 +19,28 @@
     return hasEmoji(emoji) ? emoji[name].repeat(n) : `with ${count(n, name)}`;
   }
 
-  // What each pool die landed on; blanks are a dash when showing emoji.
-  function poolText(dice, name, emoji, label) {
-    if (!dice.length) return "";
-    if (hasEmoji(emoji)) return `${label} ${dice.map((hit) => (hit ? emoji[name] : "–")).join(" ")}`;
-    const hits = dice.filter(Boolean).length;
-    return `${count(dice.length, `${label.toLowerCase()} die`, `${label.toLowerCase()} dice`)}: ${count(hits, name)}`;
+  // Every Boon and Drawback that came up, before cancelling; blanks aren't shown.
+  function rolledText(r, emoji) {
+    if (!r.boons && !r.drawbacks) return "";
+    const symbols = hasEmoji(emoji)
+      ? emoji.boon.repeat(r.boons) + emoji.drawback.repeat(r.drawbacks)
+      : [r.boons && count(r.boons, "boon"), r.drawbacks && count(r.drawbacks, "drawback")].filter(Boolean).join(", ");
+    return `Rolled: ${symbols}`;
   }
 
-  // The three lines: small intro, big result, subtle breakdown.
-  function lines(r, player, emoji) {
+  // The three lines: small intro, big result, and a subtle footer.
+  function lines(r, player, emoji, luck) {
     const verdict = { success: "Success!", failure: "Failure.", none: "" }[outcomeOf(r)];
     const net = netText(r, emoji);
     return {
       intro: r.target == null ? `${player} rolled and got` : `${player} rolled against ${r.target} and got`,
       result: [verdict, String(r.total)].filter(Boolean).join(" ") + (net ? (net.startsWith("with") ? ` ${net}` : ` · ${net}`) : ""),
-      detail: [
-        `Rolled ${fmtTens(r.tens)} + ${r.ones}`,
-        poolText(r.adv, "boon", emoji, "Advantage"),
-        poolText(r.chal, "drawback", emoji, "Challenge"),
-      ].filter(Boolean).join(" · "),
+      detail: [`Luck: ${luck}`, rolledText(r, emoji)].filter(Boolean).join(" · "),
     };
   }
 
-  function buildMessage(r, player, { emoji, username } = {}) {
-    const l = lines(r, player, emoji);
+  function buildMessage(r, player, { emoji, username, luck } = {}) {
+    const l = lines(r, player, emoji, luck);
     return {
       ...(username && { username }),
       flags: 1 << 15, // IS_COMPONENTS_V2
