@@ -6,6 +6,7 @@
 (function (root) {
   const COLORS = { success: 0x3dffb0, failure: 0xff3b5c, none: 0x00f0ff };
   const NO_PINGS = { parse: [] };
+  const THIN = "\u2009"; // thin space between emoji, so they don't run together
   const WORDS = ["no", "one", "two", "three", "four", "five"];
   const count = (n, one, many = one + "s") => `${WORDS[n] ?? n} ${n === 1 ? one : many}`;
   const outcomeOf = (r) => (r.success == null ? "none" : r.success ? "success" : "failure");
@@ -19,32 +20,34 @@
   function netText(r, emoji) {
     if (!r.net) return r.cancelled ? "all symbols cancelled" : "";
     const name = r.net > 0 ? "boon" : "drawback", n = Math.abs(r.net);
-    return hasEmoji(emoji) ? emoji[name].repeat(n) : `with ${count(n, name)}`;
+    return hasEmoji(emoji) ? Array(n).fill(emoji[name]).join(THIN) : `with ${count(n, name)}`;
   }
 
   // Every Boon and Drawback that came up, before cancelling; blanks aren't shown.
   function rolledText(r, emoji) {
     if (!r.boons && !r.drawbacks) return "";
     const symbols = hasEmoji(emoji)
-      ? [...Array(r.boons).fill(emoji.boon), ...Array(r.drawbacks).fill(emoji.drawback)].join(" ") // thin space
+      ? [...Array(r.boons).fill(emoji.boon), ...Array(r.drawbacks).fill(emoji.drawback)].join(THIN)
       : [r.boons && count(r.boons, "boon"), r.drawbacks && count(r.drawbacks, "drawback")].filter(Boolean).join(", ");
     return `Rolled: ${symbols}`;
   }
 
   // The three lines: small intro, big result, and a subtle footer.
-  // `luck` is null for the GM, so the footer can end up empty. `skill` is the skill's name, if any.
-  function lines(r, player, emoji, luck, skill) {
+  // `luck` and `influence` are null for the GM (or with no character open), so the footer can end up empty.
+  // `skill` is the skill's name, if any.
+  function lines(r, player, emoji, luck, skill, influence) {
     const verdict = { success: "Success!", failure: "Failure.", none: "" }[outcomeOf(r)];
     const net = netText(r, emoji);
     return {
       intro: `${player} rolled${skill ? ` *${skill}*` : ""}${r.target == null ? "" : ` against ${r.target}`} and got a`,
       result: [verdict, String(r.total)].filter(Boolean).join(" ") + (net ? (net.startsWith("with") ? ` ${net}` : ` · ${net}`) : ""),
-      detail: [luck != null && `Luck: ${luck}`, rolledText(r, emoji)].filter(Boolean).join(" · "),
+      detail: [luck != null && `Luck: ${luck}`, influence != null && `Influence: ${influence}`, rolledText(r, emoji)]
+        .filter(Boolean).join(" · "),
     };
   }
 
-  function buildMessage(r, player, { emoji, username, luck, skill } = {}) {
-    const l = lines(r, player, emoji, luck, skill);
+  function buildMessage(r, player, { emoji, username, luck, influence, skill } = {}) {
+    const l = lines(r, player, emoji, luck, skill, influence);
     return {
       ...(username && { username }),
       allowed_mentions: NO_PINGS,

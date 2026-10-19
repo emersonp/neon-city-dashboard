@@ -100,3 +100,18 @@ test("messages never ping anyone", () => {
   const r = roll({ target: 50 }, seq(2, 4));
   assert.deepEqual(buildMessage(r, "@everyone").allowed_mentions, { parse: [] });
 });
+
+test("leftover emoji in the result line are spaced like the footer", () => {
+  const r = roll({ target: 50, advantage: 2 }, seq(2, 4, 0, 0));
+  assert.equal(lines(r, "Parker", EMOJI, 50).result, "Success! 24 · <:ncd_boon:1> <:ncd_boon:1>");
+});
+
+test("footer shows Luck, then Influence, then what was rolled", () => {
+  const r = roll({ target: 50, advantage: 1 }, seq(2, 4, 0));
+  assert.equal(lines(r, "Parker", EMOJI, 94, null, 2).detail, "Luck: 94 · Influence: 2 · Rolled: <:ncd_boon:1>");
+  const plain = roll({ target: 50 }, seq(2, 4));
+  assert.equal(lines(plain, "Parker", EMOJI, 94, null, 0).detail, "Luck: 94 · Influence: 0");
+  assert.equal(lines(plain, "The GM", EMOJI, null, null, null).detail, "");
+  const m = buildMessage(r, "Parker", { emoji: EMOJI, luck: 94, influence: 2 });
+  assert.equal(m.components[0].components.at(-1).content, "-# Luck: 94 · Influence: 2 · Rolled: <:ncd_boon:1>");
+});

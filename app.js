@@ -140,7 +140,7 @@
 
   // ---- Discord ----
   // Luck and the posting name come from the character open in the Character tab (roster.js).
-  // The GM posts as Administrator; with no character open, Luck is left out.
+  // The GM posts as Administrator; for the GM or with no character open, Luck and Influence are left out.
   const activeCharacter = () => window.NCD_ACTIVE_CHARACTER?.();
   function postingName() {
     const handle = String(activeCharacter()?.handle ?? "").trim();
@@ -151,6 +151,7 @@
     return buildMessage(r, playerName(), {
       skill,
       luck: isGM() || !character ? null : window.NCD_CHARACTERS.luck(character).current,
+      influence: isGM() || !character ? null : window.NCD_CHARACTERS.influence(character).current,
       emoji: window.NCD_CONFIG?.emoji,
       username: postingName(),
     });

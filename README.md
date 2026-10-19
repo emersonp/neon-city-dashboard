@@ -56,12 +56,12 @@ green for success, red for failure, and cyan when there's no target, holding thr
 ```
 -# Parker rolled against 45 and got a
 ## Success! 32 · [boon]
--# Luck: 50 · Rolled: [boon][boon][drawback]
+-# Luck: 94 · Influence: 2 · Rolled: [boon] [boon] [drawback]
 ```
 
-The player name comes from **Settings** ("Player" if blank). The footer shows the Current Luck of the character
-open in the Character tab (none if no character is open), except for the **Administrator (GM)**, whose rolls leave it
-out. Messages post as that character's handle, as "Administrator" for the GM, or as "Neon City Dashboard" with no
+The player name comes from **Settings** ("Player" if blank). The footer shows the Current Luck and Current Influence of
+the character open in the Character tab (neither if no character is open), except for the **Administrator (GM)**,
+whose rolls leave them out. Messages post as that character's handle, as "Administrator" for the GM, or as "Neon City Dashboard" with no
 character open. `Rolled:` lists every Boon and
 Drawback that came up, before cancelling, and is left out when none did. A GM roll with no symbols has no footer.
 
