@@ -258,17 +258,52 @@ wa-tab[hidden] { display: none; }
 .character-card { max-width: 72rem; }
 .character-form > wa-input, .character-form > wa-select { max-width: 32rem; }
 .character-actions { display: flex; gap: var(--wa-space-s); }
-.character-fields { display: grid; grid-template-columns: max-content 1fr; gap: var(--wa-space-s) var(--wa-space-l); margin: 0 0 var(--wa-space-l); }
-.character-fields dt {
+/* sheet head: identity (left) and stat boxes (right), like the paper sheet */
+.sheet-head {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--wa-space-xl);
+  margin: 0 0 var(--wa-space-xl);
+  padding-bottom: var(--wa-space-l);
+  border-bottom: 1px solid var(--wa-color-surface-border);
+}
+.sheet-head[hidden], .sheet-head [hidden] { display: none; }
+.sheet-head dl { margin: 0; }
+.sheet-head dt {
   font-family: "Orbitron", sans-serif;
-  font-size: var(--wa-font-size-xs);
+  font-size: var(--wa-font-size-2xs);
   letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--wa-color-text-quiet);
-  align-self: center;
 }
-.character-fields dd { margin: 0; font-weight: 700; }
-.character-fields dd[data-field="handle"] { color: var(--wa-color-brand); font-size: var(--wa-font-size-l); }
+.sheet-head dd { margin: 0; font-weight: 700; }
+
+/* identity: written-in fields with a line under each */
+.sheet-identity { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--wa-space-m) var(--wa-space-l); align-content: start; }
+.sheet-field { display: flex; flex-direction: column; gap: var(--wa-space-3xs); padding-bottom: var(--wa-space-2xs); border-bottom: 1px solid color-mix(in srgb, var(--ncd-cyan) 35%, transparent); }
+.sheet-field.wide { grid-column: 1 / -1; }
+.sheet-field dd { font-size: var(--wa-font-size-m); }
+.sheet-field dd[data-field="handle"] { font-family: "Orbitron", sans-serif; font-size: var(--wa-font-size-xl); letter-spacing: 0.06em; color: var(--wa-color-brand); }
+.wa-dark .sheet-field dd[data-field="handle"] { text-shadow: 0 0 10px var(--ncd-glow); }
+
+/* stats: boxes with the label on top; every value row is the same height, so Running doesn't shift anything */
+.sheet-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--wa-space-s); align-content: start; }
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wa-space-2xs);
+  padding: var(--wa-space-xs) var(--wa-space-s);
+  border: 1px solid var(--wa-color-surface-border);
+  border-left: 3px solid color-mix(in srgb, var(--ncd-magenta) 70%, transparent);
+  border-radius: var(--wa-border-radius-s);
+}
+.stat dd { display: flex; align-items: center; min-height: 2.25rem; font-family: "Chakra Petch", sans-serif; font-size: var(--wa-font-size-xl); }
+.stat-wounds { grid-column: 1 / -1; }
+.stat dd.wounds { font-size: var(--wa-font-size-m); }
+.sheet-head[data-state="running"] .stat-wounds { grid-column: auto; }
+@media (max-width: 800px) {
+  .sheet-head { grid-template-columns: minmax(0, 1fr); gap: var(--wa-space-l); }
+}
 .character-form { display: flex; flex-direction: column; gap: var(--wa-space-l); }
 .character-form[hidden] { display: none; }
 .character-form > wa-button[type="submit"] { align-self: flex-start; }
@@ -311,18 +346,19 @@ wa-tab[hidden] { display: none; }
 .skills.editing .skill-controls wa-input { width: 5.75rem; }
 .skills.editing .skill-controls > .skill-value { justify-self: end; padding-right: var(--wa-space-s); }
 .skills.editing .skill-controls > wa-button { width: 100%; }
-.luck-fields { display: flex; flex-wrap: wrap; gap: var(--wa-space-l); }
-.luck-fields wa-input { width: 10rem; }
-.luck-steps { display: flex; align-items: center; gap: var(--wa-space-2xs); }
+.stat-fields { display: flex; flex-wrap: wrap; gap: var(--wa-space-l); }
+.stat-fields wa-input { width: 10rem; }
+.luck-steps { gap: var(--wa-space-2xs); }
 .luck-steps [data-field="currentLuck"] { min-width: 3ch; text-align: center; }
-.luck-steps wa-button { min-width: 2.75rem; }
+.sheet-head[data-state="running"] .luck-steps [data-field="currentLuck"] { flex: 1; }
+.luck-steps wa-button { font-family: var(--wa-font-family-body); }
+.luck-steps wa-button::part(base) { padding-inline: var(--wa-space-xs); }
+/* on phones the luck controls get the whole row while running */
 @media (max-width: 480px) {
-  .character-fields { column-gap: var(--wa-space-s); }
-  .character-fields dt { letter-spacing: 0.08em; }
-  .luck-steps wa-button { min-width: 0; }
-  .luck-steps wa-button::part(base) { padding-inline: var(--wa-space-xs); }
+  .sheet-head[data-state="running"] .stat-luck { grid-column: 1 / -1; }
+  .sheet-head[data-state="running"] .stat-wounds { grid-column: 1 / -1; }
+  .sheet-head[data-state="running"] .sheet-stats { grid-auto-flow: dense; }
 }
-.character-fields[hidden], .character-fields [hidden] { display: none; }
 
 /* ---- wounds: four boxes, filled red when marked ---- */
 .wounds { display: flex; align-items: center; gap: var(--wa-space-xs); }
@@ -331,8 +367,8 @@ wa-tab[hidden] { display: none; }
   display: inline-grid;
   place-items: center;
   color: color-mix(in srgb, var(--ncd-bad) 55%, transparent);
-  width: 1.75rem;
-  height: 1.75rem;
+  width: 2.25rem;
+  height: 2.25rem;
   padding: 0;
   border: 2px solid color-mix(in srgb, var(--ncd-bad) 55%, transparent);
   border-radius: var(--wa-border-radius-s);
@@ -341,7 +377,7 @@ wa-tab[hidden] { display: none; }
 .wound.on { background: var(--ncd-bad); border-color: var(--ncd-bad); color: var(--wa-color-surface-default); }
 .wound wa-icon { font-size: 0.9em; }
 .wa-dark .wound.on { box-shadow: 0 0 8px var(--ncd-bad); }
-button.wound { cursor: pointer; width: 2.25rem; height: 2.25rem; }
+button.wound { cursor: pointer; }
 button.wound:hover { border-color: var(--ncd-bad); }
 button.wound:focus-visible { outline: 2px solid var(--wa-color-focus); outline-offset: 2px; }
 .wounds-field { display: flex; flex-direction: column; gap: var(--wa-space-xs); }

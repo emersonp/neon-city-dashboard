@@ -94,12 +94,16 @@
     form.hidden = state !== "editing";
     running.hidden = state !== "running";
     fields.hidden = state === "editing";
+    fields.dataset.state = state;
     if (state === "editing") {
       draft = { skills: { ...(current.skills ?? {}) }, wounds: C.wounds(current) };
       for (const name of ["handle", "name", "archetype", "origin"]) field(name).value = current[name] ?? "";
       const luck = C.luck(current);
       field("maxLuck").value = String(luck.max);
       field("currentLuck").value = String(luck.current);
+      const inf = C.influence(current);
+      field("startingInfluence").value = String(inf.starting);
+      field("currentInfluence").value = String(inf.current);
       woundsEdit.innerHTML = woundBoxes(draft.wounds, true);
       renderSkillsEdit();
     } else {
@@ -112,12 +116,16 @@
   // Handle, name, etc. Current Luck and Wounds can be changed while running, and are saved right away.
   function renderFields() {
     const luck = C.luck(current);
-    const values = { ...current, maxLuck: luck.max, currentLuck: luck.current };
+    const inf = C.influence(current);
+    const values = { ...current, maxLuck: luck.max, currentLuck: luck.current, startingInfluence: inf.starting, currentInfluence: inf.current };
     for (const dd of fields.querySelectorAll("[data-field]")) {
       const v = values[dd.dataset.field];
       dd.textContent = v == null || v === "" ? "—" : v;
     }
     const editable = state === "running";
+    // Running shows only the current influence, labelled plainly.
+    $("starting-influence").hidden = editable;
+    $("influence-label").textContent = editable ? "Influence" : "Current Influence";
     for (const button of currentLuck.querySelectorAll("[data-luck]")) {
       const step = Number(button.dataset.luck);
       button.hidden = !editable;
@@ -366,6 +374,8 @@
     for (const name of ["handle", "name", "archetype", "origin"]) edited[name] = String(field(name).value ?? "").trim();
     edited.maxLuck = C.clampMaxLuck(field("maxLuck").value);
     edited.currentLuck = C.clampCurrentLuck(field("currentLuck").value, edited.maxLuck);
+    edited.startingInfluence = C.clampInfluence(field("startingInfluence").value);
+    edited.currentInfluence = C.clampInfluence(field("currentInfluence").value, edited.startingInfluence);
     edited.wounds = draft.wounds;
     edited.skills = draft.skills;
     try {

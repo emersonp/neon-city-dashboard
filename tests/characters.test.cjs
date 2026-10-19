@@ -190,3 +190,21 @@ test("only trained skills can be marked used", () => {
   assert.equal(C.canBeUsed(c, "heal-someone"), false);
   assert.equal(C.canBeUsed(c, "anything-else"), false);
 });
+
+// ---- influence ----
+
+test("influence starts at 1, and older saves without it start there too", () => {
+  const c = C.newCharacter();
+  assert.equal(c.startingInfluence, 1);
+  assert.equal(c.currentInfluence, 1);
+  assert.deepEqual(C.influence({}), { starting: 1, current: 1 });
+  assert.deepEqual(C.influence({ startingInfluence: 3 }), { starting: 3, current: 3 });
+  assert.deepEqual(C.influence({ startingInfluence: 3, currentInfluence: 0 }), { starting: 3, current: 0 });
+});
+
+test("influence is a whole number, never negative", () => {
+  assert.equal(C.clampInfluence(-2), 0);
+  assert.equal(C.clampInfluence("4.6"), 5);
+  assert.equal(C.clampInfluence("", 2), 2);
+  assert.equal(C.clampInfluence(12), 12);
+});

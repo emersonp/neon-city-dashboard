@@ -59,6 +59,15 @@
     return { max, current: clampCurrentLuck(character?.currentLuck, max) };
   }
 
+  // ---- influence: whole numbers, 0 or more ----
+  const DEFAULT_INFLUENCE = 1;
+  const clampInfluence = (v, fallback = DEFAULT_INFLUENCE) => Math.max(0, toInt(v) ?? fallback);
+  // Older saves have no influence yet; current starts at the starting value.
+  function influence(character) {
+    const starting = clampInfluence(character?.startingInfluence);
+    return { starting, current: clampInfluence(character?.currentInfluence, starting) };
+  }
+
   // ---- used skills: marked while running (by hand, or by rolling the skill) ----
   // Only trained skills (a value above 50) can be used; dice alone don't count.
   const canBeUsed = (character, id) => skill(character, id).value != null;
@@ -132,6 +141,8 @@
       origin: "Cybernetic",
       maxLuck: DEFAULT_LUCK,
       currentLuck: DEFAULT_LUCK,
+      startingInfluence: DEFAULT_INFLUENCE,
+      currentInfluence: DEFAULT_INFLUENCE,
       wounds: 0,
       skills: {},
       createdAt: now,
@@ -170,6 +181,7 @@
     randomHandle, randomName, newCharacter, label, load, save, toExport,
     skill, shownValue, isNotable, clampValue, increment, withSkill,
     DEFAULT_LUCK, luck, clampMaxLuck, clampCurrentLuck,
+    DEFAULT_INFLUENCE, influence, clampInfluence,
     MAX_WOUNDS, wounds, clickWound,
     canBeUsed, isUsed, withUsed,
   };

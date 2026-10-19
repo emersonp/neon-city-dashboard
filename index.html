@@ -130,23 +130,31 @@
 
       <wa-tab-panel name="character">
         <wa-card class="character-card">
-          <!-- Shown in Display and Running -->
-          <dl id="character-fields" class="character-fields">
-            <dt>Handle</dt><dd data-field="handle"></dd>
-            <dt>Name</dt><dd data-field="name"></dd>
-            <dt>Archetype</dt><dd data-field="archetype"></dd>
-            <dt>Origin</dt><dd data-field="origin"></dd>
-            <dt>Max Luck</dt><dd data-field="maxLuck"></dd>
-            <dt>Current Luck</dt>
-            <dd id="current-luck" class="luck-steps">
-              <wa-button size="s" appearance="outlined" data-luck="-5" hidden>−5</wa-button>
-              <wa-button size="s" appearance="outlined" data-luck="-1" hidden>−1</wa-button>
-              <span data-field="currentLuck"></span>
-              <wa-button size="s" appearance="outlined" data-luck="1" hidden>+1</wa-button>
-              <wa-button size="s" appearance="outlined" data-luck="5" hidden>+5</wa-button>
-            </dd>
-            <dt>Wounds</dt><dd id="wounds-fields" class="wounds"></dd>
-          </dl>
+          <!-- Shown in Display and Running: who they are on the left, stats on the right -->
+          <div id="character-fields" class="sheet-head">
+            <dl class="sheet-identity">
+              <div class="sheet-field wide"><dt>Handle</dt><dd data-field="handle"></dd></div>
+              <div class="sheet-field wide"><dt>Name</dt><dd data-field="name"></dd></div>
+              <div class="sheet-field"><dt>Archetype</dt><dd data-field="archetype"></dd></div>
+              <div class="sheet-field"><dt>Origin</dt><dd data-field="origin"></dd></div>
+            </dl>
+            <dl class="sheet-stats">
+              <div class="stat"><dt>Max Luck</dt><dd data-field="maxLuck"></dd></div>
+              <div class="stat stat-luck">
+                <dt>Current Luck</dt>
+                <dd id="current-luck" class="luck-steps">
+                  <wa-button size="s" appearance="outlined" data-luck="-5" hidden>−5</wa-button>
+                  <wa-button size="s" appearance="outlined" data-luck="-1" hidden>−1</wa-button>
+                  <span data-field="currentLuck"></span>
+                  <wa-button size="s" appearance="outlined" data-luck="1" hidden>+1</wa-button>
+                  <wa-button size="s" appearance="outlined" data-luck="5" hidden>+5</wa-button>
+                </dd>
+              </div>
+              <div class="stat" id="starting-influence"><dt>Starting Influence</dt><dd data-field="startingInfluence"></dd></div>
+              <div class="stat"><dt id="influence-label">Current Influence</dt><dd data-field="currentInfluence"></dd></div>
+              <div class="stat stat-wounds"><dt>Wounds</dt><dd id="wounds-fields" class="wounds"></dd></div>
+            </dl>
+          </div>
 
           <!-- Display -->
           <div id="character-display">
@@ -188,9 +196,11 @@
             </wa-input>
             <wa-select name="archetype" label="Archetype"></wa-select>
             <wa-select name="origin" label="Origin"></wa-select>
-            <div class="luck-fields">
+            <div class="stat-fields">
               <wa-input name="maxLuck" label="Max Luck" type="number" min="0"></wa-input>
               <wa-input name="currentLuck" label="Current Luck" type="number" min="0"></wa-input>
+              <wa-input name="startingInfluence" label="Starting Influence" type="number" min="0"></wa-input>
+              <wa-input name="currentInfluence" label="Current Influence" type="number" min="0"></wa-input>
             </div>
             <div class="wounds-field">
               <span class="wounds-label" id="wounds-edit-label">Wounds</span>
