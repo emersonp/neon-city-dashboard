@@ -300,7 +300,6 @@ wa-tab[hidden] { display: none; }
 .stat dd { display: flex; align-items: center; min-height: 2.25rem; font-family: "Chakra Petch", sans-serif; font-size: var(--wa-font-size-xl); }
 .stat-wounds { grid-column: 1 / -1; }
 .stat dd.wounds { font-size: var(--wa-font-size-m); }
-.sheet-head[data-state="running"] .stat-wounds { grid-column: auto; }
 @media (max-width: 800px) {
   .sheet-head { grid-template-columns: minmax(0, 1fr); gap: var(--wa-space-l); }
 }
@@ -355,9 +354,7 @@ wa-tab[hidden] { display: none; }
 .luck-steps wa-button::part(base) { padding-inline: var(--wa-space-xs); }
 /* on phones the luck controls get the whole row while running */
 @media (max-width: 480px) {
-  .sheet-head[data-state="running"] .stat-luck { grid-column: 1 / -1; }
-  .sheet-head[data-state="running"] .stat-wounds { grid-column: 1 / -1; }
-  .sheet-head[data-state="running"] .sheet-stats { grid-auto-flow: dense; }
+  .sheet-head[data-state="running"] .sheet-stats { grid-template-columns: minmax(0, 1fr); }
 }
 
 /* ---- wounds: four boxes, filled red when marked ---- */

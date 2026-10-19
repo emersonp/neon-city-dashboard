@@ -123,8 +123,10 @@
       dd.textContent = v == null || v === "" ? "—" : v;
     }
     const editable = state === "running";
-    // Running shows only the current influence, labelled plainly.
+    // Running shows only the current luck and influence, labelled plainly.
+    $("max-luck").hidden = editable;
     $("starting-influence").hidden = editable;
+    $("luck-label").textContent = editable ? "Luck" : "Current Luck";
     $("influence-label").textContent = editable ? "Influence" : "Current Influence";
     for (const button of currentLuck.querySelectorAll("[data-luck]")) {
       const step = Number(button.dataset.luck);
