@@ -34,7 +34,7 @@
     const verdict = { success: "Success!", failure: "Failure.", none: "" }[outcomeOf(r)];
     const net = netText(r, emoji);
     return {
-      intro: `${player} rolled${skill ? ` ${skill}` : ""}${r.target == null ? "" : ` against ${r.target}`} and got a`,
+      intro: `${player} rolled${skill ? ` *${skill}*` : ""}${r.target == null ? "" : ` against ${r.target}`} and got a`,
       result: [verdict, String(r.total)].filter(Boolean).join(" ") + (net ? (net.startsWith("with") ? ` ${net}` : ` · ${net}`) : ""),
       detail: [luck != null && `Luck: ${luck}`, rolledText(r, emoji)].filter(Boolean).join(" · "),
     };

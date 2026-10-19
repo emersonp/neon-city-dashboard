@@ -77,11 +77,11 @@ test("GM roll with no symbols has no footer at all", () => {
   assert.equal(parts[0].content, "-# The GM rolled against 50 and got a\n## Success! 24");
 });
 
-test("a skill roll names the skill in the intro", () => {
+test("a skill roll names the skill, in italics, in the intro", () => {
   const r = roll({ target: 65, advantage: 0 }, seq(2, 4));
-  assert.equal(lines(r, "Parker", EMOJI, 50, "Shoot Someone").intro, "Parker rolled Shoot Someone against 65 and got a");
+  assert.equal(lines(r, "Parker", EMOJI, 50, "Shoot Someone").intro, "Parker rolled *Shoot Someone* against 65 and got a");
   const untargeted = roll({}, seq(2, 4));
-  assert.equal(lines(untargeted, "Parker", EMOJI, 50, "Anything else").intro, "Parker rolled Anything else and got a");
+  assert.equal(lines(untargeted, "Parker", EMOJI, 50, "Anything else").intro, "Parker rolled *Anything else* and got a");
   const m = buildMessage(r, "Parker", { luck: 50, skill: "Shoot Someone" });
-  assert.match(m.components[0].components[0].content, /^-# Parker rolled Shoot Someone against 65 and got a\n/);
+  assert.match(m.components[0].components[0].content, /^-# Parker rolled \*Shoot Someone\* against 65 and got a\n/);
 });

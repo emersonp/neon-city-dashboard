@@ -66,7 +66,7 @@ character open. `Rolled:` lists every Boon and
 Drawback that came up, before cancelling, and is left out when none did. A GM roll with no symbols has no footer.
 
 Skill rolls from a running character (Character tab → **Run**, then click a skill) name the skill:
-`Parker rolled Shoot Someone against 75 and got a`. The roll dialog starts at the skill's value and intrinsic dice.
+`Parker rolled *Shoot Someone* against 75 and got a` (the skill in italics). The roll dialog starts at the skill's value and intrinsic dice.
 
 ### Inline Boon / Drawback icons
 
