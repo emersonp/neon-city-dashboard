@@ -11,8 +11,8 @@
     set(key, value) { try { localStorage.setItem(`ncd.${key}`, value); } catch {} },
   };
 
-  // A webhook saved in Settings wins over the one in config.js.
-  const webhookUrl = () => String(store.get("webhook") ?? "").trim() || window.NCD_CONFIG?.webhookUrl || "";
+  // The webhook lives only in Settings (this browser's localStorage), never in a file.
+  const webhookUrl = () => String(store.get("webhook") ?? "").trim();
 
   document.querySelectorAll("[data-icon]").forEach((el) => { el.innerHTML = icon(el.dataset.icon); });
 
@@ -54,8 +54,7 @@
   playerInput.addEventListener("input", () => store.set("playerName", playerInput.value));
   const webhookInput = $("webhook");
   webhookInput.value = store.get("webhook", "");
-  webhookInput.placeholder = window.NCD_CONFIG?.webhookUrl ? "Using the one in config.js" : "https://discord.com/api/webhooks/…";
-  // Flags a mistyped address; blank is fine when config.js has one.
+  webhookInput.placeholder = "https://discord.com/api/webhooks/…";
   const checkWebhook = () => customElements.whenDefined("wa-input").then(() =>
     webhookInput.setCustomValidity(isWebhookUrl(webhookUrl()) ? "" : "Not a Discord webhook address"));
   webhookInput.addEventListener("input", () => { store.set("webhook", String(webhookInput.value ?? "").trim()); checkWebhook(); });

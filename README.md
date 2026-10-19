@@ -5,12 +5,12 @@ Built with [Web Awesome](https://webawesome.com) (free, from its CDN). No build 
 
 ## Run it
 
-1. Copy `config.example.js` to `config.js` and paste in your Discord webhook URL, or paste it into **Settings** instead.
-   `config.js` is git-ignored, so the webhook never ends up in the repo.
-   Until there's a player name and a valid webhook, the page opens on **Settings**.
-2. Open `index.html` in a browser, or serve the folder (for example `npx serve` or `python -m http.server`).
+1. Open `index.html` in a browser, or serve the folder (for example `npx serve` or `python -m http.server`).
+2. In **Settings**, enter a player name and paste the Discord webhook URL. Until both are set, the page opens on Settings.
+   The webhook is saved only in that browser (OBS keeps its own storage: use the browser source's **Interact** window).
 
-Anyone who has the webhook URL can post to that channel. Don't host a copy online with the URL baked in.
+Anyone who has the webhook URL can post to that channel, so share it with your players privately. It's never in the repo,
+so the site is safe to host on GitHub Pages.
 
 ## Dice rules
 
@@ -38,6 +38,7 @@ node --test tests/dice.test.cjs tests/discord.test.cjs tests/characters.test.cjs
 | `index.html` | Page shell: header, theme toggle, tabs, and the dialogs |
 | `styles.css` | Light cyberpunk accents on top of the Web Awesome default theme |
 | `app.js` | Theme, tabs, the roller and result panel, and posting to Discord |
+| `config.js` | Shared settings for everyone: Discord emoji codes and the published address (no webhook) |
 | `dice.js` | Dice rules (no page code, so it's testable in Node) |
 | `characters.js` | Archetypes, origins, random handles and names, saving characters (testable in Node) |
 | `roster.js` | Roster tab and the Character tab |
@@ -47,7 +48,6 @@ node --test tests/dice.test.cjs tests/discord.test.cjs tests/characters.test.cjs
 | `icons.js`, `icons/` | Game icons (advantage die, challenge die, boon, drawback, heat, influence) |
 
 Things remembered in localStorage (all under `ncd.`): characters, the open character, player name, GM toggle, webhook, theme, the last tab, the target number, and the last roll.
-A webhook saved in Settings takes priority over `config.js`.
 
 ## Discord messages
 
