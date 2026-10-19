@@ -45,7 +45,7 @@
         <div class="dice-layout">
           <wa-card class="roller">
             <wa-input id="target" label="Target ≤" placeholder="none" inputmode="numeric" maxlength="3"
-              autocomplete="off" with-clear hint="Optional. At or under the target succeeds."></wa-input>
+              autocomplete="off" with-clear></wa-input>
 
             <wa-radio-group id="adv" class="pool adv" orientation="horizontal" value="0">
               <span slot="label" class="pool-label"><span data-icon="advantage-die"></span>Advantage dice</span>
@@ -80,9 +80,8 @@
       <wa-tab-panel name="settings">
         <wa-card class="settings-card">
           <div slot="header" class="card-header"><h2>Player</h2></div>
-          <wa-input id="player-name" label="Player name:" placeholder="Player" autocomplete="off"
-            hint="Shown on your rolls in Discord."></wa-input>
-          <wa-switch id="gm" hint="GM rolls leave Luck out of the Discord message.">Administrator (GM)</wa-switch>
+          <wa-input id="player-name" label="Player name:" placeholder="Player" autocomplete="off"></wa-input>
+          <wa-switch id="gm">Administrator (GM)</wa-switch>
         </wa-card>
       </wa-tab-panel>
     </wa-tab-group>
