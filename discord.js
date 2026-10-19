@@ -29,13 +29,14 @@
   }
 
   // The three lines: small intro, big result, and a subtle footer.
+  // `luck` is null for the GM, so the footer can end up empty.
   function lines(r, player, emoji, luck) {
     const verdict = { success: "Success!", failure: "Failure.", none: "" }[outcomeOf(r)];
     const net = netText(r, emoji);
     return {
       intro: r.target == null ? `${player} rolled and got` : `${player} rolled against ${r.target} and got`,
       result: [verdict, String(r.total)].filter(Boolean).join(" ") + (net ? (net.startsWith("with") ? ` ${net}` : ` · ${net}`) : ""),
-      detail: [`Luck: ${luck}`, rolledText(r, emoji)].filter(Boolean).join(" · "),
+      detail: [luck != null && `Luck: ${luck}`, rolledText(r, emoji)].filter(Boolean).join(" · "),
     };
   }
 
@@ -49,8 +50,10 @@
         accent_color: COLORS[outcomeOf(r)],
         components: [
           { type: 10, content: `-# ${l.intro}\n## ${l.result}` }, // text display
-          { type: 14, divider: true, spacing: 1 },                // separator
-          { type: 10, content: `-# ${l.detail}` },
+          ...(l.detail ? [
+            { type: 14, divider: true, spacing: 1 },              // separator
+            { type: 10, content: `-# ${l.detail}` },
+          ] : []),
         ],
       }],
     };

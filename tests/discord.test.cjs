@@ -64,3 +64,15 @@ test("message is a components container colored by outcome", () => {
   assert.equal(m.components[0].accent_color, 0xff3b5c);
   assert.equal(m.components[0].components[0].content, "-# Parker rolled against 10 and got\n## Failure. 55");
 });
+
+test("GM rolls (no luck) leave Luck out of the footer", () => {
+  const r = roll({ target: 50, advantage: 1 }, seq(2, 4, 0));
+  assert.equal(lines(r, "The GM", EMOJI, null).detail, "Rolled: <:ncd_boon:1>");
+});
+
+test("GM roll with no symbols has no footer at all", () => {
+  const r = roll({ target: 50, advantage: 1 }, seq(2, 4, 1));
+  const parts = buildMessage(r, "The GM", { emoji: EMOJI, luck: null }).components[0].components;
+  assert.equal(parts.length, 1);
+  assert.equal(parts[0].content, "-# The GM rolled against 50 and got\n## Success! 24");
+});

@@ -204,6 +204,8 @@ wa-tab::part(tab) {
 
 /* ---- Discord card ---- */
 .discord-card { width: 100%; }
+.settings-card { max-width: 32rem; }
+.settings-card::part(body) { display: flex; flex-direction: column; gap: var(--wa-space-l); }
 .card-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--wa-space-s); }
 .card-header h2 { margin: 0; font-size: var(--wa-font-size-m); letter-spacing: 0.15em; text-transform: uppercase; }
 

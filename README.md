@@ -42,7 +42,7 @@ node --test tests/dice.test.cjs tests/discord.test.cjs
 | `emoji/` | Boon and Drawback PNGs to upload as Discord server emoji |
 | `icons.js`, `icons/` | Game icons (advantage die, challenge die, boon, drawback, heat, influence) |
 
-Things remembered in localStorage (all under `ncd.`): theme, the last tab, the target number, the last roll, and the custom-name toggle.
+Things remembered in localStorage (all under `ncd.`): player name, GM toggle, theme, the last tab, the target number, the last roll, and the custom-name toggle.
 A `ncd.webhook` value, once Settings can save one, takes priority over `config.js`.
 
 ## Discord messages
@@ -56,8 +56,9 @@ green for success, red for failure, and cyan when there's no target, holding thr
 -# Luck: 50 · Rolled: [boon][boon][drawback]
 ```
 
-The footer always shows Luck (hardcoded to 50 until the Roster tab exists). `Rolled:` lists every Boon and
-Drawback that came up, before cancelling, and is left out when none did.
+The player name comes from **Settings** ("Player" if blank). The footer shows Luck (hardcoded to 50 until the
+Roster tab exists), except for the **Administrator (GM)**, whose rolls leave it out. `Rolled:` lists every Boon and
+Drawback that came up, before cancelling, and is left out when none did. A GM roll with no symbols has no footer.
 
 ### Inline Boon / Drawback icons
 

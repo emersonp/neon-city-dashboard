@@ -4,9 +4,7 @@
   const { buildMessage, send } = window.NCD_DISCORD;
   const { svg: icon } = window.NCD_ICONS;
   const $ = (id) => document.getElementById(id);
-  // Until the Roster tab exists.
-  const PLAYER = "Parker";
-  const LUCK = 50;
+  const LUCK = 50; // until the Roster tab exists
 
   // localStorage can be missing or throw (private windows, blocked storage); never let that break the page.
   const store = {
@@ -36,6 +34,16 @@
   const tabs = $("tabs");
   customElements.whenDefined("wa-tab-group").then(() => { tabs.active = store.get("tab", "dice"); });
   tabs.addEventListener("wa-tab-show", (e) => store.set("tab", e.detail.name));
+
+  // ---- settings ----
+  const playerInput = $("player-name");
+  const gmSwitch = $("gm");
+  playerInput.value = store.get("playerName", "");
+  if (store.get("gm") === "1") gmSwitch.setAttribute("checked", "");
+  const playerName = () => String(playerInput.value ?? "").trim() || "Player";
+  const isGM = () => gmSwitch.checked;
+  playerInput.addEventListener("input", () => { store.set("playerName", playerInput.value); renderPreview(); });
+  gmSwitch.addEventListener("change", () => { store.set("gm", gmSwitch.checked ? "1" : "0"); renderPreview(); });
 
   // ---- toasts ----
   const toast = (message, variant = "neutral") =>
@@ -130,8 +138,8 @@
   // ---- Discord ----
   const customName = $("custom-name");
   if (store.get("customName") === "1") customName.setAttribute("checked", "");
-  const messageFor = (r) => buildMessage(r, PLAYER, {
-    luck: LUCK,
+  const messageFor = (r) => buildMessage(r, playerName(), {
+    luck: isGM() ? null : LUCK,
     emoji: window.NCD_CONFIG?.emoji,
     username: customName.checked ? "Neon City Dashboard" : undefined,
   });

@@ -77,7 +77,14 @@
       </wa-tab-panel>
 
       <wa-tab-panel name="roster"></wa-tab-panel>
-      <wa-tab-panel name="settings"></wa-tab-panel>
+      <wa-tab-panel name="settings">
+        <wa-card class="settings-card">
+          <div slot="header" class="card-header"><h2>Player</h2></div>
+          <wa-input id="player-name" label="Player name:" placeholder="Player" autocomplete="off"
+            hint="Shown on your rolls in Discord."></wa-input>
+          <wa-switch id="gm" hint="GM rolls leave Luck out of the Discord message.">Administrator (GM)</wa-switch>
+        </wa-card>
+      </wa-tab-panel>
     </wa-tab-group>
   </main>
 
