@@ -278,6 +278,22 @@ wa-tab[hidden] { display: none; }
 .sheet-head dd { margin: 0; font-weight: 700; }
 
 /* identity: written-in fields with a line under each */
+/* portrait beside the identity fields */
+.sheet-who { display: grid; grid-template-columns: 8rem minmax(0, 1fr); gap: var(--wa-space-l); align-items: start; }
+.portrait {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border: 1px solid color-mix(in srgb, var(--ncd-cyan) 50%, transparent);
+  border-radius: var(--wa-border-radius-m);
+}
+.wa-dark .portrait { box-shadow: 0 0 12px color-mix(in srgb, var(--ncd-cyan) 25%, transparent); }
+.portrait-field { display: grid; grid-template-columns: 6rem minmax(0, 26rem); gap: var(--wa-space-l); align-items: end; }
+@media (max-width: 480px) {
+  .sheet-who { grid-template-columns: 5rem minmax(0, 1fr); gap: var(--wa-space-m); }
+  .portrait-field { grid-template-columns: 4.5rem minmax(0, 1fr); }
+}
 .sheet-identity { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--wa-space-m) var(--wa-space-l); align-content: start; }
 .sheet-field { display: flex; flex-direction: column; gap: var(--wa-space-3xs); padding-bottom: var(--wa-space-2xs); border-bottom: 1px solid color-mix(in srgb, var(--ncd-cyan) 35%, transparent); }
 .sheet-field.wide { grid-column: 1 / -1; }

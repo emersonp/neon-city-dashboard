@@ -46,10 +46,12 @@
     };
   }
 
-  function buildMessage(r, player, { emoji, username, luck, influence, skill } = {}) {
+  // avatarUrl must be a public link Discord can fetch (a GitHub Pages URL, not localhost).
+  function buildMessage(r, player, { emoji, username, avatarUrl, luck, influence, skill } = {}) {
     const l = lines(r, player, emoji, luck, skill, influence);
     return {
       ...(username && { username }),
+      ...(avatarUrl && { avatar_url: avatarUrl }),
       allowed_mentions: NO_PINGS,
       flags: 1 << 15, // IS_COMPONENTS_V2
       components: [{
@@ -67,10 +69,11 @@
   }
 
   // A plain one-line message for spending or gaining Influence while running a character.
-  function influenceMessage(player, delta, { emoji, username } = {}) {
+  function influenceMessage(player, delta, { emoji, username, avatarUrl } = {}) {
     const icon = emoji?.influence ? ` ${emoji.influence}` : "";
     return {
       ...(username && { username }),
+      ...(avatarUrl && { avatar_url: avatarUrl }),
       allowed_mentions: NO_PINGS,
       content: `${player} ${delta > 0 ? "gained" : "spent"} an Influence.${icon}`,
     };

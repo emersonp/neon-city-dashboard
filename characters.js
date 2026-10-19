@@ -68,6 +68,17 @@
     return { starting, current: clampInfluence(character?.currentInfluence, starting) };
   }
 
+  // ---- portraits: image files in portraits/, listed in portraits/portraits.js ----
+  const DEFAULT_PORTRAIT = "default.png";
+  const PORTRAIT_DIR = "portraits/";
+  // The listed portraits, always including the default.
+  const availablePortraits = (listed) => [...new Set([DEFAULT_PORTRAIT, ...(Array.isArray(listed) ? listed : [])])];
+  // The character's portrait if it's still listed, otherwise the default. null means "use the default".
+  const portraitFile = (character, available = [DEFAULT_PORTRAIT]) =>
+    available.includes(character?.portrait) ? character.portrait : DEFAULT_PORTRAIT;
+  // "street-samurai.png" -> "Street Samurai"
+  const portraitLabel = (file) => file.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ").replace(/\b\w/g, (ch) => ch.toUpperCase());
+
   // ---- used skills: marked while running (by hand, or by rolling the skill) ----
   // Only trained skills (a value above 50) can be used; dice alone don't count.
   const canBeUsed = (character, id) => skill(character, id).value != null;
@@ -144,6 +155,7 @@
       startingInfluence: DEFAULT_INFLUENCE,
       currentInfluence: DEFAULT_INFLUENCE,
       wounds: 0,
+      portrait: null,
       skills: {},
       createdAt: now,
       updatedAt: now,
@@ -184,5 +196,6 @@
     DEFAULT_INFLUENCE, influence, clampInfluence,
     MAX_WOUNDS, wounds, clickWound,
     canBeUsed, isUsed, withUsed,
+    DEFAULT_PORTRAIT, PORTRAIT_DIR, availablePortraits, portraitFile, portraitLabel,
   };
 })(globalThis);

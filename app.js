@@ -146,6 +146,15 @@
     const handle = String(activeCharacter()?.handle ?? "").trim();
     return isGM() ? "Administrator" : handle || "Neon City Dashboard";
   }
+  // The character's portrait as the message avatar. Discord fetches it itself, so it needs a public link:
+  // the site's own address on GitHub Pages (https), or publicUrl in config.js. Locally, no avatar is sent.
+  function avatarUrl() {
+    const character = activeCharacter();
+    const base = window.NCD_CONFIG?.publicUrl || (location.protocol === "https:" ? location.href : "");
+    if (isGM() || !character || !base) return undefined;
+    const C = window.NCD_CHARACTERS;
+    return new URL(C.PORTRAIT_DIR + C.portraitFile(character, C.availablePortraits(window.NCD_PORTRAITS)), base).href;
+  }
   function messageFor(r, skill) {
     const character = activeCharacter();
     return buildMessage(r, playerName(), {
@@ -154,6 +163,7 @@
       influence: isGM() || !character ? null : window.NCD_CHARACTERS.influence(character).current,
       emoji: window.NCD_CONFIG?.emoji,
       username: postingName(),
+      avatarUrl: avatarUrl(),
     });
   }
 
@@ -170,7 +180,7 @@
   const postToDiscord = (r, skill) => post(messageFor(r, skill), "Rolled");
   // delta is +1 (gained) or -1 (spent).
   const postInfluence = (delta) => post(
-    influenceMessage(playerName(), delta, { emoji: window.NCD_CONFIG?.emoji, username: postingName() }),
+    influenceMessage(playerName(), delta, { emoji: window.NCD_CONFIG?.emoji, username: postingName(), avatarUrl: avatarUrl() }),
     "Influence changed");
 
   // ---- rolling ----

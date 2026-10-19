@@ -115,3 +115,11 @@ test("footer shows Luck, then Influence, then what was rolled", () => {
   const m = buildMessage(r, "Parker", { emoji: EMOJI, luck: 94, influence: 2 });
   assert.equal(m.components[0].components.at(-1).content, "-# Luck: 94 · Influence: 2 · Rolled: <:ncd_boon:1>");
 });
+
+test("an avatar link is sent only when given", () => {
+  const r = roll({ target: 50 }, seq(2, 4));
+  assert.equal(buildMessage(r, "Parker", { avatarUrl: "https://x.test/portraits/default.png" }).avatar_url, "https://x.test/portraits/default.png");
+  assert.equal("avatar_url" in buildMessage(r, "Parker"), false);
+  const { influenceMessage } = globalThis.NCD_DISCORD;
+  assert.equal(influenceMessage("Parker", 1, { avatarUrl: "https://x.test/a.png" }).avatar_url, "https://x.test/a.png");
+});

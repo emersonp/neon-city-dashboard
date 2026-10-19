@@ -27,11 +27,15 @@
 
   const escapeHTML = (s) => String(s ?? "").replace(/[&<>"']/g, (ch) => `&#${ch.charCodeAt(0)};`);
 
-  for (const [name, values] of [["archetype", C.ARCHETYPES], ["origin", C.ORIGINS]]) {
-    for (const value of values) {
+  const portraits = C.availablePortraits(window.NCD_PORTRAITS);
+  const portraitSrc = (file) => C.PORTRAIT_DIR + file;
+  const portraitOptions = portraits.map((file) => [file, C.portraitLabel(file)]);
+  const plain = (values) => values.map((value) => [value, value]);
+  for (const [name, options] of [["archetype", plain(C.ARCHETYPES)], ["origin", plain(C.ORIGINS)], ["portrait", portraitOptions]]) {
+    for (const [value, text] of options) {
       const option = document.createElement("wa-option");
       option.value = value;
-      option.textContent = value;
+      option.textContent = text;
       field(name).append(option);
     }
   }
@@ -105,6 +109,8 @@
       const inf = C.influence(current);
       field("startingInfluence").value = String(inf.starting);
       field("currentInfluence").value = String(inf.current);
+      field("portrait").value = C.portraitFile(current, portraits);
+      $("portrait-preview").src = portraitSrc(field("portrait").value);
       woundsEdit.innerHTML = woundBoxes(draft.wounds, true);
       renderSkillsEdit();
     } else {
@@ -116,6 +122,8 @@
 
   // Handle, name, etc. Current Luck, Current Influence, and Wounds can be changed while running, and are saved right away.
   function renderFields() {
+    $("portrait").src = portraitSrc(C.portraitFile(current, portraits));
+    $("portrait").alt = `Portrait of ${C.label(current)}`;
     const luck = C.luck(current);
     const inf = C.influence(current);
     const values = { ...current, maxLuck: luck.max, currentLuck: luck.current, startingInfluence: inf.starting, currentInfluence: inf.current };
@@ -388,6 +396,7 @@
     if (name === "handle") setLabel(field("handle").value);
   });
   field("handle").addEventListener("input", () => setLabel(field("handle").value));
+  field("portrait").addEventListener("change", () => { $("portrait-preview").src = portraitSrc(field("portrait").value); });
 
   form.addEventListener("submit", (e) => {
     e.preventDefault();
@@ -397,6 +406,8 @@
     edited.currentLuck = C.clampCurrentLuck(field("currentLuck").value, edited.maxLuck);
     edited.startingInfluence = C.clampInfluence(field("startingInfluence").value);
     edited.currentInfluence = C.clampInfluence(field("currentInfluence").value, edited.startingInfluence);
+    // The default is stored as null, so a character follows it if default.png ever changes.
+    edited.portrait = field("portrait").value === C.DEFAULT_PORTRAIT ? null : field("portrait").value;
     edited.wounds = draft.wounds;
     edited.skills = draft.skills;
     try {

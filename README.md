@@ -72,6 +72,15 @@ Changing Influence with the −1 / +1 buttons while running posts a one-line mes
 `Parker gained an Influence.` or `Parker spent an Influence.`, followed by the Influence emoji if one is set.
 Changes made in Edit aren't posted. No message ever pings anyone.
 
+### Character portraits
+
+Portraits live in `portraits/`. To add one, put the image there (a 256×256 square works best) and add its file
+name to `portraits/portraits.js`; it then shows up in the Portrait picker when editing a character. Characters
+without one use `portraits/default.png`.
+
+Discord shows the portrait as the message's avatar, but it has to load the image from a public link. On GitHub Pages
+that's automatic. A local copy sends no avatar unless `publicUrl` in `config.js` points at the published site.
+
 ### Inline Boon / Drawback / Influence icons
 
 The icons are custom server emoji, which is the only way to put an image inline in a Discord message.

@@ -208,3 +208,20 @@ test("influence is a whole number, never negative", () => {
   assert.equal(C.clampInfluence("", 2), 2);
   assert.equal(C.clampInfluence(12), 12);
 });
+
+// ---- portraits ----
+
+test("portraits fall back to the default unless the chosen one is listed", () => {
+  const available = C.availablePortraits(["razor.png"]);
+  assert.deepEqual(available, ["default.png", "razor.png"]);
+  assert.deepEqual(C.availablePortraits(undefined), ["default.png"]);
+  assert.equal(C.portraitFile({ portrait: "razor.png" }, available), "razor.png");
+  assert.equal(C.portraitFile({ portrait: "gone.png" }, available), "default.png");
+  assert.equal(C.portraitFile({ portrait: null }, available), "default.png");
+  assert.equal(C.newCharacter().portrait, null);
+});
+
+test("portrait labels come from the file name", () => {
+  assert.equal(C.portraitLabel("default.png"), "Default");
+  assert.equal(C.portraitLabel("street-samurai_2.jpg"), "Street Samurai 2");
+});

@@ -132,12 +132,15 @@
         <wa-card class="character-card">
           <!-- Shown in Display and Running: who they are on the left, stats on the right -->
           <div id="character-fields" class="sheet-head">
-            <dl class="sheet-identity">
-              <div class="sheet-field wide"><dt>Handle</dt><dd data-field="handle"></dd></div>
-              <div class="sheet-field wide"><dt>Name</dt><dd data-field="name"></dd></div>
-              <div class="sheet-field"><dt>Archetype</dt><dd data-field="archetype"></dd></div>
-              <div class="sheet-field"><dt>Origin</dt><dd data-field="origin"></dd></div>
-            </dl>
+            <div class="sheet-who">
+              <img id="portrait" class="portrait" alt="">
+              <dl class="sheet-identity">
+                <div class="sheet-field wide"><dt>Handle</dt><dd data-field="handle"></dd></div>
+                <div class="sheet-field wide"><dt>Name</dt><dd data-field="name"></dd></div>
+                <div class="sheet-field"><dt>Archetype</dt><dd data-field="archetype"></dd></div>
+                <div class="sheet-field"><dt>Origin</dt><dd data-field="origin"></dd></div>
+              </dl>
+            </div>
             <dl class="sheet-stats">
               <div class="stat" id="max-luck"><dt>Max Luck</dt><dd data-field="maxLuck"></dd></div>
               <div class="stat stat-luck">
@@ -202,6 +205,10 @@
             </wa-input>
             <wa-select name="archetype" label="Archetype"></wa-select>
             <wa-select name="origin" label="Origin"></wa-select>
+            <div class="portrait-field">
+              <img id="portrait-preview" class="portrait" alt="">
+              <wa-select name="portrait" label="Portrait"></wa-select>
+            </div>
             <div class="stat-fields">
               <wa-input name="maxLuck" label="Max Luck" type="number" min="0"></wa-input>
               <wa-input name="currentLuck" label="Current Luck" type="number" min="0"></wa-input>
@@ -261,6 +268,7 @@
   <wa-toast id="toast" placement="bottom-center"></wa-toast>
 
   <script src="config.js" onerror="window.NCD_CONFIG = window.NCD_CONFIG || {}"></script>
+  <script src="portraits/portraits.js"></script>
   <script src="icons.js"></script>
   <script src="dice.js"></script>
   <script src="discord.js"></script>
