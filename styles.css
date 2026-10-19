@@ -10,7 +10,6 @@
   --ncd-bad: #d6173d;
 
   --wa-font-family-heading: "Orbitron", var(--wa-font-family-body);
-  --wa-font-family-code: "Share Tech Mono", ui-monospace, Consolas, monospace;
 }
 
 .wa-dark {
