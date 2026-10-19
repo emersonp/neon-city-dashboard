@@ -23,6 +23,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&family=Orbitron:wght@600;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
+<!-- Cut corners: Chrome draws them natively (corner-shape); Firefox and Safari get the clip-path version in styles.css -->
+<script>document.documentElement.classList.toggle("bevel", CSS.supports("corner-shape: bevel"));</script>
 </head>
 <body>
   <header class="topbar">
@@ -133,7 +135,7 @@
           <!-- Shown in Display and Running: who they are on the left, stats on the right -->
           <div id="character-fields" class="sheet-head">
             <div class="sheet-who">
-              <img id="portrait" class="portrait" alt="">
+              <span class="portrait-frame"><img id="portrait" class="portrait" alt=""></span>
               <dl class="sheet-identity">
                 <div class="sheet-field wide"><dt>Handle</dt><dd data-field="handle"></dd></div>
                 <div class="sheet-field wide"><dt>Name</dt><dd data-field="name"></dd></div>
@@ -209,7 +211,7 @@
             <div class="sheet-head">
               <div class="sheet-who">
                 <div class="portrait-pick">
-                  <img id="portrait-preview" class="portrait" alt="">
+                  <span class="portrait-frame"><img id="portrait-preview" class="portrait" alt=""></span>
                   <wa-select name="portrait" label="Portrait" size="s"></wa-select>
                 </div>
                 <div class="sheet-identity">

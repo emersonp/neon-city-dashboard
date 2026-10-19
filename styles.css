@@ -307,7 +307,7 @@ wa-tab[hidden] { display: none; }
 @media (max-width: 480px) {
   .character-form .sheet-who { grid-template-columns: minmax(0, 1fr); }
   .portrait-pick { flex-direction: row; align-items: center; }
-  .portrait-pick .portrait { width: 5rem; flex: none; }
+  .portrait-pick .portrait-frame { width: 5rem; flex: none; }
   .portrait-pick wa-select { flex: 1; min-width: 0; }
 }
 .sheet-identity { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--wa-space-m) var(--wa-space-l); align-content: start; }
@@ -460,22 +460,65 @@ wa-radio-group::part(form-control-input) { flex-wrap: wrap; gap: var(--wa-space-
   .brand h1 { font-size: var(--wa-font-size-m); letter-spacing: 0.08em; }
 }
 
-/* ---- cut corners: everything square, then the top-left and bottom-right corners bevelled ----
-   corner-shape keeps borders and glows on the bevel; browsers without it (like OBS's) get a clip-path instead. */
+/* ---- cut corners: everything square, then the top-left and bottom-right corners cut ----
+   Chrome cuts them natively with corner-shape, so borders and glows follow the cut (html.bevel).
+   Firefox and Safari clip the corners off instead, and a thin gradient line redraws the border along each cut. */
 :root { --wa-border-radius-scale: 0; }
+/* not inherited, so a card's edge colour doesn't leak into the buttons inside it */
+@property --cut { syntax: "*"; inherits: false; }
+@property --edge { syntax: "*"; inherits: false; }
+@property --edge-w { syntax: "*"; inherits: false; }
+@property --edge-tl { syntax: "*"; inherits: false; }
+@property --edge-tl-w { syntax: "*"; inherits: false; }
+
 wa-card, .result, .sheet-column, wa-dialog::part(dialog) { --cut: 18px; }
-.stat, .portrait { --cut: 10px; }
+.stat, .portrait, .portrait-frame::after { --cut: 10px; }
 wa-button::part(base), wa-input::part(base), wa-textarea::part(base), wa-select::part(combobox), wa-select::part(listbox), wa-radio, .wound { --cut: 7px; }
-@supports (corner-shape: bevel) {
-  wa-card, .result, .sheet-column, wa-dialog::part(dialog), .stat, .portrait,
-  wa-button::part(base), wa-input::part(base), wa-textarea::part(base), wa-select::part(combobox), wa-select::part(listbox), wa-radio, .wound {
-    border-radius: var(--cut) 0;
-    corner-shape: bevel;
-  }
+
+/* the border colour to redraw along each cut (transparent where there's no border) */
+wa-card, .result, .sheet-column, .stat { --edge: var(--wa-color-surface-border); }
+.stat { --edge-tl: color-mix(in srgb, var(--ncd-magenta) 70%, transparent); --edge-tl-w: 3px; }
+.portrait-frame::after { --edge: color-mix(in srgb, var(--ncd-cyan) 50%, transparent); }
+wa-input::part(base), wa-textarea::part(base), wa-select::part(combobox), wa-select::part(listbox), wa-radio { --edge: var(--wa-form-control-border-color); }
+wa-button::part(base), wa-dialog::part(dialog) { --edge: transparent; }
+wa-button[appearance~="outlined"]::part(base) { --edge: var(--wa-color-border-loud); }
+.pool wa-radio:state(checked) { --edge: var(--c); }
+.wound { --edge: color-mix(in srgb, var(--ncd-bad) 55%, transparent); --edge-w: 2px; }
+.wound.on { --edge: var(--ncd-bad); }
+
+.portrait-frame { display: block; position: relative; }
+
+html.bevel :is(wa-card, .result, .sheet-column, .stat, .portrait, .wound, wa-radio),
+html.bevel wa-dialog::part(dialog), html.bevel wa-button::part(base), html.bevel wa-input::part(base), html.bevel wa-textarea::part(base),
+html.bevel wa-select::part(combobox), html.bevel wa-select::part(listbox) {
+  border-radius: var(--cut) 0;
+  corner-shape: bevel;
 }
-@supports not (corner-shape: bevel) {
-  wa-card, .result, .sheet-column, wa-dialog::part(dialog), .stat, .portrait,
-  wa-button::part(base), wa-input::part(base), wa-textarea::part(base), wa-select::part(combobox), wa-select::part(listbox), wa-radio, .wound {
-    clip-path: polygon(var(--cut) 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%, 0 var(--cut));
-  }
+
+html:not(.bevel) :is(wa-card, .result, .sheet-column, .stat, .portrait, .wound, wa-radio),
+html:not(.bevel) wa-dialog::part(dialog), html:not(.bevel) wa-button::part(base), html:not(.bevel) wa-input::part(base),
+html:not(.bevel) wa-textarea::part(base), html:not(.bevel) wa-select::part(combobox), html:not(.bevel) wa-select::part(listbox) {
+  clip-path: polygon(var(--cut) 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%, 0 var(--cut));
 }
+/* the diagonal border lines: a corner-sized gradient at top left and bottom right, sitting just inside the cut */
+html:not(.bevel) :is(wa-card, .result, .sheet-column, .stat, .wound, wa-radio),
+html:not(.bevel) wa-button::part(base), html:not(.bevel) wa-input::part(base), html:not(.bevel) wa-textarea::part(base),
+html:not(.bevel) wa-select::part(combobox), html:not(.bevel) wa-select::part(listbox), html:not(.bevel) .portrait-frame::after {
+  --tl: var(--edge-tl, var(--edge, transparent));
+  --tl-w: var(--edge-tl-w, var(--edge-w, 1px));
+  --br: var(--edge, transparent);
+  --br-w: var(--edge-w, 1px);
+  background-image:
+    linear-gradient(135deg, transparent 50%, var(--tl) 50%, var(--tl) calc(50% + var(--tl-w)), transparent calc(50% + var(--tl-w))),
+    linear-gradient(-45deg, transparent 50%, var(--br) 50%, var(--br) calc(50% + var(--br-w)), transparent calc(50% + var(--br-w)));
+  background-size: var(--cut) var(--cut);
+  background-position: left top, right bottom;
+  background-repeat: no-repeat;
+  background-origin: border-box;
+}
+/* an <img> paints over its own background, so the portrait's lines go on top of it */
+html:not(.bevel) .portrait-frame::after { content: ""; position: absolute; inset: 0; pointer-events: none; }
+/* clipping cuts off box-shadow glows, so those move to a drop-shadow on an unclipped parent */
+html:not(.bevel) .roll-button::part(base), html:not(.bevel) .portrait { box-shadow: none; }
+html:not(.bevel) .roll-button { filter: drop-shadow(0 0 10px var(--ncd-glow)); }
+html:not(.bevel).wa-dark .portrait-frame { filter: drop-shadow(0 0 6px color-mix(in srgb, var(--ncd-cyan) 25%, transparent)); }
