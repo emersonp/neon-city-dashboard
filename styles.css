@@ -1,0 +1,133 @@
+/* Web Awesome default theme with a light cyberpunk accent: cyan brand (set on <html>),
+   magenta highlights, techy display fonts, a faint grid, and a glow on the Roll button. */
+
+:root {
+  --ncd-cyan: #00f0ff;
+  --ncd-magenta: #ff2bd6;
+  --ncd-yellow: #f5ff3b;
+  --ncd-grid: color-mix(in srgb, var(--wa-color-brand) 7%, transparent);
+  --ncd-glow: color-mix(in srgb, var(--ncd-cyan) 35%, transparent);
+
+  --wa-font-family-heading: "Orbitron", var(--wa-font-family-body);
+  --wa-font-family-code: "Share Tech Mono", ui-monospace, Consolas, monospace;
+}
+
+.wa-dark {
+  --ncd-grid: color-mix(in srgb, var(--ncd-cyan) 6%, transparent);
+  --ncd-glow: color-mix(in srgb, var(--ncd-cyan) 55%, transparent);
+  --wa-color-surface-default: #0d0c1a;
+  --wa-color-surface-raised: #15142a;
+  --wa-color-surface-lowered: #08070f;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Chakra Petch", var(--wa-font-family-body);
+  background-color: var(--wa-color-surface-default);
+  background-image:
+    radial-gradient(ellipse at 85% -10%, color-mix(in srgb, var(--ncd-magenta) 10%, transparent), transparent 55%),
+    radial-gradient(ellipse at 0% 110%, color-mix(in srgb, var(--ncd-cyan) 9%, transparent), transparent 50%),
+    linear-gradient(var(--ncd-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--ncd-grid) 1px, transparent 1px);
+  background-size: auto, auto, 32px 32px, 32px 32px;
+  background-attachment: fixed;
+}
+
+/* ---- top bar ---- */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--wa-space-m);
+  padding: var(--wa-space-m) var(--wa-space-l);
+  border-bottom: 1px solid transparent;
+  border-image: linear-gradient(90deg, var(--ncd-cyan), var(--ncd-magenta) 60%, transparent) 1;
+}
+
+.brand { display: flex; align-items: center; gap: var(--wa-space-s); min-width: 0; }
+.brand h1 {
+  margin: 0;
+  font-size: var(--wa-font-size-l);
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.brand h1 span { color: var(--ncd-magenta); font-weight: 600; }
+
+.icon .ink { fill: var(--ink); }
+.icon .paper { fill: var(--paper); }
+.icon .paper-stroke { stroke: var(--paper); }
+
+.brand-icon .icon {
+  width: 30px;
+  height: 30px;
+  --ink: var(--wa-color-brand);
+  --paper: var(--wa-color-surface-default);
+  filter: drop-shadow(0 0 6px var(--ncd-glow));
+}
+
+/* ---- layout ---- */
+main { max-width: 760px; margin: 0 auto; padding: var(--wa-space-l) var(--wa-space-m) var(--wa-space-3xl); }
+
+wa-tab::part(tab) {
+  font-family: "Orbitron", sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-size: var(--wa-font-size-s);
+}
+
+.roll-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--wa-space-m);
+  padding: var(--wa-space-2xl) 0 var(--wa-space-xl);
+}
+
+.roll-button {
+  min-width: 14rem;
+  font-family: "Orbitron", sans-serif;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+}
+.roll-button::part(base) {
+  box-shadow: 0 0 0 1px var(--ncd-glow), 0 0 22px var(--ncd-glow);
+  transition: box-shadow var(--wa-transition-normal);
+}
+.roll-button:hover::part(base) {
+  box-shadow: 0 0 0 1px var(--ncd-cyan), 0 0 34px var(--ncd-glow), 0 0 60px color-mix(in srgb, var(--ncd-magenta) 25%, transparent);
+}
+
+/* ---- style lab ---- */
+.lab { width: 100%; }
+.lab-header { display: flex; align-items: center; justify-content: space-between; gap: var(--wa-space-s); }
+.lab-header h2 { margin: 0; font-size: var(--wa-font-size-m); letter-spacing: 0.15em; text-transform: uppercase; }
+
+.lab wa-radio-group { margin-bottom: var(--wa-space-xs); }
+.lab wa-radio-group::part(form-control-input) { flex-wrap: wrap; gap: var(--wa-space-2xs); }
+
+.style-about {
+  margin: var(--wa-space-s) 0 var(--wa-space-l);
+  color: var(--wa-color-text-quiet);
+  font-size: var(--wa-font-size-s);
+  min-height: 2.6em;
+}
+
+.payload { margin-top: var(--wa-space-l); }
+.payload pre {
+  margin: 0;
+  max-height: 22rem;
+  overflow: auto;
+  font-family: var(--wa-font-family-code);
+  font-size: var(--wa-font-size-xs);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+@media (max-width: 480px) {
+  .topbar { padding-inline: var(--wa-space-m); }
+  .brand h1 { font-size: var(--wa-font-size-m); letter-spacing: 0.08em; }
+}

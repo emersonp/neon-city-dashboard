@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en" class="wa-theme-default wa-brand-cyan">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Neon City Dashboard</title>
+<link rel="icon" href="icons/advantage-die.svg" type="image/svg+xml">
+
+<!-- Pick the theme before anything paints so there's no light/dark flash. -->
+<script>
+  (function () {
+    let saved = null;
+    try { saved = localStorage.getItem("ncd.theme"); } catch {}
+    const dark = saved ? saved === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+    document.documentElement.classList.add(dark ? "wa-dark" : "wa-light");
+  })();
+</script>
+
+<link rel="stylesheet" href="https://ka-f.webawesome.com/webawesome@3.14.0/styles/webawesome.css">
+<script type="module" src="https://ka-f.webawesome.com/webawesome@3.14.0/webawesome.loader.js"></script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&family=Orbitron:wght@600;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-icon" id="brand-icon"></span>
+      <h1>Neon City <span>Dashboard</span></h1>
+    </div>
+    <wa-button id="theme-toggle" appearance="plain" size="s" title="Toggle light/dark">
+      <wa-icon name="moon" label="Toggle light/dark"></wa-icon>
+    </wa-button>
+  </header>
+
+  <main>
+    <wa-tab-group id="tabs">
+      <wa-tab panel="dice">Dice</wa-tab>
+      <wa-tab panel="roster">Roster</wa-tab>
+      <wa-tab panel="settings">Settings</wa-tab>
+
+      <wa-tab-panel name="dice">
+        <section class="roll-zone">
+          <wa-button id="roll" variant="brand" size="xl" class="roll-button">
+            <wa-icon slot="start" name="dice-d20"></wa-icon>
+            Roll
+          </wa-button>
+          <wa-button id="roll-all" appearance="outlined" size="s">
+            <wa-icon slot="start" name="layer-group"></wa-icon>
+            Send one of every style
+          </wa-button>
+        </section>
+
+        <wa-card class="lab">
+          <div slot="header" class="lab-header">
+            <h2>Discord style lab</h2>
+            <wa-badge variant="neutral" appearance="outlined">sample rolls</wa-badge>
+          </div>
+
+          <wa-radio-group id="style" label="Message style" orientation="horizontal" value="markdown">
+            <!-- filled in from NCD_DISCORD.STYLES -->
+          </wa-radio-group>
+          <p class="style-about" id="style-about"></p>
+
+          <wa-switch id="custom-name">Post as “Neon City Dashboard” instead of the webhook’s own name</wa-switch>
+
+          <wa-details summary="Payload preview" appearance="filled" class="payload">
+            <pre id="payload"></pre>
+          </wa-details>
+        </wa-card>
+      </wa-tab-panel>
+
+      <wa-tab-panel name="roster"></wa-tab-panel>
+      <wa-tab-panel name="settings"></wa-tab-panel>
+    </wa-tab-group>
+  </main>
+
+  <wa-toast id="toast" placement="bottom-center"></wa-toast>
+
+  <script src="config.js" onerror="window.NCD_CONFIG = window.NCD_CONFIG || {}"></script>
+  <script src="icons.js"></script>
+  <script src="discord.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
