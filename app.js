@@ -1,7 +1,7 @@
 // Page wiring: theme toggle, tabs, the dice roller, and posting rolls to Discord.
 (function () {
   const DICE = window.NCD_DICE;
-  const { buildMessage, send } = window.NCD_DISCORD;
+  const { buildMessage, influenceMessage, send } = window.NCD_DISCORD;
   const { svg: icon } = window.NCD_ICONS;
   const $ = (id) => document.getElementById(id);
 
@@ -141,27 +141,36 @@
   // ---- Discord ----
   // Luck and the posting name come from the character open in the Character tab (roster.js).
   // The GM posts as Administrator; with no character open, Luck is left out.
+  const activeCharacter = () => window.NCD_ACTIVE_CHARACTER?.();
+  function postingName() {
+    const handle = String(activeCharacter()?.handle ?? "").trim();
+    return isGM() ? "Administrator" : handle || "Neon City Dashboard";
+  }
   function messageFor(r, skill) {
-    const character = window.NCD_ACTIVE_CHARACTER?.();
-    const handle = String(character?.handle ?? "").trim();
+    const character = activeCharacter();
     return buildMessage(r, playerName(), {
       skill,
       luck: isGM() || !character ? null : window.NCD_CHARACTERS.luck(character).current,
       emoji: window.NCD_CONFIG?.emoji,
-      username: isGM() ? "Administrator" : handle || "Neon City Dashboard",
+      username: postingName(),
     });
   }
 
-  async function postToDiscord(r, skill) {
+  async function post(payload, what) {
     const url = webhookUrl();
-    if (!url) { toast("Rolled, but no webhook is set. Copy config.example.js to config.js and add one.", "warning"); return; }
+    if (!url) { toast(`${what}, but no webhook is set. Copy config.example.js to config.js and add one.`, "warning"); return; }
     try {
-      await send(url, messageFor(r, skill));
+      await send(url, payload);
     } catch (err) {
       console.error(err);
       toast(`Discord: ${err.message}`, "danger");
     }
   }
+  const postToDiscord = (r, skill) => post(messageFor(r, skill), "Rolled");
+  // delta is +1 (gained) or -1 (spent).
+  const postInfluence = (delta) => post(
+    influenceMessage(playerName(), delta, { emoji: window.NCD_CONFIG?.emoji, username: postingName() }),
+    "Influence changed");
 
   // ---- rolling ----
   let rolling = false;
@@ -195,5 +204,5 @@
   });
 
   // For the character tab's skill rolls (roster.js).
-  window.NCD_ROLLER = { fillPool, targetField, spin, showResult, postToDiscord };
+  window.NCD_ROLLER = { fillPool, targetField, spin, showResult, postToDiscord, postInfluence };
 })();

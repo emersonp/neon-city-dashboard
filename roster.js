@@ -185,12 +185,16 @@
   currentInfluence.addEventListener("click", (e) => {
     const step = Number(e.target.closest("[data-influence]")?.dataset.influence);
     if (!step || state !== "running") return;
+    const before = C.influence(current).current;
+    const after = C.clampInfluence(before + step);
+    if (after === before) return;
     try {
-      current = C.save(storage, { ...current, currentInfluence: C.clampInfluence(C.influence(current).current + step) });
+      current = C.save(storage, { ...current, currentInfluence: after });
     } catch (err) {
       console.error(err);
     }
     renderFields();
+    window.NCD_ROLLER.postInfluence(after - before); // only while running; changes in Edit aren't posted
   });
 
   $("character-edit").addEventListener("click", () => { state = "editing"; render(); });

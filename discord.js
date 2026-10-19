@@ -5,11 +5,14 @@
 // Plain script (no modules) so the page also works when opened straight from disk.
 (function (root) {
   const COLORS = { success: 0x3dffb0, failure: 0xff3b5c, none: 0x00f0ff };
+  const NO_PINGS = { parse: [] };
   const WORDS = ["no", "one", "two", "three", "four", "five"];
   const count = (n, one, many = one + "s") => `${WORDS[n] ?? n} ${n === 1 ? one : many}`;
   const outcomeOf = (r) => (r.success == null ? "none" : r.success ? "success" : "failure");
 
-  // emoji: { boon: "<:ncd_boon:123>", drawback: "<:ncd_drawback:456>" }, both or neither.
+  // emoji: { boon: "<:ncd_boon:123>", drawback: "<:ncd_drawback:456>" }, both or neither,
+  // plus an optional influence: "<:ncd_influence:789>".
+  // Player names and handles are typed in by hand, so messages never ping anyone (no @everyone).
   const hasEmoji = (emoji) => Boolean(emoji?.boon && emoji?.drawback);
 
   // Leftover symbols after Boons and Drawbacks cancel.
@@ -44,6 +47,7 @@
     const l = lines(r, player, emoji, luck, skill);
     return {
       ...(username && { username }),
+      allowed_mentions: NO_PINGS,
       flags: 1 << 15, // IS_COMPONENTS_V2
       components: [{
         type: 17, // container
@@ -56,6 +60,16 @@
           ] : []),
         ],
       }],
+    };
+  }
+
+  // A plain one-line message for spending or gaining Influence while running a character.
+  function influenceMessage(player, delta, { emoji, username } = {}) {
+    const icon = emoji?.influence ? ` ${emoji.influence}` : "";
+    return {
+      ...(username && { username }),
+      allowed_mentions: NO_PINGS,
+      content: `${player} ${delta > 0 ? "gained" : "spent"} an Influence.${icon}`,
     };
   }
 
@@ -75,5 +89,5 @@
     return res.json();
   }
 
-  root.NCD_DISCORD = { COLORS, lines, buildMessage, send };
+  root.NCD_DISCORD = { COLORS, lines, buildMessage, influenceMessage, send };
 })(globalThis);

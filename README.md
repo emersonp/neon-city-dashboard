@@ -68,14 +68,18 @@ Drawback that came up, before cancelling, and is left out when none did. A GM ro
 Skill rolls from a running character (Character tab → **Run**, then click a skill) name the skill:
 `Parker rolled *Shoot Someone* against 75 and got a` (the skill in italics). The roll dialog starts at the skill's value and intrinsic dice.
 
-### Inline Boon / Drawback icons
+Changing Influence with the −1 / +1 buttons while running posts a one-line message, like
+`Parker gained an Influence.` or `Parker spent an Influence.`, followed by the Influence emoji if one is set.
+Changes made in Edit aren't posted. No message ever pings anyone.
+
+### Inline Boon / Drawback / Influence icons
 
 The icons are custom server emoji, which is the only way to put an image inline in a Discord message.
 
-1. Have a Boon and a Drawback emoji on the server. Any names work; `emoji/` has PNGs to upload
+1. Have Boon, Drawback, and Influence emoji on the server. Any names work; `emoji/` has PNGs to upload
    (**Server Settings → Emoji → Upload Emoji**) if you need them.
-2. In any channel, send the emoji names with a backslash, like `\:boon:` and `\:drawback:`.
+2. In any channel, send the emoji names with a backslash, like `\:boon:`, `\:drawback:`, and `\:influence:`.
    Discord replies with codes like `<:boon:1234567890>`.
 3. Paste those codes into `emoji` in `config.js`.
 
-Until then, messages use words ("with two boons").
+Until then, messages use words ("with two boons"), and Influence messages have no icon.

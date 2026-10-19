@@ -85,3 +85,18 @@ test("a skill roll names the skill, in italics, in the intro", () => {
   const m = buildMessage(r, "Parker", { luck: 50, skill: "Shoot Someone" });
   assert.match(m.components[0].components[0].content, /^-# Parker rolled \*Shoot Someone\* against 65 and got a\n/);
 });
+
+test("influence message: gained or spent, with the icon when configured", () => {
+  const { influenceMessage } = globalThis.NCD_DISCORD;
+  assert.deepEqual(influenceMessage("Parker", 1, { username: "NullJack" }), {
+    username: "NullJack",
+    allowed_mentions: { parse: [] },
+    content: "Parker gained an Influence.",
+  });
+  assert.equal(influenceMessage("Parker", -1, { emoji: { influence: "<:influence:9>" } }).content, "Parker spent an Influence. <:influence:9>");
+});
+
+test("messages never ping anyone", () => {
+  const r = roll({ target: 50 }, seq(2, 4));
+  assert.deepEqual(buildMessage(r, "@everyone").allowed_mentions, { parse: [] });
+});
