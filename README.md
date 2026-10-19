@@ -54,17 +54,18 @@ Every roll posts one message built from Discord's layout components: a container
 green for success, red for failure, and cyan when there's no target, holding three lines:
 
 ```
--# Parker rolled against 45 and got
+-# Parker rolled against 45 and got a
 ## Success! 32 · [boon]
 -# Luck: 50 · Rolled: [boon][boon][drawback]
 ```
 
-The player name comes from **Settings** ("Player" if blank). The footer shows Luck (hardcoded to 50 until the
-Roster tab exists), except for the **Administrator (GM)**, whose rolls leave it out. `Rolled:` lists every Boon and
+The player name comes from **Settings** ("Player" if blank). The footer shows the Current Luck of the character
+open in the Character tab (none if no character is open), except for the **Administrator (GM)**, whose rolls leave it
+out. With the custom-name switch on, messages post as that character's handle, or as "Administrator" for the GM. `Rolled:` lists every Boon and
 Drawback that came up, before cancelling, and is left out when none did. A GM roll with no symbols has no footer.
 
 Skill rolls from a running character (Character tab → **Run**, then click a skill) name the skill:
-`Parker rolled Shoot Someone against 75 and got`. The roll dialog starts at the skill's value and intrinsic dice.
+`Parker rolled Shoot Someone against 75 and got a`. The roll dialog starts at the skill's value and intrinsic dice.
 
 ### Inline Boon / Drawback icons
 

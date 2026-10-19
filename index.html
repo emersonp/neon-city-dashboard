@@ -70,7 +70,7 @@
 
           <wa-card class="discord-card">
             <div slot="header" class="card-header"><h2>Discord</h2></div>
-            <wa-switch id="custom-name">Post as “Neon City Dashboard” instead of the webhook’s own name</wa-switch>
+            <wa-switch id="custom-name">Post as the open character’s handle (“Administrator” for the GM) instead of the webhook’s own name</wa-switch>
             <wa-details summary="Message preview" appearance="filled" class="payload">
               <pre id="payload"></pre>
             </wa-details>
@@ -136,14 +136,22 @@
 
       <wa-tab-panel name="character">
         <wa-card class="character-card">
+          <!-- Shown in Display and Running -->
+          <dl id="character-fields" class="character-fields">
+            <dt>Handle</dt><dd data-field="handle"></dd>
+            <dt>Name</dt><dd data-field="name"></dd>
+            <dt>Archetype</dt><dd data-field="archetype"></dd>
+            <dt>Origin</dt><dd data-field="origin"></dd>
+            <dt>Max Luck</dt><dd data-field="maxLuck"></dd>
+            <dt>Current Luck</dt>
+            <dd>
+              <span data-field="currentLuck"></span>
+              <wa-input id="current-luck" type="number" size="s" min="0" aria-label="Current Luck" hidden></wa-input>
+            </dd>
+          </dl>
+
           <!-- Display -->
           <div id="character-display">
-            <dl class="character-fields">
-              <dt>Handle</dt><dd data-field="handle"></dd>
-              <dt>Name</dt><dd data-field="name"></dd>
-              <dt>Archetype</dt><dd data-field="archetype"></dd>
-              <dt>Origin</dt><dd data-field="origin"></dd>
-            </dl>
             <div id="skills-display" class="skills"></div>
             <div class="character-actions">
               <wa-button id="character-edit" appearance="outlined">
@@ -182,6 +190,10 @@
             </wa-input>
             <wa-select name="archetype" label="Archetype"></wa-select>
             <wa-select name="origin" label="Origin"></wa-select>
+            <div class="luck-fields">
+              <wa-input name="maxLuck" label="Max Luck" type="number" min="0"></wa-input>
+              <wa-input name="currentLuck" label="Current Luck" type="number" min="0"></wa-input>
+            </div>
             <div id="skills-edit" class="skills editing"></div>
             <wa-button type="submit" variant="brand">
               <wa-icon slot="start" name="floppy-disk"></wa-icon>

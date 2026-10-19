@@ -4,7 +4,6 @@
   const { buildMessage, send } = window.NCD_DISCORD;
   const { svg: icon } = window.NCD_ICONS;
   const $ = (id) => document.getElementById(id);
-  const LUCK = 50; // until the Roster tab exists
 
   // localStorage can be missing or throw (private windows, blocked storage); never let that break the page.
   const store = {
@@ -142,12 +141,18 @@
   // ---- Discord ----
   const customName = $("custom-name");
   if (store.get("customName") === "1") customName.setAttribute("checked", "");
-  const messageFor = (r, skill) => buildMessage(r, playerName(), {
-    skill,
-    luck: isGM() ? null : LUCK,
-    emoji: window.NCD_CONFIG?.emoji,
-    username: customName.checked ? "Neon City Dashboard" : undefined,
-  });
+  // Luck and the posting name come from the character open in the Character tab (roster.js).
+  // With no character open, Luck is left out and the webhook's own name is used.
+  function messageFor(r, skill) {
+    const character = window.NCD_ACTIVE_CHARACTER?.();
+    const handle = String(character?.handle ?? "").trim();
+    return buildMessage(r, playerName(), {
+      skill,
+      luck: isGM() || !character ? null : window.NCD_CHARACTERS.luck(character).current,
+      emoji: window.NCD_CONFIG?.emoji,
+      username: customName.checked ? (isGM() ? "Administrator" : handle || undefined) : undefined,
+    });
+  }
 
   function renderPreview() {
     // Before the first roll, preview an example so there's something to look at.
@@ -202,5 +207,5 @@
   renderPreview();
 
   // For the character tab's skill rolls (roster.js).
-  window.NCD_ROLLER = { fillPool, targetField, spin, showResult, postToDiscord };
+  window.NCD_ROLLER = { fillPool, targetField, spin, showResult, postToDiscord, renderPreview };
 })();

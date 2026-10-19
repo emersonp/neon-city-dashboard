@@ -306,16 +306,26 @@ wa-tab[hidden] { display: none; }
 .skill-dice .icon { width: 18px; height: 18px; }
 .skill-controls { display: flex; align-items: center; justify-content: flex-end; gap: var(--wa-space-xs); }
 .skill-controls wa-input { width: 6.5rem; }
+/* fixed slots: value | Set to 55 or +5 | Remove */
+.skills.editing .skill-controls { display: grid; grid-template-columns: 5.75rem 5.25rem 4.75rem; gap: var(--wa-space-2xs); }
+.skills.editing .skill-controls wa-input { width: 5.75rem; }
+.skills.editing .skill-controls > .skill-value { justify-self: end; padding-right: var(--wa-space-s); }
+.skills.editing .skill-controls > wa-button { width: 100%; }
+.luck-fields { display: flex; flex-wrap: wrap; gap: var(--wa-space-l); }
+.luck-fields wa-input { width: 10rem; }
+#current-luck { width: 7rem; }
+.character-fields[hidden], .character-fields [hidden] { display: none; }
 
 /* editing rows: name | controls | a fixed-width dice button, so the controls line up */
-.skills.editing li { display: grid; grid-template-columns: minmax(0, 1fr) auto 4.5rem; }
+.skills.editing li { display: grid; grid-template-columns: minmax(0, 1fr) auto 3.5rem; }
 .skills.editing li > wa-button[data-action="dice"] { justify-self: end; }
-.skills.editing li > wa-button[data-action="dice"] .skill-dice { flex-wrap: wrap; justify-content: flex-end; max-width: 4.25rem; }
+.skills.editing li > wa-button[data-action="dice"] .skill-dice { flex-wrap: wrap; justify-content: flex-end; max-width: 3.5rem; }
 .skills.editing .skill-dice .icon { width: 13px; height: 13px; }
 @media (max-width: 480px) {
   .skills.editing li { grid-template-columns: minmax(0, 1fr) 4.5rem; padding: var(--wa-space-xs) 0; }
   .skills.editing .skill-name { grid-column: 1 / -1; }
-  .skills.editing .skill-controls { justify-content: flex-start; }
+  .skills.editing .skill-controls { justify-content: flex-start; grid-template-columns: 5.75rem 5.5rem 5rem; }
+  .skills.editing .skill-controls wa-input { width: 5.75rem; }
 }
 
 a.skill-name { color: var(--wa-color-brand); text-decoration: none; }

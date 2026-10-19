@@ -131,3 +131,26 @@ test("skills that are back to default are dropped from storage", () => {
 test("new characters start with no skills set", () => {
   assert.deepEqual(C.newCharacter().skills, {});
 });
+
+// ---- luck ----
+
+test("new characters start with full luck", () => {
+  const c = C.newCharacter();
+  assert.equal(c.maxLuck, 100);
+  assert.equal(c.currentLuck, 100);
+});
+
+test("older saves without luck start full", () => {
+  assert.deepEqual(C.luck({}), { max: 100, current: 100 });
+  assert.deepEqual(C.luck({ maxLuck: 80 }), { max: 80, current: 80 });
+  assert.deepEqual(C.luck({ maxLuck: 80, currentLuck: 30 }), { max: 80, current: 30 });
+});
+
+test("current luck stays between 0 and max", () => {
+  assert.equal(C.clampCurrentLuck(120, 90), 90);
+  assert.equal(C.clampCurrentLuck(-5, 90), 0);
+  assert.equal(C.clampCurrentLuck("42", 90), 42);
+  assert.equal(C.clampCurrentLuck("", 90), 90);
+  assert.equal(C.clampMaxLuck(-3), 0);
+  assert.equal(C.clampMaxLuck("abc"), 100);
+});

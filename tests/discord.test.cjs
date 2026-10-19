@@ -12,7 +12,7 @@ const EMOJI = { boon: "<:ncd_boon:1>", drawback: "<:ncd_drawback:2>" };
 test("words when no emoji are configured", () => {
   const r = roll({ target: 45, advantage: 2, challenge: 1 }, seq(3, 2, 0, 2, 7));
   assert.deepEqual(lines(r, "Parker", undefined, 50), {
-    intro: "Parker rolled against 45 and got",
+    intro: "Parker rolled against 45 and got a",
     result: "Success! 32 with two boons",
     detail: "Luck: 50 · Rolled: two boons",
   });
@@ -28,7 +28,7 @@ test("inline emoji for leftover symbols and each pool die", () => {
 test("cancelled symbols and no target", () => {
   const r = roll({ advantage: 1, challenge: 1 }, seq(0, 0, 0, 0));
   assert.equal(lines(r, "Parker", EMOJI, 50).result, "100 · all symbols cancelled");
-  assert.equal(lines(r, "Parker", undefined, 50).intro, "Parker rolled and got");
+  assert.equal(lines(r, "Parker", undefined, 50).intro, "Parker rolled and got a");
   assert.equal(lines(r, "Parker", EMOJI, 50).detail, "Luck: 50 · Rolled: <:ncd_boon:1> <:ncd_drawback:2>");
 });
 
@@ -62,7 +62,7 @@ test("message is a components container colored by outcome", () => {
   assert.equal(m.username, "Neon City Dashboard");
   assert.equal(m.components[0].type, 17);
   assert.equal(m.components[0].accent_color, 0xff3b5c);
-  assert.equal(m.components[0].components[0].content, "-# Parker rolled against 10 and got\n## Failure. 55");
+  assert.equal(m.components[0].components[0].content, "-# Parker rolled against 10 and got a\n## Failure. 55");
 });
 
 test("GM rolls (no luck) leave Luck out of the footer", () => {
@@ -74,14 +74,14 @@ test("GM roll with no symbols has no footer at all", () => {
   const r = roll({ target: 50, advantage: 1 }, seq(2, 4, 1));
   const parts = buildMessage(r, "The GM", { emoji: EMOJI, luck: null }).components[0].components;
   assert.equal(parts.length, 1);
-  assert.equal(parts[0].content, "-# The GM rolled against 50 and got\n## Success! 24");
+  assert.equal(parts[0].content, "-# The GM rolled against 50 and got a\n## Success! 24");
 });
 
 test("a skill roll names the skill in the intro", () => {
   const r = roll({ target: 65, advantage: 0 }, seq(2, 4));
-  assert.equal(lines(r, "Parker", EMOJI, 50, "Shoot Someone").intro, "Parker rolled Shoot Someone against 65 and got");
+  assert.equal(lines(r, "Parker", EMOJI, 50, "Shoot Someone").intro, "Parker rolled Shoot Someone against 65 and got a");
   const untargeted = roll({}, seq(2, 4));
-  assert.equal(lines(untargeted, "Parker", EMOJI, 50, "Anything else").intro, "Parker rolled Anything else and got");
+  assert.equal(lines(untargeted, "Parker", EMOJI, 50, "Anything else").intro, "Parker rolled Anything else and got a");
   const m = buildMessage(r, "Parker", { luck: 50, skill: "Shoot Someone" });
-  assert.match(m.components[0].components[0].content, /^-# Parker rolled Shoot Someone against 65 and got\n/);
+  assert.match(m.components[0].components[0].content, /^-# Parker rolled Shoot Someone against 65 and got a\n/);
 });

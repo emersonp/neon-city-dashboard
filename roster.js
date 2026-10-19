@@ -13,6 +13,8 @@
   const rows = $("roster-rows");
   const display = $("character-display");
   const running = $("character-running");
+  const fields = $("character-fields");
+  const currentLuck = $("current-luck");
   const form = $("character-form");
   const field = (name) => form.querySelector(`[name="${name}"]`);
 
@@ -89,17 +91,46 @@
     display.hidden = state !== "display";
     form.hidden = state !== "editing";
     running.hidden = state !== "running";
-    if (state === "display") {
-      for (const dd of display.querySelectorAll("[data-field]")) dd.textContent = current[dd.dataset.field] || "—";
-      renderSkillsDisplay($("skills-display"));
-    } else if (state === "running") {
-      renderSkillsDisplay($("skills-run"), { links: true });
-    } else if (state === "editing") {
+    fields.hidden = state === "editing";
+    if (state === "editing") {
       draft = { skills: { ...(current.skills ?? {}) } };
       for (const name of ["handle", "name", "archetype", "origin"]) field(name).value = current[name] ?? "";
+      const luck = C.luck(current);
+      field("maxLuck").value = String(luck.max);
+      field("currentLuck").value = String(luck.current);
       renderSkillsEdit();
+    } else {
+      renderFields();
+      if (state === "display") renderSkillsDisplay($("skills-display"));
+      else renderSkillsDisplay($("skills-run"), { links: true });
     }
+    window.NCD_ROLLER.renderPreview(); // the Discord preview uses this character's handle and luck
   }
+
+  // Handle, name, etc. Current Luck can be changed while running, and is saved right away.
+  function renderFields() {
+    const luck = C.luck(current);
+    const values = { ...current, maxLuck: luck.max, currentLuck: luck.current };
+    for (const dd of fields.querySelectorAll("[data-field]")) {
+      const v = values[dd.dataset.field];
+      dd.textContent = v == null || v === "" ? "—" : v;
+    }
+    const editable = state === "running";
+    fields.querySelector('[data-field="currentLuck"]').hidden = editable;
+    currentLuck.hidden = !editable;
+    currentLuck.max = luck.max;
+    currentLuck.value = String(luck.current);
+  }
+  currentLuck.addEventListener("change", () => {
+    const value = C.clampCurrentLuck(currentLuck.value, C.luck(current).max);
+    try {
+      current = C.save(storage, { ...current, currentLuck: value });
+    } catch (err) {
+      console.error(err);
+    }
+    renderFields();
+    window.NCD_ROLLER.renderPreview();
+  });
 
   $("character-edit").addEventListener("click", () => { state = "editing"; render(); });
   $("character-run").addEventListener("click", () => { state = "running"; render(); });
@@ -134,14 +165,16 @@
   }
 
   // Editing: every skill, with set / +5 / Set to 55 / Remove, and a button for intrinsic dice.
+  // The controls sit in fixed slots (value, Set to 55 or +5, Remove) so buttons don't move as the value changes.
   function editRow(sk, st) {
     const controls = st.value == null
       ? `<span class="skill-value untrained">${C.UNTRAINED}%</span>
-         <wa-button size="s" appearance="outlined" data-action="set-min">Set to ${C.MIN_VALUE}</wa-button>`
+         <wa-button size="s" appearance="outlined" data-action="set-min">Set to ${C.MIN_VALUE}</wa-button>
+         <span></span>`
       : `<wa-input type="number" size="s" min="${C.MIN_VALUE}" max="${C.MAX_VALUE}" value="${st.value}" data-action="value"
            aria-label="${escapeHTML(sk.name)} %"><span slot="end">%</span></wa-input>
          <wa-button size="s" appearance="outlined" data-action="increment" ${st.value >= C.MAX_VALUE ? "disabled" : ""}>+5</wa-button>
-         ${st.value === C.MIN_VALUE ? `<wa-button size="s" appearance="plain" variant="danger" data-action="remove">Remove</wa-button>` : ""}`;
+         ${st.value === C.MIN_VALUE ? `<wa-button size="s" appearance="plain" variant="danger" data-action="remove">Remove</wa-button>` : "<span></span>"}`;
     return `<li data-skill="${sk.id}">
         <span class="skill-name">${escapeHTML(sk.name)}</span>
         <span class="skill-controls">${controls}</span>
@@ -274,6 +307,8 @@
     e.preventDefault();
     const edited = { ...current };
     for (const name of ["handle", "name", "archetype", "origin"]) edited[name] = String(field(name).value ?? "").trim();
+    edited.maxLuck = C.clampMaxLuck(field("maxLuck").value);
+    edited.currentLuck = C.clampCurrentLuck(field("currentLuck").value, edited.maxLuck);
     edited.skills = draft.skills;
     try {
       current = C.save(storage, edited);
@@ -287,6 +322,9 @@
     render();
     renderRoster();
   });
+
+  // For the Discord message: the character open in the Character tab, if any.
+  window.NCD_ACTIVE_CHARACTER = () => current;
 
   // ---- start up: reopen the last saved character, if any ----
   renderRoster();

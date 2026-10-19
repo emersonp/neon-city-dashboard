@@ -48,6 +48,17 @@
     return { ...character, skills };
   }
 
+  // ---- luck: current is kept between 0 and max ----
+  const DEFAULT_LUCK = 100;
+  const toInt = (v) => (v === "" || v == null || !Number.isFinite(Number(v)) ? null : Math.round(Number(v)));
+  const clampMaxLuck = (v) => Math.max(0, toInt(v) ?? DEFAULT_LUCK);
+  const clampCurrentLuck = (v, max) => Math.max(0, Math.min(max, toInt(v) ?? max));
+  // Older saves have no luck yet; they start full.
+  function luck(character) {
+    const max = clampMaxLuck(character?.maxLuck);
+    return { max, current: clampCurrentLuck(character?.currentLuck, max) };
+  }
+
   const pick = (list, rng = Math.random) => list[Math.floor(rng() * list.length)];
 
   // ---- hacker handles ----
@@ -104,6 +115,8 @@
       name: randomName(),
       archetype: "Assassin",
       origin: "Cybernetic",
+      maxLuck: DEFAULT_LUCK,
+      currentLuck: DEFAULT_LUCK,
       skills: {},
       createdAt: now,
       updatedAt: now,
@@ -140,5 +153,6 @@
     ARCHETYPES, ORIGINS, CULTURES, SKILLS, UNTRAINED, MIN_VALUE, MAX_VALUE, MAX_DICE,
     randomHandle, randomName, newCharacter, label, load, save, toExport,
     skill, shownValue, isNotable, clampValue, increment, withSkill,
+    DEFAULT_LUCK, luck, clampMaxLuck, clampCurrentLuck,
   };
 })(globalThis);
