@@ -433,7 +433,8 @@ wa-tab[hidden] { display: none; }
 .sheet-head:not([data-state="running"]) .luck-steps [data-field] { min-width: 0; text-align: left; }
 .sheet-head[data-state="running"] .luck-steps [data-field="currentLuck"] { flex: 1; }
 .luck-steps .stat-icon { margin-left: auto; }
-.luck-steps wa-button { font-family: var(--wa-font-family-body); }
+/* the buttons keep their size; the value between them gives way */
+.luck-steps wa-button { flex: none; font-family: var(--wa-font-family-body); }
 .luck-steps wa-button::part(base) { padding-inline: var(--wa-space-xs); }
 /* on phones the luck controls get the whole row while running */
 @media (max-width: 480px) {
