@@ -194,16 +194,17 @@
             <span class="skill-value${st.value == null ? " untrained" : ""}">${C.shownValue(st.value)}%</span></li>`;
         }).join("")}</ul></section></div>`;
 
+    // The option comes first: it decides how many augmentations to pick (Chop Shop takes two).
     body.innerHTML = `${originCards}
-      <section class="create-augs">
-        <h3 class="create-heading">Augmentation <span class="create-hint">${max > 1 ? `Choose ${max} different` : "Choose 1"}</span></h3>
-        <div class="create-cards create-perk-cards" role="group" aria-label="Starting augmentation">${augs}</div>
-      </section>
       <section class="create-option">
         <h3 class="create-heading">Origin Option <span class="create-hint">Optional</span></h3>
         ${options}
         ${places || optionBumps ? `<div class="create-placements">${places}</div>${optionBumps}` : ""}
         ${preview}
+      </section>
+      <section class="create-augs">
+        <h3 class="create-heading">Augmentation <span class="create-hint">${max > 1 ? `Choose ${max} different` : "Choose 1"}</span></h3>
+        <div class="create-cards create-perk-cards" role="group" aria-label="Starting augmentation">${augs}</div>
       </section>`;
     wireOrigin(body);
   }
