@@ -19,13 +19,13 @@
 
   document.querySelectorAll("[data-icon]").forEach((el) => { el.innerHTML = icon(el.dataset.icon); });
 
-  // Every dice pool on the page (data-pool="adv" or "chal") gets its label and 0-4 button choices.
+  // Every dice pool on the page (data-pool="adv" or "chal") gets its label and 0-4 button choices (data-max caps a group lower).
   document.querySelectorAll("[data-pool]").forEach((group) => {
     const kind = KINDS[group.dataset.pool];
     const label = Object.assign(document.createElement("span"), { slot: "label", className: "pool-label" });
     label.innerHTML = icon(kind.die) + kind.label;
     group.append(label);
-    for (let n = 0; n <= DICE.MAX_POOL; n++) {
+    for (let n = 0; n <= Number(group.dataset.max ?? DICE.MAX_POOL); n++) {
       const radio = document.createElement("wa-radio");
       radio.value = String(n);
       radio.setAttribute("appearance", "button");

@@ -140,7 +140,13 @@ test("withSkill updates one skill without touching the original", () => {
   assert.deepEqual(next.skills["run-like-hell"], { value: null, adv: 1, chal: 0 });
   assert.equal(c.skills["run-like-hell"].value, 60);
   const dice = C.withSkill({}, "heal-someone", { adv: 9, chal: -1 });
-  assert.deepEqual(dice.skills["heal-someone"], { value: null, adv: 4, chal: 0 });
+  assert.deepEqual(dice.skills["heal-someone"], { value: null, adv: 2, chal: 0 });
+});
+
+test("intrinsic dice go up to 2 of each, and older saves read back clamped", () => {
+  assert.equal(C.MAX_INTRINSIC, 2);
+  assert.deepEqual(C.skill({ skills: { "sneak-around": { value: 60, adv: 4, chal: 3 } } }, "sneak-around"),
+    { value: 60, adv: 2, chal: 2 });
 });
 
 test("skills that are back to default are dropped from storage", () => {

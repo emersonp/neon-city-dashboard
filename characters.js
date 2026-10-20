@@ -1,7 +1,6 @@
 // Characters: rulebook lists, random handles and names, and saving to localStorage.
-// No page code here, so it can be tested in Node. Needs dice.js (for the dice pool limits).
+// No page code here, so it can be tested in Node.
 (function (root) {
-  const { clampPool } = root.NCD_DICE;
   const ARCHETYPES = ["Assassin", "Bruiser", "Doc", "Gearhead", "Grifter", "Hacker", "Mastermind", "Merc", "Operator", "Thief"];
   const ORIGINS = ["Cybernetic", "Gene-Spliced", "Psionic", "Synthetic"];
   const KEY = "ncd.characters";
@@ -28,10 +27,14 @@
   const toInt = (v) => (v === "" || v == null || !Number.isFinite(Number(v)) ? null : Math.round(Number(v)));
   const clampInt = (v, { min = 0, max = Infinity, fallback = min } = {}) => Math.max(min, Math.min(max, toInt(v) ?? fallback));
 
-  // A skill's stored state: value is null (untrained) or 55-95; adv/chal are intrinsic dice, 0-4.
+  // The sheet gives a skill at most 2 of each intrinsic die (rolling pools still go to 4).
+  const MAX_INTRINSIC = 2;
+  const clampIntrinsic = (n) => clampInt(n, { max: MAX_INTRINSIC, fallback: 0 });
+
+  // A skill's stored state: value is null (untrained) or 55-95; adv/chal are intrinsic dice, 0-2.
   function skill(character, id) {
     const s = character?.skills?.[id] ?? {};
-    return { value: s.value ?? null, adv: s.adv ?? 0, chal: s.chal ?? 0 };
+    return { value: s.value ?? null, adv: clampIntrinsic(s.adv), chal: clampIntrinsic(s.chal) };
   }
   const shownValue = (value) => value ?? UNTRAINED;
   const isNotable = (s) => s.value != null || s.adv > 0 || s.chal > 0;
@@ -42,8 +45,8 @@
   // Returns a copy of the character with one skill changed. Skills back at the default are dropped.
   function withSkill(character, id, changes) {
     const next = { ...skill(character, id), ...changes };
-    next.adv = clampPool(next.adv);
-    next.chal = clampPool(next.chal);
+    next.adv = clampIntrinsic(next.adv);
+    next.chal = clampIntrinsic(next.chal);
     const skills = { ...(character?.skills ?? {}) };
     if (isNotable(next)) skills[id] = next; else delete skills[id];
     return { ...character, skills };
@@ -264,7 +267,7 @@
   }
 
   root.NCD_CHARACTERS = {
-    ARCHETYPES, ORIGINS, CULTURES, SKILLS, UNTRAINED, MIN_VALUE, MAX_VALUE,
+    ARCHETYPES, ORIGINS, CULTURES, SKILLS, UNTRAINED, MIN_VALUE, MAX_VALUE, MAX_INTRINSIC,
     randomHandle, randomName, newCharacter, label, load, save, toExport,
     skill, shownValue, isNotable, clampValue, increment, withSkill,
     DEFAULT_LUCK, luck, clampMaxLuck, clampCurrentLuck,
