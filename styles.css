@@ -399,6 +399,30 @@ wa-tab[hidden] { display: none; }
 .create-body { display: flex; flex-direction: column; gap: var(--wa-space-l); }
 .create-placeholder { color: var(--wa-color-text-quiet); margin: 0; }
 .create-details .sheet-identity > .wide { grid-column: 1 / -1; }
+.create-hint { color: var(--wa-color-text-quiet); font-family: var(--wa-font-family-body); font-size: var(--wa-font-size-s);
+  font-weight: 400; letter-spacing: normal; text-transform: none; }
+.create-heading { display: flex; align-items: baseline; gap: var(--wa-space-s); }
+/* selectable cards (archetypes, perks): a plain button with a name and a line of text; the picked one is outlined */
+.create-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr)); gap: var(--wa-space-s); }
+.create-perk-cards { grid-template-columns: minmax(0, 1fr); }
+.create-card { border: 1px solid var(--wa-color-surface-border); border-radius: var(--wa-border-radius-m); min-width: 0; }
+.create-card.selected { border-color: var(--wa-color-brand); box-shadow: 0 0 0 1px var(--wa-color-brand); }
+.wa-dark .create-card.selected { box-shadow: 0 0 0 1px var(--wa-color-brand), 0 0 12px var(--ncd-glow); }
+.create-card-pick {
+  display: flex; flex-direction: column; gap: var(--wa-space-2xs); width: 100%; height: auto; margin: 0;
+  padding: var(--wa-space-s) var(--wa-space-m); border: 0; background: none; transform: none;
+  color: var(--wa-color-text-normal); font: inherit; text-align: start; white-space: normal; align-items: stretch; cursor: pointer;
+}
+.create-card-pick:focus-visible { outline: 2px solid var(--ncd-cyan); outline-offset: 2px; }
+.create-card-name { font-family: "Chakra Petch", sans-serif; font-weight: 700; }
+.create-card.selected .create-card-name, .create-card-pick:hover .create-card-name { color: var(--wa-color-brand); }
+.create-card-text { color: var(--wa-color-text-quiet); font-size: var(--wa-font-size-s); }
+.create-card .ability-text { padding: 0 var(--wa-space-m) var(--wa-space-xs); }
+.create-count { margin: 0; font-family: "Chakra Petch", sans-serif; font-weight: 700; }
+.create-skill-list { margin-bottom: 0; }
+.create-skill-list .bump { flex: none; width: 3.5rem; }
+.create-skill-list li.bumped .skill-value { color: var(--wa-color-brand); }
+.create-gear li { padding: var(--wa-space-xs) 0; }
 .create-totals { margin: 0; font-family: "Chakra Petch", sans-serif; font-size: var(--wa-font-size-l); font-weight: 700; color: var(--wa-color-brand); }
 @media (max-width: 480px) {
   .create-step-label { display: none; }
@@ -495,7 +519,7 @@ wa-tab[hidden] { display: none; }
   margin-bottom: var(--wa-space-l);
 }
 .skills.editing { grid-template-columns: repeat(auto-fit, minmax(min(100%, 30rem), 1fr)); }
-.skill-group h3, .gear h3, .ability-group h3 {
+.skill-group h3, .gear h3, .ability-group h3, .create-perks h3 {
   margin: 0 0 var(--wa-space-xs);
   font-size: var(--wa-font-size-xs);
   letter-spacing: 0.2em;

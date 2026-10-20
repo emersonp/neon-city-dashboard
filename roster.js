@@ -518,9 +518,11 @@
       </li>`;
   }
 
+  // Every skill in the sheet's columns; rowHTML(skill) returns its <li>. Create's skills step uses it too.
+  const skillGroups = (rowHTML) => columns((type) => `<section class="skill-group"><h3>${GROUPS[type]}</h3><ul>${
+    C.SKILLS.filter((sk) => sk.type === type).map(rowHTML).join("")}</ul></section>`);
   function renderSkillsEdit() {
-    $("skills-edit").innerHTML = columns((type) => `<section class="skill-group"><h3>${GROUPS[type]}</h3><ul>${
-      C.SKILLS.filter((sk) => sk.type === type).map((sk) => editRow(sk, C.skill(draft, sk.id))).join("")}</ul></section>`);
+    $("skills-edit").innerHTML = skillGroups((sk) => editRow(sk, C.skill(draft, sk.id)));
   }
 
   const updateSkill = (id, changes) => { draft = C.withSkill(draft, id, changes); renderSkillsEdit(); };
@@ -734,6 +736,10 @@
     },
     pickPortrait,
     renderSummary,
+    // Sheet pieces Create's steps draw with, so they look like Detail:
+    diceIcons,                                                     // a skill's intrinsic dice icons ("" when none)
+    abilityText: (a) => formatDescription(a.description, abilityIcon), // rules text as HTML, icons colored like the dialog
+    skillGroups,                                                   // every skill in the sheet's columns (see above)
   };
 
   // ---- start up: reopen the last saved character, if any ----

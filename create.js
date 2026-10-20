@@ -15,12 +15,17 @@
 
   // What each step renderer gets as `ctx`:
   //   current()          the character as it is now (use this in event handlers)
-  //   choose(changes)    saves creation choices: withCreation (resets and re-derives the sheet), then commit
+  //   choose(changes, focus?)  saves creation choices: withCreation (resets and re-derives the sheet), then commit.
+  //                      The step body is rebuilt, so `focus` (a selector in the new body) gets focus back afterwards.
   //   save(character)    saves a changed character as is (handle, name, appearance, portrait)
   //   hooks, rules, catalog
   const ctx = {
     current: () => shown.character,
-    choose: (changes) => shown.hooks.change(C.withCreation(shown.character, changes, rules(), catalog())),
+    choose: (changes, focus) => {
+      shown.hooks.change(C.withCreation(shown.character, changes, rules(), catalog()));
+      // after a frame: Web Awesome controls in the new body only become focusable once they've rendered
+      if (focus) root.requestAnimationFrame(() => shown.el.querySelector(`.create-body ${focus}`)?.focus());
+    },
     save: (character) => shown.hooks.change(character),
     get hooks() { return shown.hooks; },
     get rules() { return rules(); },
@@ -29,6 +34,100 @@
 
   // ---- steps: each renders its controls into `body` ----
   const placeholder = (body) => { body.innerHTML = `<p class="create-placeholder">Coming soon.</p>`; };
+  const needsArchetype = (body) => { body.innerHTML = `<p class="create-placeholder">Pick an archetype first.</p>`; };
+
+  // A selectable card: a button with a name and a line of text, plus `more` (shown below the button, e.g. rules text).
+  const card = (attr, value, on, name, line, more = "") => `<div class="create-card${on ? " selected" : ""}">
+      <button type="button" class="create-card-pick" ${attr}="${esc(value)}" aria-pressed="${on}">
+        <span class="create-card-name">${esc(name)}</span>${line ? `<span class="create-card-text">${esc(line)}</span>` : ""}</button>
+      ${more}</div>`;
+  // Checking a box adds the value, unchecking removes it; a list already at `max` stays as it is.
+  const toggled = (list, value, on, max) => (!on ? list.filter((v) => v !== value)
+    : list.includes(value) || list.length >= max ? list : [...list, value]);
+
+  // Archetype: one card each. Changing it clears the knowledge, perk, gear, and augmentation picks made for the old one.
+  const hasPicks = (cr) => cr.knows.length > 0 || cr.perk != null || Object.keys(cr.gear ?? {}).length > 0 || cr.augmentations.length > 0;
+  function renderArchetype(body, character) {
+    const picked = character.creation.archetype;
+    body.innerHTML = `<div class="create-cards" role="group" aria-label="Archetype">${C.ARCHETYPES.map((name) =>
+      card("data-archetype", name, name === picked, name, rules().archetypes[name]?.pitch)).join("")}</div>`;
+    body.addEventListener("click", (e) => {
+      const archetype = e.target.closest("[data-archetype]")?.dataset.archetype;
+      if (!archetype) return;
+      const before = ctx.current().creation;
+      ctx.choose({ archetype }, `[data-archetype="${archetype}"]`);
+      if (hasPicks(before) && !hasPicks(ctx.current().creation)) {
+        root.NCD_APP.toast("Changing archetype cleared your perk, gear, knowledge, and augmentation picks.", "warning");
+      }
+    });
+  }
+
+  // Skills: the archetype's Things You Know About, then every skill as the archetype (and bumps) leave it, with a +5 toggle
+  // on each skill that can take one. The initiatives are shown but can't be bumped.
+  function renderSkills(body, character) {
+    const cr = character.creation, arch = rules().archetypes[cr.archetype];
+    if (!arch) { needsArchetype(body); return; }
+    const { count, from } = arch.knows, knowsFull = cr.knows.length >= count;
+    const legal = C.bumpable(cr, rules()), bumpsFull = cr.bumps.length >= C.BUMP_COUNT;
+    const row = (sk) => {
+      const st = C.skill(character, sk.id), on = cr.bumps.includes(sk.id);
+      const toggle = legal.includes(sk.id)
+        ? `<wa-checkbox size="s" class="bump" data-bump="${sk.id}" ${on ? "checked" : ""} ${!on && bumpsFull ? "disabled" : ""}>+5<span
+            class="visually-hidden"> to ${esc(sk.name)}</span></wa-checkbox>`
+        : `<span class="bump"></span>`;
+      return `<li${on ? ` class="bumped"` : ""}><span class="skill-name">${esc(sk.name)}</span>${ctx.hooks.diceIcons(st)}
+          <span class="skill-value${st.value == null ? " untrained" : ""}">${C.shownValue(st.value)}%</span>${toggle}</li>`;
+    };
+    body.innerHTML = `<div class="knows-edit" role="group" aria-labelledby="create-knows-label">
+        <span class="sheet-label" id="create-knows-label">Knows something about… <span class="create-hint">Choose ${count}</span></span>
+        <div class="knows-boxes">${from.map((k) => {
+          const on = cr.knows.includes(k);
+          return `<wa-checkbox data-know="${esc(k)}" ${on ? "checked" : ""} ${!on && knowsFull ? "disabled" : ""}>${esc(k)}</wa-checkbox>`;
+        }).join("")}</div>
+      </div>
+      <p class="create-count">Bumps: ${cr.bumps.length} / ${C.BUMP_COUNT} <span class="create-hint">+5% to ${C.BUMP_COUNT} different skills</span></p>
+      <div class="skills create-skill-list">${ctx.hooks.skillGroups(row)}</div>`;
+    body.addEventListener("change", (e) => {
+      const box = e.target.closest("[data-know], [data-bump]");
+      if (!box) return;
+      const now = ctx.current().creation, max = rules().archetypes[now.archetype]?.knows.count ?? 0;
+      if (box.dataset.know) ctx.choose({ knows: toggled(now.knows, box.dataset.know, box.checked, max) }, `[data-know="${box.dataset.know}"]`);
+      else ctx.choose({ bumps: toggled(now.bumps, box.dataset.bump, box.checked, C.BUMP_COUNT) }, `[data-bump="${box.dataset.bump}"]`);
+    });
+  }
+
+  // Perk & Gear: the archetype's five perks (the picked one shows its rules text), then the starting gear,
+  // fixed lines as written and each "choose one" line as radio buttons.
+  function renderPerk(body, character) {
+    const cr = character.creation, arch = rules().archetypes[cr.archetype];
+    if (!arch) { needsArchetype(body); return; }
+    const perks = C.findAbilities(catalog().filter((a) => a.type === "perk" && a.archetype === cr.archetype))[0]?.items ?? [];
+    body.innerHTML = `<section class="create-perks">
+        <h3 class="create-heading">Perk <span class="create-hint">Choose 1</span></h3>
+        <div class="create-cards create-perk-cards" role="group" aria-label="Perk">${perks.map((a) => {
+          const on = a.id === cr.perk;
+          return card("data-perk", a.id, on, a.name, a.summary,
+            on && a.description ? `<div class="ability-text">${ctx.hooks.abilityText(a)}</div>` : "");
+        }).join("")}</div>
+      </section>
+      <section class="gear">
+        <h3 class="create-heading">Starting Gear</h3>
+        <ul class="gear-list create-gear">${arch.gear.map((line, i) => typeof line === "string"
+          ? `<li><span class="gear-text">${esc(line)}</span></li>`
+          : `<li><wa-radio-group label="Choose one" data-gear="${i}" ${cr.gear?.[i] != null ? `value="${cr.gear[i]}"` : ""}>${
+              line.choose.map((option, n) => `<wa-radio value="${n}">${esc(option)}</wa-radio>`).join("")}</wa-radio-group></li>`).join("")}</ul>
+      </section>`;
+    body.addEventListener("click", (e) => {
+      const perk = e.target.closest("[data-perk]")?.dataset.perk;
+      if (perk) ctx.choose({ perk }, `[data-perk="${perk}"]`);
+    });
+    body.addEventListener("change", (e) => {
+      const group = e.target.closest("[data-gear]");
+      if (!group || group.value === "" || group.value == null) return;
+      const i = group.dataset.gear, n = Number(group.value);
+      ctx.choose({ gear: { ...ctx.current().creation.gear, [i]: n } }, `[data-gear="${i}"] wa-radio[value="${n}"]`);
+    });
+  }
 
   // Details: who they are. Saved on every keystroke; the inputs aren't rebuilt meanwhile (see LIVE_STEPS), so they keep focus.
   const APPEARANCE = [["pronouns", "Pronouns"], ["physical", "Physical Appearance"], ["network", "Network Default"]];
@@ -95,11 +194,11 @@
     ctx.hooks.renderSummary(body.querySelector(".create-summary"));
   }
 
-  // Tasks to come fill in archetype, skills, perk and origin; each is (body, character, ctx).
+  // Each is (body, character, ctx); origin comes in a later task.
   const STEP_RENDERERS = {
-    archetype: placeholder,
-    skills: placeholder,
-    perk: placeholder,
+    archetype: renderArchetype,
+    skills: renderSkills,
+    perk: renderPerk,
     origin: placeholder,
     details: renderDetails,
     review: renderReview,
@@ -163,11 +262,12 @@
   }
 
   // Renders the character's current step into `el`. hooks (from roster.js): change(next), finish(), discard(),
-  // pickPortrait() -> Promise<file | null>, renderSummary(el).
+  // pickPortrait() -> Promise<file | null>, renderSummary(el), and the sheet's own pieces: diceIcons(skillState),
+  // abilityText(ability) -> HTML, skillGroups(rowHTML) -> every skill in the sheet's columns.
   function render(el, character, hooks) {
     const step = stepOf(character);
     const keep = LIVE_STEPS.has(step) && shown?.character.id === character.id && el.dataset.step === step;
-    shown = { character, hooks };
+    shown = { character, hooks, el };
     el.dataset.step = step;
     if (!el.dataset.wired) {
       el.dataset.wired = "true";
