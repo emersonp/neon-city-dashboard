@@ -3,7 +3,7 @@
 window.NCD_CONFIG = {
   // Where the site is published (like https://you.github.io/neon-city-dashboard/). Discord loads character
   // portraits from here. Not needed on GitHub Pages itself; without it, local copies post without portraits.
-  publicUrl: "",
+  publicUrl: "https://emersonp.github.io/neon-city-dashboard/",
   // Inline Boon / Drawback / Influence icons in Discord: any server emoji works (emoji/ has PNGs if you need them).
   // Send \:boon: in Discord and paste what it prints (like <:boon:123...>).
   // Leave Boon / Drawback blank to show words instead; leave Influence blank for no icon.
