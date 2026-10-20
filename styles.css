@@ -534,7 +534,12 @@ html.bevel wa-select::part(combobox), html.bevel wa-select::part(listbox) {
 html:not(.bevel) :is(wa-card, .result, .sheet-column, .stat, .portrait, .wound, wa-radio),
 html:not(.bevel) wa-dialog::part(dialog), html:not(.bevel) wa-button::part(base), html:not(.bevel) wa-input::part(base),
 html:not(.bevel) wa-textarea::part(base), html:not(.bevel) wa-select::part(combobox), html:not(.bevel) wa-select::part(listbox) {
-  clip-path: polygon(var(--cut) 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%, 0 var(--cut));
+  /* The straight sides sit 1px outside the box: on a half-pixel position Firefox rounds the 1px border outward,
+     and a clip exactly on the edge would cut it off. The diagonals are unchanged, just extended to meet them. */
+  clip-path: polygon(
+    calc(var(--cut) + 1px) -1px, calc(100% + 1px) -1px,
+    calc(100% + 1px) calc(100% - var(--cut) - 1px), calc(100% - var(--cut) - 1px) calc(100% + 1px),
+    -1px calc(100% + 1px), -1px calc(var(--cut) + 1px));
 }
 /* the diagonal border lines: a corner-sized gradient at top left and bottom right, sitting just inside the cut */
 html:not(.bevel) :is(wa-card, .result, .sheet-column, .stat, .wound, wa-radio),
