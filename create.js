@@ -33,12 +33,12 @@
   };
 
   // ---- steps: each renders its controls into `body` ----
-  const placeholder = (body) => { body.innerHTML = `<p class="create-placeholder">Coming soon.</p>`; };
   const needsArchetype = (body) => { body.innerHTML = `<p class="create-placeholder">Pick an archetype first.</p>`; };
 
   // A selectable card: a button with a name and a line of text, plus `more` (shown below the button, e.g. rules text).
-  const card = (attr, value, on, name, line, more = "") => `<div class="create-card${on ? " selected" : ""}">
-      <button type="button" class="create-card-pick" ${attr}="${esc(value)}" aria-pressed="${on}">
+  // `off` disables the button (a list that is already full).
+  const card = (attr, value, on, name, line, more = "", off = false) => `<div class="create-card${on ? " selected" : ""}${off ? " off" : ""}">
+      <button type="button" class="create-card-pick" ${attr}="${esc(value)}" aria-pressed="${on}"${off ? " disabled" : ""}>
         <span class="create-card-name">${esc(name)}</span>${line ? `<span class="create-card-text">${esc(line)}</span>` : ""}</button>
       ${more}</div>`;
   // Checking a box adds the value, unchecking removes it; a list already at `max` stays as it is.
@@ -101,6 +101,9 @@
   function renderPerk(body, character) {
     const cr = character.creation, arch = rules().archetypes[cr.archetype];
     if (!arch) { needsArchetype(body); return; }
+    // several "choose one" lines each get their own label, so screen readers can tell them apart
+    const choices = arch.gear.filter((line) => typeof line !== "string").length;
+    let nth = 0;
     const perks = C.findAbilities(catalog().filter((a) => a.type === "perk" && a.archetype === cr.archetype))[0]?.items ?? [];
     body.innerHTML = `<section class="create-perks">
         <h3 class="create-heading">Perk <span class="create-hint">Choose 1</span></h3>
@@ -114,7 +117,7 @@
         <h3 class="create-heading">Starting Gear</h3>
         <ul class="gear-list create-gear">${arch.gear.map((line, i) => typeof line === "string"
           ? `<li><span class="gear-text">${esc(line)}</span></li>`
-          : `<li><wa-radio-group label="Choose one" data-gear="${i}" ${cr.gear?.[i] != null ? `value="${cr.gear[i]}"` : ""}>${
+          : `<li><wa-radio-group label="Choose one${choices > 1 ? ` (${++nth} of ${choices})` : ""}" data-gear="${i}" ${cr.gear?.[i] != null ? `value="${cr.gear[i]}"` : ""}>${
               line.choose.map((option, n) => `<wa-radio value="${n}">${esc(option)}</wa-radio>`).join("")}</wa-radio-group></li>`).join("")}</ul>
       </section>`;
     body.addEventListener("click", (e) => {
@@ -126,6 +129,121 @@
       if (!group || group.value === "" || group.value == null) return;
       const i = group.dataset.gear, n = Number(group.value);
       ctx.choose({ gear: { ...ctx.current().creation.gear, [i]: n } }, `[data-gear="${i}"] wa-radio[value="${n}"]`);
+    });
+  }
+
+  // Origin: one card each (with the augmentations it grants), then the starting augmentation(s) for this origin and archetype,
+  // then the optional origin option with its dice placements (and Lycanthropy's +5%s), previewed on the skills they touch.
+  const DICE_KIND = { adv: "advantage", chal: "challenge" };
+  const placementLabel = (p) => `${p.count} ${DICE_KIND[p.kind]} ${p.count === 1 ? "die" : "dice"} on a ${p.differentFrom ? "different " : ""}${p.category} skill`;
+  const skillName = (id) => C.SKILLS.find((s) => s.id === id)?.name ?? id;
+  const abilityName = (id) => catalog().find((a) => a.id === id)?.name ?? id;
+  const augmentationsFor = (cr) => C.findAbilities(catalog().filter((a) =>
+    a.type === "augmentation" && a.origin === cr.origin && a.archetype === cr.archetype))[0]?.items ?? [];
+  // Physical skills Lycanthropy's +5% can go on (as with the 4 bumps, not ones the archetype already has at 95)
+  const optionBumpable = (cr, category) => C.bumpable(cr, rules()).filter((id) => C.SKILLS.find((s) => s.id === id)?.type === category);
+
+  function renderOrigin(body, character) {
+    const cr = character.creation, arch = rules().archetypes[cr.archetype];
+    if (!arch) { needsArchetype(body); return; }
+    const origins = rules().origins, origin = origins[cr.origin];
+    const option = origin?.options.find((o) => o.id === cr.option) ?? null;
+    const originCards = `<div class="create-cards" role="group" aria-label="Origin">${C.ORIGINS.map((name) => {
+      const autos = origins[name]?.augmentations ?? [];
+      return card("data-origin", name, name === cr.origin, name, origins[name]?.pitch,
+        autos.length ? `<p class="create-card-note">Includes ${esc(autos.map(abilityName).join(" and "))}.</p>` : "");
+    }).join("")}</div>`;
+    if (!origin) { body.innerHTML = originCards; wireOrigin(body); return; }
+
+    const max = option?.extraAugmentation ? 2 : 1, augsFull = cr.augmentations.length >= max;
+    const augs = augmentationsFor(cr).map((a) => {
+      const on = cr.augmentations.includes(a.id);
+      return card("data-aug", a.id, on, a.name, a.summary,
+        a.description ? `<div class="ability-text">${ctx.hooks.abilityText(a)}</div>` : "", max > 1 && augsFull && !on);
+    }).join("");
+
+    const options = `<wa-radio-group label="Origin option" data-option value="${esc(cr.option ?? "none")}">
+        <wa-radio value="none"><span class="create-option-name">None</span></wa-radio>
+        ${origin.options.map((o) => `<wa-radio value="${esc(o.id)}"><span class="create-option-name">${esc(o.name)}</span>
+          <span class="create-option-text">${esc(o.text)}</span></wa-radio>`).join("")}
+      </wa-radio-group>`;
+
+    const places = (option?.placements ?? []).map((p) => {
+      const at = cr.placements?.[p.key];
+      return `<wa-select data-place="${esc(p.key)}" label="${esc(placementLabel(p))}" placeholder="Choose a skill" with-clear
+          ${at ? `value="${esc(at)}"` : ""}>${C.placeable(cr, p.key, rules()).map((id) =>
+            `<wa-option value="${esc(id)}">${esc(skillName(id))}</wa-option>`).join("")}</wa-select>`;
+    }).join("");
+
+    const ob = option?.bumps, obFull = ob && cr.optionBumps.length >= ob.count;
+    const optionBumps = !ob ? "" : `<div class="knows-edit" role="group" aria-labelledby="create-option-bumps-label">
+        <span class="sheet-label" id="create-option-bumps-label">+5% to ${ob.count} ${esc(ob.category)} skills
+          <span class="create-hint">${cr.optionBumps.length} / ${ob.count}</span></span>
+        <div class="knows-boxes">${optionBumpable(cr, ob.category).map((id) => {
+          const on = cr.optionBumps.includes(id);
+          return `<wa-checkbox data-obump="${esc(id)}" ${on ? "checked" : ""} ${!on && obFull ? "disabled" : ""}>${esc(skillName(id))}</wa-checkbox>`;
+        }).join("")}</div>
+      </div>`;
+
+    // the skills the option touches, as they end up (in sheet order)
+    const touched = new Set([...Object.values(cr.placements ?? {}), ...cr.optionBumps]);
+    const preview = !touched.size ? "" : `<div class="skills create-skill-list"><section class="skill-group">
+        <h3>Affected Skills</h3><ul>${C.SKILLS.filter((s) => touched.has(s.id)).map((sk) => {
+          const st = C.skill(character, sk.id);
+          return `<li><span class="skill-name">${esc(sk.name)}</span>${ctx.hooks.diceIcons(st)}
+            <span class="skill-value${st.value == null ? " untrained" : ""}">${C.shownValue(st.value)}%</span></li>`;
+        }).join("")}</ul></section></div>`;
+
+    body.innerHTML = `${originCards}
+      <section class="create-augs">
+        <h3 class="create-heading">Augmentation <span class="create-hint">${max > 1 ? `Choose ${max} different` : "Choose 1"}</span></h3>
+        <div class="create-cards create-perk-cards" role="group" aria-label="Starting augmentation">${augs}</div>
+      </section>
+      <section class="create-option">
+        <h3 class="create-heading">Origin Option <span class="create-hint">Optional</span></h3>
+        ${options}
+        ${places || optionBumps ? `<div class="create-placements">${places}</div>${optionBumps}` : ""}
+        ${preview}
+      </section>`;
+    wireOrigin(body);
+  }
+
+  function wireOrigin(body) {
+    body.addEventListener("click", (e) => {
+      const pick = e.target.closest("[data-origin], [data-aug]");
+      if (!pick || pick.disabled) return;
+      if (pick.dataset.origin) { ctx.choose({ origin: pick.dataset.origin }, `[data-origin="${pick.dataset.origin}"]`); return; }
+      const cr = ctx.current().creation, id = pick.dataset.aug, on = cr.augmentations.includes(id);
+      const max = rules().origins[cr.origin]?.options.find((o) => o.id === cr.option)?.extraAugmentation ? 2 : 1;
+      // with room for only one, picking another swaps it
+      const augmentations = max === 1 && !on ? [id] : toggled(cr.augmentations, id, !on, max);
+      ctx.choose({ augmentations }, `[data-aug="${id}"]`);
+    });
+    body.addEventListener("change", (e) => {
+      const cr = ctx.current().creation;
+      const group = e.target.closest("[data-option]");
+      if (group) {
+        if (!group.value) return;
+        const option = group.value === "none" ? null : group.value;
+        ctx.choose({ option }, `[data-option] wa-radio[value="${group.value}"]`);
+        return;
+      }
+      const select = e.target.closest("[data-place]");
+      if (select) {
+        const key = select.dataset.place, id = select.value || null;
+        const placements = { ...cr.placements };
+        if (id) placements[key] = id; else delete placements[key];
+        // a "different skill" pick that now matches this one has to be made again
+        const option = rules().origins[cr.origin]?.options.find((o) => o.id === cr.option);
+        for (const p of option?.placements ?? []) if (p.differentFrom === key && placements[p.key] === id) delete placements[p.key];
+        ctx.choose({ placements }, `[data-place="${key}"]`);
+        return;
+      }
+      const box = e.target.closest("[data-obump]");
+      if (box) {
+        const max = rules().origins[cr.origin]?.options.find((o) => o.id === cr.option)?.bumps?.count ?? 0;
+        ctx.choose({ optionBumps: toggled(cr.optionBumps, box.dataset.obump, box.checked, max) }, `[data-obump="${box.dataset.obump}"]`);
+      }
     });
   }
 
@@ -194,12 +312,12 @@
     ctx.hooks.renderSummary(body.querySelector(".create-summary"));
   }
 
-  // Each is (body, character, ctx); origin comes in a later task.
+  // Each is (body, character, ctx).
   const STEP_RENDERERS = {
     archetype: renderArchetype,
     skills: renderSkills,
     perk: renderPerk,
-    origin: placeholder,
+    origin: renderOrigin,
     details: renderDetails,
     review: renderReview,
   };

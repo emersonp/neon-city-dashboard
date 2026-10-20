@@ -418,6 +418,17 @@ wa-tab[hidden] { display: none; }
 .create-card.selected .create-card-name, .create-card-pick:hover .create-card-name { color: var(--wa-color-brand); }
 .create-card-text { color: var(--wa-color-text-quiet); font-size: var(--wa-font-size-s); }
 .create-card .ability-text { padding: 0 var(--wa-space-m) var(--wa-space-xs); }
+.create-card.off { opacity: 0.55; }
+.create-card.off .create-card-pick { cursor: not-allowed; }
+.create-card-note { margin: 0; padding: 0 var(--wa-space-m) var(--wa-space-s); color: var(--wa-color-brand); font-size: var(--wa-font-size-s); }
+/* the section heading already says "Origin Option"; the group keeps its label for screen readers */
+.create-option wa-radio-group::part(form-control-label) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.create-option wa-radio { margin-bottom: var(--wa-space-xs); }
+.create-option-name { display: block; font-weight: 700; }
+.create-option-text { display: block; color: var(--wa-color-text-quiet); font-size: var(--wa-font-size-s); }
+.create-placements { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr)); gap: var(--wa-space-m);
+  margin: var(--wa-space-m) 0; }
+.create-option .knows-edit { margin-bottom: var(--wa-space-m); }
 .create-count { margin: 0; font-family: "Chakra Petch", sans-serif; font-weight: 700; }
 .create-skill-list { margin-bottom: 0; }
 .create-skill-list .bump { flex: none; width: 3.5rem; }
@@ -519,7 +530,7 @@ wa-tab[hidden] { display: none; }
   margin-bottom: var(--wa-space-l);
 }
 .skills.editing { grid-template-columns: repeat(auto-fit, minmax(min(100%, 30rem), 1fr)); }
-.skill-group h3, .gear h3, .ability-group h3, .create-perks h3 {
+.skill-group h3, .gear h3, .ability-group h3, .create-perks h3, .create-augs h3, .create-option > h3 {
   margin: 0 0 var(--wa-space-xs);
   font-size: var(--wa-font-size-xs);
   letter-spacing: 0.2em;
