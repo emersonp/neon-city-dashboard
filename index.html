@@ -196,6 +196,7 @@
               </div>
               <div id="gear-display"></div>
             </section>
+            <div id="abilities-display" class="abilities"></div>
             <div class="character-actions">
               <wa-button id="character-edit" appearance="outlined">
                 <wa-icon slot="start" name="pen"></wa-icon>
@@ -221,6 +222,7 @@
               </div>
               <div id="gear-run"></div>
             </section>
+            <div id="abilities-run" class="abilities"></div>
             <div class="character-actions">
               <wa-button id="character-appearance" appearance="outlined">
                 <wa-icon slot="start" name="user"></wa-icon>
@@ -373,6 +375,11 @@
     </wa-button>
   </wa-dialog>
 
+  <!-- An ability's full text (Display and Run). -->
+  <wa-dialog id="ability-dialog" label="Ability" light-dismiss>
+    <div id="ability-body"></div>
+  </wa-dialog>
+
   <!-- Edit: every portrait in portraits/portraits.js; picking one closes the dialog -->
   <wa-dialog id="portrait-dialog" label="Choose a portrait" light-dismiss>
     <div id="portrait-choices" class="portrait-choices"></div>
@@ -402,8 +409,10 @@
   <script src="config.js"></script>
   <script src="portraits/portraits.js"></script>
   <script src="icons.js"></script>
+  <script src="format.js"></script>
   <script src="dice.js"></script>
   <script src="discord.js"></script>
+  <script src="abilities.js"></script>
   <script src="characters.js"></script>
   <script src="app.js"></script>
   <script src="roster.js"></script>

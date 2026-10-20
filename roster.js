@@ -8,6 +8,8 @@
   const SESSION = window.NCD_SESSION;
   const { $, text, escapeHTML } = window.NCD_UTIL;
   const icon = window.NCD_ICONS.svg;
+  const ABILITIES = window.NCD_ABILITIES ?? [];
+  const { formatDescription } = window.NCD_FORMAT;
   // The character helpers take localStorage itself, and handle it being null.
   const storage = store.raw;
 
@@ -166,9 +168,11 @@
         renderSkillsDisplay($("skills-display"));
         $("gear-display-section").hidden = !C.gear(current).length;
         renderGear($("gear-display"), current);
+        renderAbilities($("abilities-display"), C.abilities(current, ABILITIES));
       } else {
         renderSkillsDisplay($("skills-run"), { links: true });
         renderGear($("gear-run"), current);
+        renderAbilities($("abilities-run"), C.abilities(current, ABILITIES));
       }
     }
   }
@@ -321,6 +325,38 @@
       renderGear($("gear-edit"), draft, { editable: true });
     }
   });
+
+  // ---- abilities: Perks and Augmentations, each name opening its full text ----
+  const ABILITY_TYPES = [["perk", "Perks"], ["augmentation", "Augmentations"]];
+  function renderAbilities(el, list) {
+    el.innerHTML = ABILITY_TYPES.map(([type, heading]) => {
+      const items = list.filter((a) => a.type === type);
+      return items.length ? `<section class="ability-group"><h3>${heading}</h3><ul class="ability-list">${items.map((a) => `<li>
+          <button type="button" class="ability-name" data-ability="${escapeHTML(a.id)}">${escapeHTML(a.name)}</button>
+          ${a.summary ? `<span class="ability-summary">${escapeHTML(a.summary)}</span>` : ""}
+        </li>`).join("")}</ul></section>` : "";
+    }).join("");
+  }
+
+  // Icons in ability text: advantage and boon in the good color, challenge and drawback in the bad one, others in brand.
+  const ICON_COLOR = { "advantage-die": "adv", boon: "adv", "challenge-die": "chal", drawback: "chal" };
+  const abilityIcon = (name) => icon(name, ICON_COLOR[name] ?? "");
+  const abilityDialog = $("ability-dialog");
+  function openAbility(id) {
+    const a = ABILITIES.find((x) => x.id === id);
+    if (!a) return;
+    abilityDialog.label = a.name;
+    $("ability-body").innerHTML = `<p class="ability-tag">${escapeHTML(C.abilityTag(a))}</p>
+      ${a.summary ? `<p class="ability-lead">${escapeHTML(a.summary)}</p>` : ""}
+      ${a.description ? `<div class="ability-text">${formatDescription(a.description, abilityIcon)}</div>` : ""}`;
+    abilityDialog.open = true;
+  }
+  for (const el of [$("abilities-display"), $("abilities-run")]) {
+    el.addEventListener("click", (e) => {
+      const id = e.target.closest("[data-ability]")?.dataset.ability;
+      if (id) openAbility(id);
+    });
+  }
 
   // ---- editing Luck and Influence: the same −/+ buttons as Running, each value kept in its hidden field ----
   // In this order, so lowering Max Luck pulls Current Luck down with it.

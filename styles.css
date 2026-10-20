@@ -387,6 +387,36 @@ wa-tab[hidden] { display: none; }
 .gear-empty { margin: 0; }
 .gear-form { display: flex; flex-direction: column; gap: var(--wa-space-l); }
 
+/* ---- abilities: Perks and Augmentations, names open their full text ---- */
+.ability-group { margin-bottom: var(--wa-space-l); }
+.ability-group h3 { margin: 0 0 var(--wa-space-xs); }
+.ability-list { list-style: none; margin: 0; padding: 0; }
+.ability-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: var(--wa-space-s);
+  padding: var(--wa-space-2xs) 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--wa-color-surface-border) 60%, transparent);
+}
+.ability-name {
+  font: inherit;
+  color: var(--wa-color-text-link);
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  text-align: start;
+}
+.ability-name:hover, .ability-name:focus-visible { text-decoration: underline; }
+.ability-summary, .ability-tag { color: var(--wa-color-text-quiet); font-size: var(--wa-font-size-s); }
+.ability-tag { margin-top: 0; }
+.ability-lead { font-style: italic; }
+.ability-text .icon { width: 1.2em; height: 1.2em; vertical-align: -0.25em; --ink: var(--wa-color-brand); }
+.ability-text .icon.adv { --ink: var(--ncd-good); }
+.ability-text .icon.chal { --ink: var(--ncd-bad); }
+.ability-text ul { padding-inline-start: 1.5em; }
+
 /* ---- skills: Mental and Physical side by side when there's room ---- */
 .skills {
   display: grid;
