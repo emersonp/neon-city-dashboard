@@ -320,7 +320,6 @@ wa-tab[hidden] { display: none; }
 .portrait-edit::part(base) { box-shadow: 0 0 6px rgb(0 0 0 / 50%); }
 .character-form .stat wa-input::part(form-control-label) { margin-bottom: var(--wa-space-2xs); }
 .character-form .stat wa-input { --wa-form-control-value-font-family: "Chakra Petch", sans-serif; }
-.character-form .stat wa-input .stat-icon .icon { width: 1.4rem; height: 1.4rem; }
 @media (max-width: 480px) {
   .character-form .sheet-who { grid-template-columns: minmax(0, 1fr); }
   .portrait-pick { flex-direction: row; align-items: center; }
@@ -344,7 +343,7 @@ wa-tab[hidden] { display: none; }
   border-left: 3px solid color-mix(in srgb, var(--ncd-magenta) 70%, transparent);
   border-radius: var(--wa-border-radius-s);
 }
-.stat dd { display: flex; align-items: center; min-height: 2.25rem; font-family: "Chakra Petch", sans-serif; font-size: var(--wa-font-size-xl); }
+.stat dd, .stat .stepper { display: flex; align-items: center; min-height: 2.25rem; font-family: "Chakra Petch", sans-serif; font-size: var(--wa-font-size-xl); }
 .stat-wounds, .stat-xp { grid-column: 1 / -1; }
 /* XP: Total | Available | Spent, each with its own small label */
 .xp { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--wa-space-s); align-items: end; }
@@ -428,7 +427,9 @@ wa-tab[hidden] { display: none; }
 .skills.editing .skill-controls > .skill-value { justify-self: end; padding-right: var(--wa-space-s); }
 .skills.editing .skill-controls > wa-button { width: 100%; }
 .luck-steps { gap: var(--wa-space-2xs); }
-.luck-steps [data-field] { min-width: 3ch; text-align: center; }
+.luck-steps [data-field], .luck-steps [data-step-value] { min-width: 3ch; text-align: center; }
+/* editing Luck: the value between the buttons, like Running */
+.stepper[data-stepper$="Luck"] [data-step-value] { flex: 1; }
 .sheet-head:not([data-state="running"]) .luck-steps [data-field] { min-width: 0; text-align: left; }
 .sheet-head[data-state="running"] .luck-steps [data-field="currentLuck"] { flex: 1; }
 .luck-steps .stat-icon { margin-left: auto; }

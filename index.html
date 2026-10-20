@@ -260,17 +260,48 @@
                 </div>
               </div>
               <div class="sheet-stats">
-                <div class="stat"><wa-input name="maxLuck" label="Max Luck" type="number" min="0"></wa-input></div>
-                <div class="stat"><wa-input name="currentLuck" label="Current Luck" type="number" min="0"></wa-input></div>
+                <!-- Luck and Influence: the same −/+ buttons as Running; each value is kept in the hidden field -->
                 <div class="stat">
-                  <wa-input name="startingInfluence" label="Starting Influence" type="number" min="0">
-                    <span slot="end" class="stat-icon" data-icon="influence"></span>
-                  </wa-input>
+                  <span class="sheet-label" id="max-luck-label">Max Luck</span>
+                  <div class="stepper luck-steps" data-stepper="maxLuck" role="group" aria-labelledby="max-luck-label">
+                    <wa-button size="s" appearance="outlined" data-step="-5">−5</wa-button>
+                    <wa-button size="s" appearance="outlined" data-step="-1">−1</wa-button>
+                    <span data-step-value></span>
+                    <wa-button size="s" appearance="outlined" data-step="1">+1</wa-button>
+                    <wa-button size="s" appearance="outlined" data-step="5">+5</wa-button>
+                  </div>
+                  <input type="hidden" name="maxLuck">
                 </div>
                 <div class="stat">
-                  <wa-input name="currentInfluence" label="Current Influence" type="number" min="0">
-                    <span slot="end" class="stat-icon" data-icon="influence"></span>
-                  </wa-input>
+                  <span class="sheet-label" id="current-luck-label">Current Luck</span>
+                  <div class="stepper luck-steps" data-stepper="currentLuck" role="group" aria-labelledby="current-luck-label">
+                    <wa-button size="s" appearance="outlined" data-step="-5">−5</wa-button>
+                    <wa-button size="s" appearance="outlined" data-step="-1">−1</wa-button>
+                    <span data-step-value></span>
+                    <wa-button size="s" appearance="outlined" data-step="1">+1</wa-button>
+                    <wa-button size="s" appearance="outlined" data-step="5">+5</wa-button>
+                  </div>
+                  <input type="hidden" name="currentLuck">
+                </div>
+                <div class="stat">
+                  <span class="sheet-label" id="starting-influence-label">Starting Influence</span>
+                  <div class="stepper luck-steps" data-stepper="startingInfluence" role="group" aria-labelledby="starting-influence-label">
+                    <wa-button size="s" appearance="outlined" data-step="-1">−1</wa-button>
+                    <span data-step-value></span>
+                    <wa-button size="s" appearance="outlined" data-step="1">+1</wa-button>
+                    <span class="stat-icon" data-icon="influence"></span>
+                  </div>
+                  <input type="hidden" name="startingInfluence">
+                </div>
+                <div class="stat">
+                  <span class="sheet-label" id="current-influence-label">Current Influence</span>
+                  <div class="stepper luck-steps" data-stepper="currentInfluence" role="group" aria-labelledby="current-influence-label">
+                    <wa-button size="s" appearance="outlined" data-step="-1">−1</wa-button>
+                    <span data-step-value></span>
+                    <wa-button size="s" appearance="outlined" data-step="1">+1</wa-button>
+                    <span class="stat-icon" data-icon="influence"></span>
+                  </div>
+                  <input type="hidden" name="currentInfluence">
                 </div>
                 <div class="stat stat-wounds">
                   <span class="sheet-label" id="wounds-edit-label">Wounds</span>

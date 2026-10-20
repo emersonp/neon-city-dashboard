@@ -152,6 +152,7 @@
       draft = { skills: { ...(current.skills ?? {}) }, wounds: C.wounds(current), gear: C.gear(current) };
       for (const f of FIELDS) field(f.name).value = String(f.load(current));
       showPortrait($("portrait-preview"), field("portrait").value);
+      showSteppers();
       woundsEdit.innerHTML = woundBoxes(draft.wounds, true);
       const known = C.knows(current);
       for (const box of knowsEdit.querySelectorAll("wa-checkbox")) box.checked = known.includes(box.value);
@@ -319,6 +320,31 @@
       draft = C.withoutGear(draft, id);
       renderGear($("gear-edit"), draft, { editable: true });
     }
+  });
+
+  // ---- editing Luck and Influence: the same −/+ buttons as Running, each value kept in its hidden field ----
+  // In this order, so lowering Max Luck pulls Current Luck down with it.
+  const STEPPED = {
+    maxLuck: (v) => C.clampMaxLuck(v),
+    currentLuck: (v) => C.clampCurrentLuck(v, Number(field("maxLuck").value)),
+    startingInfluence: (v) => C.clampInfluence(v),
+    currentInfluence: (v) => C.clampInfluence(v),
+  };
+  function showSteppers() {
+    for (const [name, clamp] of Object.entries(STEPPED)) {
+      const v = clamp(field(name).value);
+      field(name).value = String(v);
+      const el = form.querySelector(`[data-stepper="${name}"]`);
+      el.querySelector("[data-step-value]").textContent = v;
+      for (const button of el.querySelectorAll("[data-step]")) button.disabled = clamp(v + Number(button.dataset.step)) === v;
+    }
+  }
+  form.addEventListener("click", (e) => {
+    const button = e.target.closest("[data-step]");
+    const name = button?.closest("[data-stepper]")?.dataset.stepper;
+    if (!name) return;
+    field(name).value = String(Number(field(name).value) + Number(button.dataset.step));
+    showSteppers();
   });
 
   // ---- XP: the editor shows the total as Available and Spent change ----
