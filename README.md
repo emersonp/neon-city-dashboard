@@ -73,7 +73,8 @@ Each entry:
 
 - Augmentations always have an origin, and often an archetype. Perks have an origin or an archetype, never both.
 - Every entry needs a summary, a description, or both.
-- Don't change an id once characters use it: a saved id that isn't in the list just stops showing.
+- Don't change an id once characters use it: a saved id that isn't in the list stops showing (it stays saved, so
+  putting the id back brings it back). Cybernetic ids come from the name, so renaming one changes its id.
 
 Descriptions: a blank line starts a new paragraph, lines starting with `- ` make a bullet list, `**bold**`, `*italic*`,
 and these icons: `[advantage]` `[challenge]` `[boon]` `[drawback]` `[heat]` `[influence]`. Anything else shows as typed.

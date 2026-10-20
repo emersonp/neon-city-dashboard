@@ -389,7 +389,6 @@ wa-tab[hidden] { display: none; }
 
 /* ---- abilities: Perks and Augmentations, names open their full text ---- */
 .ability-group { margin-bottom: var(--wa-space-l); }
-.ability-group h3 { margin: 0 0 var(--wa-space-xs); }
 .ability-list { list-style: none; margin: 0; padding: 0; }
 .ability-list li {
   display: flex;
@@ -457,7 +456,7 @@ wa-tab[hidden] { display: none; }
   margin-bottom: var(--wa-space-l);
 }
 .skills.editing { grid-template-columns: repeat(auto-fit, minmax(min(100%, 30rem), 1fr)); }
-.skill-group h3, .gear h3 {
+.skill-group h3, .gear h3, .ability-group h3 {
   margin: 0 0 var(--wa-space-xs);
   font-size: var(--wa-font-size-xs);
   letter-spacing: 0.2em;

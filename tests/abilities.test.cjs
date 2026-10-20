@@ -77,3 +77,8 @@ test("findAbilities: drops empty groups", () => {
   assert.deepEqual(C.findAbilities(cat, "", ["aa"]).map((g) => g.heading), ["Cybernetic Augmentations"]);
   assert.deepEqual(C.findAbilities(cat, "nothing"), []);
 });
+
+test("abilityIds: keeps saved ids the catalog doesn't know, so a broken catalog can't erase them on Save", () => {
+  assert.deepEqual(C.abilityIds({ abilities: ["a", "gone", 3, null, "a"] }), ["a", "gone"]);
+  assert.deepEqual(C.abilityIds({}), []);
+});

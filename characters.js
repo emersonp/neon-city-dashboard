@@ -118,7 +118,8 @@
   const withoutGear = (character, id) => ({ ...character, gear: gear(character).filter((g) => g.id !== id) });
 
   // ---- abilities (perks and augmentations): ids from the catalog in abilities.js ----
-  // The saved ids, without junk or repeats. Ids no longer in the catalog are skipped where it's passed in.
+  // The saved ids, without junk or repeats. Ids not in the catalog are kept (a broken abilities.js mustn't erase them);
+  // abilities() skips them for display.
   const abilityIds = (character) => [...new Set((Array.isArray(character?.abilities) ? character.abilities : [])
     .filter((id) => typeof id === "string"))];
   // The character's abilities as catalog entries, in the order they were added.
@@ -272,7 +273,7 @@
     canBeUsed, isUsed, withUsed,
     KNOWLEDGE, knows, xp, clampXp, appearance,
     gear, newProp, withGear, withoutGear,
-    abilities, withAbility, withoutAbility, abilityTag, findAbilities,
+    abilityIds, abilities, withAbility, withoutAbility, abilityTag, findAbilities,
     DEFAULT_PORTRAIT, ADMIN_PORTRAIT, PORTRAIT_DIR, availablePortraits, portraitFile, portraitLabel,
   };
 })(globalThis);

@@ -153,8 +153,8 @@
     if (state === "editing") {
       draft = {
         skills: { ...(current.skills ?? {}) }, wounds: C.wounds(current), gear: C.gear(current),
-        // ids no longer in the catalog are dropped here, so the next Save removes them
-        abilities: C.abilities(current, ABILITIES).map((a) => a.id),
+        // all saved ids, even ones not in the catalog: if abilities.js fails to load, Save mustn't erase them
+        abilities: C.abilityIds(current),
       };
       for (const f of FIELDS) field(f.name).value = String(f.load(current));
       showPortrait($("portrait-preview"), field("portrait").value);
