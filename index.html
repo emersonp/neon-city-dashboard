@@ -188,6 +188,12 @@
 
           <!-- Display -->
           <div id="character-display">
+            <section class="gear conditions" id="conditions-display-section">
+              <div class="gear-head">
+                <h3>Conditions</h3>
+              </div>
+              <div id="conditions-display"></div>
+            </section>
             <dl id="appearance-display" class="appearance"></dl>
             <div id="skills-display" class="skills"></div>
             <section class="gear" id="gear-display-section">
@@ -211,6 +217,16 @@
 
           <!-- Running -->
           <div id="character-running" hidden>
+            <section class="gear conditions">
+              <div class="gear-head">
+                <h3>Conditions</h3>
+                <wa-button size="s" appearance="outlined" data-add-condition>
+                  <wa-icon slot="start" name="plus"></wa-icon>
+                  Add condition
+                </wa-button>
+              </div>
+              <div id="conditions-run"></div>
+            </section>
             <div id="skills-run" class="skills running"></div>
             <section class="gear">
               <div class="gear-head">
@@ -319,6 +335,16 @@
                 </div>
               </div>
             </div>
+            <section class="gear conditions">
+              <div class="gear-head">
+                <h3>Conditions</h3>
+                <wa-button size="s" appearance="outlined" data-add-condition>
+                  <wa-icon slot="start" name="plus"></wa-icon>
+                  Add condition
+                </wa-button>
+              </div>
+              <div id="conditions-edit"></div>
+            </section>
             <div class="knows-edit" role="group" aria-labelledby="knows-edit-label">
               <span class="sheet-label" id="knows-edit-label">Knows something about…</span>
               <div id="knows-edit" class="knows-boxes"></div>
@@ -386,6 +412,47 @@
       <wa-icon slot="start" name="floppy-disk"></wa-icon>
       Save
     </wa-button>
+  </wa-dialog>
+
+  <!-- New condition (Run and Edit), on the character or a gear item. Suggestions fill in the name. -->
+  <wa-dialog id="condition-add-dialog" label="New condition" light-dismiss>
+    <div class="condition-form">
+      <p class="condition-for" id="condition-add-for" hidden></p>
+      <div class="condition-list" id="condition-suggestions"></div>
+      <wa-input id="condition-name" label="Name" autocomplete="off" autofocus></wa-input>
+      <div class="condition-row">
+        <div class="stepper luck-steps condition-steps" id="condition-add-severity" role="group" aria-label="Severity">
+          <span class="sheet-label">Severity</span>
+          <wa-button size="s" appearance="outlined" data-severity="-1">−</wa-button>
+          <span data-severity-value></span>
+          <wa-button size="s" appearance="outlined" data-severity="1">+</wa-button>
+        </div>
+        <wa-switch id="condition-intrinsic">Intrinsic</wa-switch>
+      </div>
+    </div>
+    <wa-button slot="footer" id="condition-add" variant="brand">
+      <wa-icon slot="start" name="plus"></wa-icon>
+      Add
+    </wa-button>
+  </wa-dialog>
+
+  <!-- A condition (clicking its chip in Run or Edit): severity, and remove. Name and intrinsic can't change. -->
+  <wa-dialog id="condition-dialog" label="Condition" light-dismiss>
+    <div class="condition-form">
+      <p class="condition-for" id="condition-for" hidden></p>
+      <p class="condition-intrinsic-note" id="condition-intrinsic-note" hidden>Intrinsic</p>
+      <div class="stepper luck-steps condition-steps" id="condition-severity" role="group" aria-label="Severity">
+        <span class="sheet-label">Severity</span>
+        <wa-button size="s" appearance="outlined" data-severity="-1">−</wa-button>
+        <span data-severity-value></span>
+        <wa-button size="s" appearance="outlined" data-severity="1">+</wa-button>
+      </div>
+    </div>
+    <wa-button slot="footer" id="condition-remove" variant="danger" appearance="outlined">
+      <wa-icon slot="start" name="trash"></wa-icon>
+      Remove
+    </wa-button>
+    <wa-button slot="footer" data-dialog="close">Close</wa-button>
   </wa-dialog>
 
   <!-- Picking an ability to add (Edit). Any character can pick any ability. -->

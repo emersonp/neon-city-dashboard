@@ -165,7 +165,7 @@
       window.NCD_CREATE.render(create, current, createHooks);
     } else if (state === "editing") {
       draft = {
-        skills: { ...(current.skills ?? {}) }, wounds: C.wounds(current), gear: C.gear(current),
+        skills: { ...(current.skills ?? {}) }, wounds: C.wounds(current), gear: C.gear(current), conditions: C.conditions(current),
         // all saved ids, even ones not in the catalog: if abilities.js fails to load, Save mustn't erase them
         abilities: C.abilityIds(current),
       };
@@ -177,19 +177,23 @@
       for (const box of knowsEdit.querySelectorAll("wa-checkbox")) box.checked = known.includes(box.value);
       showXpTotal();
       renderSkillsEdit();
+      renderConditions($("conditions-edit"), draft, { clickable: true });
       renderGear($("gear-edit"), draft, { editable: true });
       renderAbilitiesEdit();
     } else {
       renderFields();
       if (state === "display") {
         renderAppearance($("appearance-display"));
+        $("conditions-display-section").hidden = !C.conditions(current).length;
+        renderConditions($("conditions-display"), current);
         renderSkillsDisplay($("skills-display"));
         $("gear-display-section").hidden = !C.gear(current).length;
         renderGear($("gear-display"), current);
         renderAbilities($("abilities-display"), C.abilities(current, ABILITIES));
       } else {
+        renderConditions($("conditions-run"), current, { clickable: true });
         renderSkillsDisplay($("skills-run"), { links: true });
-        renderGear($("gear-run"), current);
+        renderGear($("gear-run"), current, { running: true });
         renderAbilities($("abilities-run"), C.abilities(current, ABILITIES));
       }
     }
@@ -292,15 +296,20 @@
 
   // ---- gear: props for now, each shown as "description [prop]" ----
   // Run can add gear (saved right away, never Starter). Edit can add, change, or remove gear and set Starter; kept in the draft until Save.
-  function renderGear(el, character, { editable = false } = {}) {
+  // Each item's conditions show under it; Run and Edit can add them ("+ condition") and click them.
+  function renderGear(el, character, { editable = false, running = false } = {}) {
     const items = C.gear(character);
+    const changeable = editable || running;
     el.innerHTML = items.length
       ? `<ul class="gear-list">${items.map((g) => `<li data-gear="${escapeHTML(g.id)}">
           <span class="gear-text">${escapeHTML(g.description)} <span class="gear-kind">[${escapeHTML(g.kind)}]</span></span>
+          ${changeable ? `<wa-button size="s" appearance="plain" data-gear-action="condition" title="Add a condition">
+            <wa-icon slot="start" name="plus"></wa-icon>condition</wa-button>` : ""}
           ${editable ? `<wa-button size="s" appearance="plain" data-gear-action="edit" title="Change">
               <wa-icon name="pen" label="Change"></wa-icon></wa-button>
             <wa-button size="s" appearance="plain" variant="danger" data-gear-action="remove" title="Remove">
               <wa-icon name="trash" label="Remove"></wa-icon></wa-button>` : ""}
+          ${conditionsHTML(g, { clickable: changeable, gearId: g.id })}
         </li>`).join("")}</ul>`
       : `<p class="gear-empty">None</p>`;
   }
@@ -326,7 +335,7 @@
       renderGear($("gear-edit"), draft, { editable: true });
     } else if (state === "running") {
       if (!commit(C.withGear(current, C.newProp(description)))) return;
-      renderGear($("gear-run"), current);
+      renderGear($("gear-run"), current, { running: true });
     }
     gearDialog.open = false;
   }
@@ -339,12 +348,141 @@
     const button = e.target.closest("[data-gear-action]");
     const id = button?.closest("[data-gear]")?.dataset.gear;
     if (!id) return;
+    if (button.dataset.gearAction === "condition") return;
     if (button.dataset.gearAction === "edit") openGearDialog(draft.gear.find((g) => g.id === id));
     else {
       draft = C.withoutGear(draft, id);
       renderGear($("gear-edit"), draft, { editable: true });
     }
   });
+
+  // ---- conditions: chips on the character and under gear; in Run and Edit a chip opens its dialog ----
+  // Run saves each change right away; Edit keeps them in the draft until Save. Nothing posts to Discord.
+  function conditionsHTML(holder, { clickable = false, gearId = null } = {}) {
+    const list = C.conditions(holder);
+    if (!list.length) return "";
+    return `<div class="condition-list">${list.map((x) => {
+      const name = x.intrinsic ? `<i title="Intrinsic">${escapeHTML(x.name)}</i>` : escapeHTML(x.name);
+      const sev = C.severityLabel(x.severity);
+      const inner = `${name}${sev ? ` <span class="condition-severity">${sev}</span>` : ""}`;
+      return clickable
+        ? `<button type="button" class="condition" data-condition="${escapeHTML(x.id)}" data-gear-of="${escapeHTML(gearId ?? "")}">${inner}</button>`
+        : `<span class="condition">${inner}</span>`;
+    }).join("")}</div>`;
+  }
+  function renderConditions(el, holder, options = {}) {
+    el.innerHTML = conditionsHTML(holder, options) || `<p class="gear-empty">None</p>`;
+  }
+
+  // The character (gearId null) or one of its gear items, from the draft while editing.
+  function holderOf(gearId) {
+    const base = state === "editing" ? draft : current;
+    return gearId == null ? base : C.gear(base).find((g) => String(g.id) === String(gearId)) ?? null;
+  }
+  function refreshConditions() {
+    if (state === "editing") {
+      renderConditions($("conditions-edit"), draft, { clickable: true });
+      renderGear($("gear-edit"), draft, { editable: true });
+    } else if (state === "running") {
+      renderConditions($("conditions-run"), current, { clickable: true });
+      renderGear($("gear-run"), current, { running: true });
+    }
+  }
+  // Applies fn(holder) → holder to the character or a gear item.
+  function changeHolder(gearId, fn) {
+    const item = holderOf(gearId);
+    if (!item) return false;
+    if (state === "editing") {
+      draft = gearId == null ? fn(draft) : C.withGear(draft, fn(item));
+    } else if (state === "running") {
+      if (!commit(gearId == null ? fn(current) : C.withGear(current, fn(item)))) return false;
+    } else return false;
+    refreshConditions();
+    return true;
+  }
+  const showSeverity = (stepper, severity) => {
+    stepper.querySelector("[data-severity-value]").textContent = `x${severity}`;
+    stepper.querySelector('[data-severity="-1"]').disabled = severity <= 1;
+    stepper.querySelector('[data-severity="1"]').disabled = severity >= C.MAX_SEVERITY;
+  };
+  const showFor = (el, gearId) => {
+    el.hidden = gearId == null;
+    el.textContent = gearId == null ? "" : holderOf(gearId)?.description ?? "";
+  };
+
+  const addDialog = $("condition-add-dialog");
+  const addName = $("condition-name");
+  const addSeverity = $("condition-add-severity");
+  const addIntrinsic = $("condition-intrinsic");
+  let adding = { gearId: null, severity: 1 };
+  function openAddCondition(gearId = null) {
+    adding = { gearId, severity: 1 };
+    showFor($("condition-add-for"), gearId);
+    $("condition-suggestions").innerHTML = C.CONDITION_SUGGESTIONS[gearId == null ? "character" : "gear"]
+      .map((name) => `<button type="button" class="condition" data-suggestion="${escapeHTML(name)}">${escapeHTML(name)}</button>`).join("");
+    addName.value = "";
+    addIntrinsic.checked = false;
+    showSeverity(addSeverity, 1);
+    addDialog.open = true;
+  }
+  function addCondition() {
+    const name = text(addName.value);
+    if (!name) { addName.focus(); return; }
+    if (!changeHolder(adding.gearId, (h) => C.withCondition(h, { name, severity: adding.severity, intrinsic: addIntrinsic.checked }))) return;
+    addDialog.open = false;
+  }
+  $("condition-suggestions").addEventListener("click", (e) => {
+    const chip = e.target.closest("[data-suggestion]");
+    if (!chip) return;
+    addName.value = chip.dataset.suggestion;
+    addName.focus();
+  });
+  addSeverity.addEventListener("click", (e) => {
+    const step = Number(e.target.closest("[data-severity]")?.dataset.severity);
+    if (!step) return;
+    adding.severity = Math.max(1, Math.min(C.MAX_SEVERITY, adding.severity + step));
+    showSeverity(addSeverity, adding.severity);
+  });
+  $("condition-add").addEventListener("click", addCondition);
+  addName.addEventListener("keydown", (e) => { if (e.key === "Enter") addCondition(); });
+
+  const conditionDialog = $("condition-dialog");
+  const conditionSeverity = $("condition-severity");
+  let changing = { gearId: null, id: null };
+  const changingCondition = () => C.conditions(holderOf(changing.gearId)).find((x) => String(x.id) === String(changing.id)) ?? null;
+  function showConditionDialog() {
+    const x = changingCondition();
+    if (!x) { conditionDialog.open = false; return; }
+    conditionDialog.label = x.name;
+    showFor($("condition-for"), changing.gearId);
+    $("condition-intrinsic-note").hidden = !x.intrinsic;
+    showSeverity(conditionSeverity, x.severity);
+  }
+  function openCondition(gearId, id) {
+    changing = { gearId, id };
+    showConditionDialog();
+    conditionDialog.open = true;
+  }
+  conditionSeverity.addEventListener("click", (e) => {
+    const step = Number(e.target.closest("[data-severity]")?.dataset.severity);
+    const x = changingCondition();
+    if (!step || !x) return;
+    if (changeHolder(changing.gearId, (h) => C.withSeverity(h, x.id, x.severity + step))) showConditionDialog();
+  });
+  $("condition-remove").addEventListener("click", () => {
+    const x = changingCondition();
+    if (x && changeHolder(changing.gearId, (h) => C.withoutCondition(h, x.id))) conditionDialog.open = false;
+  });
+
+  for (const el of [running, form]) {
+    el.addEventListener("click", (e) => {
+      if (e.target.closest("[data-add-condition]")) { openAddCondition(null); return; }
+      const add = e.target.closest('[data-gear-action="condition"]');
+      if (add) { openAddCondition(add.closest("[data-gear]").dataset.gear); return; }
+      const chip = e.target.closest(".condition[data-condition]");
+      if (chip) openCondition(chip.dataset.gearOf || null, chip.dataset.condition);
+    });
+  }
 
   // ---- abilities: Perks and Augmentations, each name opening its full text ----
   const ABILITY_TYPES = [["perk", "Perks"], ["augmentation", "Augmentations"]];
@@ -676,6 +814,7 @@
     edited.wounds = draft.wounds;
     edited.skills = draft.skills;
     edited.gear = draft.gear;
+    edited.conditions = draft.conditions;
     edited.abilities = draft.abilities;
     if (!commit(edited)) return;
     store.set("openCharacter", current.id);

@@ -461,6 +461,36 @@ wa-tab[hidden] { display: none; }
 .gear-empty { margin: 0; }
 .gear-form { display: flex; flex-direction: column; gap: var(--wa-space-l); }
 
+/* ---- conditions: pill chips; intrinsic names in italics; clickable in Run and Edit ---- */
+.condition-list { display: flex; flex-wrap: wrap; gap: var(--wa-space-2xs); }
+.condition {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35em;
+  padding: 0.1em 0.75em;
+  border: 1px solid var(--wa-color-brand);
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+/* Web Awesome styles native buttons as form controls; a chip button looks like the plain chip */
+button.condition { display: inline-flex; height: auto; min-height: 0; cursor: pointer; }
+button.condition:hover, button.condition:focus-visible { background: color-mix(in srgb, var(--wa-color-brand) 15%, transparent); }
+.condition-severity { font-weight: 600; color: var(--wa-color-brand); }
+.gear-list li .condition-list { flex-basis: 100%; }
+.gear-list li:has(.condition-list) { flex-wrap: wrap; }
+.condition-form { display: flex; flex-direction: column; gap: var(--wa-space-m); }
+.condition-for, .condition-intrinsic-note { margin: 0; }
+.condition-for { color: var(--wa-color-text-quiet); }
+.condition-intrinsic-note { font-style: italic; }
+.condition-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--wa-space-m); }
+.condition-steps { display: flex; align-items: center; }
+.condition-steps .sheet-label { margin-right: var(--wa-space-xs); }
+.condition-steps [data-severity-value] { min-width: 3ch; text-align: center; font-family: "Chakra Petch", sans-serif; font-size: var(--wa-font-size-l); }
+
 /* ---- abilities: Perks and Augmentations, names open their full text ---- */
 .ability-group { margin-bottom: var(--wa-space-l); }
 .ability-list { list-style: none; margin: 0; padding: 0; }
