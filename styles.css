@@ -269,7 +269,8 @@ wa-tab[hidden] { display: none; }
 }
 .sheet-head[hidden], .sheet-head [hidden] { display: none; }
 .sheet-head dl { margin: 0; }
-.sheet-head dt, .sheet-label, .sheet-head ::part(form-control-label), .appearance dt, .appearance-edit ::part(form-control-label) {
+.sheet-head dt, .sheet-label, .sheet-head ::part(form-control-label), .appearance dt, .appearance-edit ::part(form-control-label),
+.create-details .sheet-identity ::part(form-control-label) {
   font-family: "Orbitron", sans-serif;
   font-size: var(--wa-font-size-2xs);
   letter-spacing: 0.15em;
@@ -368,6 +369,44 @@ wa-tab[hidden] { display: none; }
 .character-form { display: flex; flex-direction: column; gap: var(--wa-space-l); }
 .character-form[hidden] { display: none; }
 .character-form > wa-button[type="submit"] { align-self: flex-start; }
+
+/* ---- create: step header, one step's controls, then Discard | Back, Next / Finish ---- */
+.create { display: flex; flex-direction: column; gap: var(--wa-space-l); }
+.create[hidden] { display: none; }
+.create-steps {
+  display: flex; flex-wrap: wrap; gap: var(--wa-space-2xs) var(--wa-space-m);
+  list-style: none; margin: 0; padding: 0 0 var(--wa-space-m); border-bottom: 1px solid var(--wa-color-surface-border);
+}
+.create-steps button {
+  display: inline-flex; align-items: center; gap: var(--wa-space-xs); height: auto; margin: 0; padding: var(--wa-space-2xs) 0;
+  border: 0; background: none; transform: none; color: var(--wa-color-text-normal); font: inherit; cursor: pointer;
+}
+.create-steps button:disabled { cursor: default; }
+.create-steps li:not(.current):not(.done) button:disabled { color: var(--wa-color-text-quiet); }
+.create-steps button:not(:disabled):hover .create-step-label { color: var(--wa-color-brand); }
+.create-step-mark {
+  display: inline-grid; place-items: center; width: 1.75rem; height: 1.75rem; border-radius: 50%;
+  border: 1px solid var(--wa-color-surface-border); font-family: "Chakra Petch", sans-serif; font-size: var(--wa-font-size-s);
+}
+.create-step-label { font-family: "Orbitron", sans-serif; font-size: var(--wa-font-size-2xs); letter-spacing: 0.15em; text-transform: uppercase; }
+.create-steps .done .create-step-mark { border-color: var(--ncd-cyan); color: var(--wa-color-brand); }
+.create-steps .current .create-step-mark { background: var(--wa-color-brand); border-color: var(--wa-color-brand); color: var(--wa-color-brand-on-loud, #000); }
+.create-steps .current .create-step-label { color: var(--wa-color-brand); }
+.wa-dark .create-steps .current .create-step-mark { box-shadow: 0 0 10px var(--ncd-glow); }
+.create-nav { display: flex; justify-content: space-between; align-items: center; gap: var(--wa-space-s); flex-wrap: wrap;
+  padding-top: var(--wa-space-m); border-top: 1px solid var(--wa-color-surface-border); }
+.create-nav-moves { display: flex; gap: var(--wa-space-s); margin-left: auto; }
+.create-body { display: flex; flex-direction: column; gap: var(--wa-space-l); }
+.create-placeholder { color: var(--wa-color-text-quiet); margin: 0; }
+.create-details .sheet-identity > .wide { grid-column: 1 / -1; }
+.create-totals { margin: 0; font-family: "Chakra Petch", sans-serif; font-size: var(--wa-font-size-l); font-weight: 700; color: var(--wa-color-brand); }
+@media (max-width: 480px) {
+  .create-step-label { display: none; }
+  .create-steps .current .create-step-label { display: inline; }
+  .create-details .sheet-who { grid-template-columns: minmax(0, 1fr); }
+  .create-details .portrait-pick { flex-direction: row; align-items: center; }
+  .create-details .portrait-pick .portrait-frame { width: 5rem; flex: none; }
+}
 
 /* ---- gear: a ruled list under the skills ---- */
 .gear { margin-bottom: var(--wa-space-l); }

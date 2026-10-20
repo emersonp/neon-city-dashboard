@@ -1,6 +1,7 @@
 // Roster tab (the saved characters) and the Character tab, which appears once a character is opened.
-// A character in the Character tab is in one of three states: display, editing, or running.
-// Skill changes made while editing live in `draft` until Save.
+// A character in the Character tab is in one of four states: display, editing, running, or creating.
+// Skill changes made while editing live in `draft` until Save. A character still being created (C.isCreating) is only
+// ever shown in Create (create.js), never Edit or Run.
 (function () {
   const C = window.NCD_CHARACTERS;
   const APP = window.NCD_APP;
@@ -19,6 +20,7 @@
   const display = $("character-display");
   const running = $("character-running");
   const fields = $("character-fields");
+  const create = $("character-create");
   const currentLuck = $("current-luck");
   const currentInfluence = $("current-influence");
   const woundsFields = $("wounds-fields");
@@ -34,7 +36,7 @@
   const field = (name) => form.querySelector(`[name="${name}"]`);
 
   let current = null;     // the character in the Character tab
-  let state = "display";  // "display" | "editing" | "running"
+  let state = "display";  // "display" | "editing" | "running" | "creating"
   let draft = null;       // while editing: a copy holding skill, wound, gear, and ability changes until Save
 
   const setCurrent = (character) => { current = character; SESSION.character = character; };
@@ -96,8 +98,8 @@
     rows.innerHTML = list.length
       ? list.map((c) => `<tr>
           <td><a href="#" data-open="${escapeHTML(c.id)}">${escapeHTML(C.label(c))}</a></td>
-          <td>${escapeHTML(c.archetype)}</td>
-          <td>${escapeHTML(c.origin)}</td>
+          <td>${C.isCreating(c) ? `<wa-badge variant="warning" appearance="outlined">In creation</wa-badge>` : escapeHTML(c.archetype)}</td>
+          <td>${C.isCreating(c) ? "" : escapeHTML(c.origin)}</td>
           <td class="actions">
             <wa-button size="s" appearance="outlined" data-export="${escapeHTML(c.id)}">
               <wa-icon slot="start" name="file-export"></wa-icon>Export JSON
@@ -123,21 +125,28 @@
     if (open) {
       e.preventDefault();
       const c = find(open.dataset.open);
-      if (c) { store.set("openCharacter", c.id); show(c, "display"); }
+      if (c) { store.set("openCharacter", c.id); show(c, C.isCreating(c) ? "creating" : "display"); }
     } else if (exp) {
       const c = find(exp.dataset.export);
       if (c) download(C.toExport(c));
     }
   });
 
-  $("new-character").addEventListener("click", () => show(C.newCharacter(), "editing"));
+  // Saved right away, so it's on the Roster while it's being created.
+  $("new-character").addEventListener("click", () => {
+    if (!commit(C.newCharacter())) return;
+    store.set("openCharacter", current.id);
+    renderRoster();
+    show(current, "creating");
+  });
 
   // ---- character tab ----
   const setLabel = (handle) => { tab.textContent = C.label({ handle }); };
 
   function show(character, mode, { activate = true } = {}) {
     setCurrent(character);
-    state = mode;
+    // In creation: Create only. Finished: never Create.
+    state = C.isCreating(character) ? "creating" : mode === "creating" ? "display" : mode;
     tab.hidden = false;
     setLabel(current.handle);
     render();
@@ -148,9 +157,12 @@
     display.hidden = state !== "display";
     form.hidden = state !== "editing";
     running.hidden = state !== "running";
-    fields.hidden = state === "editing";
+    create.hidden = state !== "creating";
+    fields.hidden = state === "editing" || state === "creating";
     fields.dataset.state = state;
-    if (state === "editing") {
+    if (state === "creating") {
+      window.NCD_CREATE.render(create, current, createHooks);
+    } else if (state === "editing") {
       draft = {
         skills: { ...(current.skills ?? {}) }, wounds: C.wounds(current), gear: C.gear(current),
         // all saved ids, even ones not in the catalog: if abilities.js fails to load, Save mustn't erase them
@@ -257,8 +269,10 @@
     key: "currentInfluence", value: () => C.influence(current).current, clamp: (n) => C.clampInfluence(n), changed: APP.postInfluence,
   });
 
-  $("character-edit").addEventListener("click", () => { state = "editing"; render(); });
-  $("character-run").addEventListener("click", () => { state = "running"; render(); });
+  // Edit and Run aren't for a character still being created.
+  const enter = (mode) => () => { if (C.isCreating(current)) return; state = mode; render(); };
+  $("character-edit").addEventListener("click", enter("editing"));
+  $("character-run").addEventListener("click", enter("running"));
   $("character-stop").addEventListener("click", () => { state = "display"; render(); });
 
   // ---- appearance: shown in full on the sheet, and in a dialog while running ----
@@ -622,15 +636,30 @@
       <img class="portrait" src="${escapeHTML(portraitSrc(file))}" alt="${escapeHTML(C.portraitLabel(file))}">
     </button>`).join("");
   $("portrait-choose").hidden = !portraits.length;
-  $("portrait-choose").addEventListener("click", () => {
+  let portraitPicked = null; // Create's pickPortrait: resolves with the file picked, or null if the dialog closes without one
+  function openPortraits(selected) {
     for (const button of portraitChoices.querySelectorAll("[data-portrait]")) {
-      button.setAttribute("aria-pressed", String(button.dataset.portrait === field("portrait").value));
+      button.setAttribute("aria-pressed", String(button.dataset.portrait === selected));
     }
     portraitDialog.open = true;
+  }
+  $("portrait-choose").addEventListener("click", () => openPortraits(field("portrait").value));
+  const pickPortrait = () => new Promise((resolve) => {
+    if (!portraits.length) { resolve(null); return; }
+    portraitPicked?.(null);
+    portraitPicked = resolve;
+    openPortraits(C.portraitFile(current, portraits));
   });
+  const resolvePortrait = (file) => { const resolve = portraitPicked; portraitPicked = null; resolve?.(file); };
+  portraitDialog.addEventListener("wa-after-hide", (e) => { if (e.target === portraitDialog) resolvePortrait(null); });
   portraitChoices.addEventListener("click", (e) => {
     const file = e.target.closest("[data-portrait]")?.dataset.portrait;
     if (!file) return;
+    if (portraitPicked) {
+      resolvePortrait(file);
+      portraitDialog.open = false;
+      return;
+    }
     field("portrait").value = file;
     showPortrait($("portrait-preview"), file);
     portraitDialog.open = false;
@@ -653,11 +682,65 @@
     renderRoster();
   });
 
+  // ---- creating: create.js draws the steps; these hooks save, finish, and discard ----
+  // The Detail sheet, read-only, for Create's review step: a copy of the sheet head, then appearance, skills, gear, abilities.
+  function renderSummary(el) {
+    renderFields();
+    const head = fields.cloneNode(true);
+    head.hidden = false;
+    for (const node of [head, ...head.querySelectorAll("[id]")]) node.removeAttribute("id");
+    for (const button of head.querySelectorAll("[data-luck], [data-influence]")) button.remove();
+    el.innerHTML = `<dl class="appearance"></dl><div class="skills"></div>
+      <section class="gear"><div class="gear-head"><h3>Gear</h3></div><div class="summary-gear"></div></section>
+      <div class="abilities"></div>`;
+    el.prepend(head);
+    renderAppearance(el.querySelector(".appearance"));
+    renderSkillsDisplay(el.querySelector(".skills"));
+    el.querySelector("section.gear").hidden = !C.gear(current).length;
+    renderGear(el.querySelector(".summary-gear"), current);
+    renderAbilities(el.querySelector(".abilities"), C.abilities(current, ABILITIES));
+  }
+  create.addEventListener("click", (e) => {
+    const id = e.target.closest(".create-summary [data-ability]")?.dataset.ability;
+    if (id) openAbility(id);
+  });
+
+  const createHooks = {
+    change(next) {
+      if (!commit(next)) return;
+      setLabel(current.handle);
+      render();
+      renderRoster();
+    },
+    finish() {
+      if (!commit(C.finishCreation(current))) return;
+      renderRoster();
+      show(current, "display");
+    },
+    discard() {
+      try {
+        C.remove(storage, current.id);
+      } catch (err) {
+        console.error(err);
+        APP.toast("Couldn't discard the character.", "danger");
+        return;
+      }
+      store.set("openCharacter", null);
+      setCurrent(null);
+      state = "display";
+      tab.hidden = true;
+      customElements.whenDefined("wa-tab-group").then(() => { tabs.active = "roster"; });
+      renderRoster();
+    },
+    pickPortrait,
+    renderSummary,
+  };
+
   // ---- start up: reopen the last saved character, if any ----
   renderRoster();
   const openId = store.get("openCharacter");
   const reopen = C.load(storage).find((c) => c.id === openId);
-  if (reopen) show(reopen, "display", { activate: false });
+  if (reopen) show(reopen, C.isCreating(reopen) ? "creating" : "display", { activate: false });
   customElements.whenDefined("wa-tab-group").then(() => {
     if (tabs.active === "character" && !reopen) tabs.active = "roster";
   });

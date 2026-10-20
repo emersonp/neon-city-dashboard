@@ -43,6 +43,7 @@ node --test tests/dice.test.cjs tests/discord.test.cjs tests/characters.test.cjs
 | `dice.js` | Dice rules (no page code, so it's testable in Node) |
 | `characters.js` | Archetypes, origins, random handles and names, saving characters (needs `dice.js`; testable in Node) |
 | `roster.js` | Roster tab and the Character tab |
+| `create.js` | Create mode: a new character built step by step from `rules.js` (step header, Back/Next/Finish, Discard, each step's controls) |
 | `abilities.js` | The perk and augmentation catalog; edit it to add abilities |
 | `rules.js` | Rulebook data for Create: archetype skills, initiative, knows, gear; origin options (needs `characters.js`; testable in Node) |
 | `format.js` | Turns ability descriptions into HTML: paragraphs, bold, italic, lists, icon tokens (testable in Node) |
@@ -55,8 +56,9 @@ Things remembered in localStorage (all under `ncd.`): characters (with the ids o
 
 ## Adding abilities
 
-Perks and augmentations (called *abilities* in the code) live in `abilities.js`. A character can pick any of them in
-**Edit → Add ability**; the sheet shows them by name under **Perks** and **Augmentations**, and clicking one opens its text.
+Perks and augmentations (called *abilities* in the code) live in `abilities.js`. A new character gets theirs in **Create**,
+which offers the ones their archetype and origin allow; after that, **Edit → Add ability** can add any of them. The sheet
+shows them by name under **Perks** and **Augmentations**, and clicking one opens its text.
 
 Each entry:
 
