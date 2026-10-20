@@ -50,7 +50,7 @@
   function renderArchetype(body, character) {
     const picked = character.creation.archetype;
     body.innerHTML = `<div class="create-cards" role="group" aria-label="Archetype">${C.ARCHETYPES.map((name) =>
-      card("data-archetype", name, name === picked, name, rules().archetypes[name]?.pitch)).join("")}</div>`;
+      card("data-archetype", name, name === picked, name, C.ruleFor(rules().archetypes, name)?.pitch)).join("")}</div>`;
     body.addEventListener("click", (e) => {
       const archetype = e.target.closest("[data-archetype]")?.dataset.archetype;
       if (!archetype) return;
@@ -65,7 +65,7 @@
   // Skills: the archetype's Things You Know About, then every skill as the archetype (and bumps) leave it, with a +5 toggle
   // on each skill that can take one. The initiatives are shown but can't be bumped.
   function renderSkills(body, character) {
-    const cr = character.creation, arch = rules().archetypes[cr.archetype];
+    const cr = character.creation, arch = C.ruleFor(rules().archetypes, cr.archetype);
     if (!arch) { needsArchetype(body); return; }
     const { count, from } = arch.knows, knowsFull = cr.knows.length >= count;
     const legal = C.bumpable(cr, rules()), bumpsFull = cr.bumps.length >= C.BUMP_COUNT;
@@ -90,7 +90,7 @@
     body.addEventListener("change", (e) => {
       const box = e.target.closest("[data-know], [data-bump]");
       if (!box) return;
-      const now = ctx.current().creation, max = rules().archetypes[now.archetype]?.knows.count ?? 0;
+      const now = ctx.current().creation, max = C.ruleFor(rules().archetypes, now.archetype)?.knows.count ?? 0;
       if (box.dataset.know) ctx.choose({ knows: toggled(now.knows, box.dataset.know, box.checked, max) }, `[data-know="${box.dataset.know}"]`);
       else ctx.choose({ bumps: toggled(now.bumps, box.dataset.bump, box.checked, C.BUMP_COUNT) }, `[data-bump="${box.dataset.bump}"]`);
     });
@@ -99,7 +99,7 @@
   // Perk & Gear: the archetype's five perks (the picked one shows its rules text), then the starting gear,
   // fixed lines as written and each "choose one" line as radio buttons.
   function renderPerk(body, character) {
-    const cr = character.creation, arch = rules().archetypes[cr.archetype];
+    const cr = character.creation, arch = C.ruleFor(rules().archetypes, cr.archetype);
     if (!arch) { needsArchetype(body); return; }
     // several "choose one" lines each get their own label, so screen readers can tell them apart
     const choices = arch.gear.filter((line) => typeof line !== "string").length;
@@ -144,13 +144,13 @@
   const optionBumpable = (cr, category) => C.bumpable(cr, rules()).filter((id) => C.SKILLS.find((s) => s.id === id)?.type === category);
 
   function renderOrigin(body, character) {
-    const cr = character.creation, arch = rules().archetypes[cr.archetype];
+    const cr = character.creation, arch = C.ruleFor(rules().archetypes, cr.archetype);
     if (!arch) { needsArchetype(body); return; }
-    const origins = rules().origins, origin = origins[cr.origin];
+    const origins = rules().origins, origin = C.ruleFor(origins, cr.origin);
     const option = origin?.options.find((o) => o.id === cr.option) ?? null;
     const originCards = `<div class="create-cards" role="group" aria-label="Origin">${C.ORIGINS.map((name) => {
-      const autos = origins[name]?.augmentations ?? [];
-      return card("data-origin", name, name === cr.origin, name, origins[name]?.pitch,
+      const autos = C.ruleFor(origins, name)?.augmentations ?? [];
+      return card("data-origin", name, name === cr.origin, name, C.ruleFor(origins, name)?.pitch,
         autos.length ? `<p class="create-card-note">Includes ${esc(autos.map(abilityName).join(" and "))}.</p>` : "");
     }).join("")}</div>`;
     if (!origin) { body.innerHTML = originCards; wireOrigin(body); return; }
@@ -214,7 +214,7 @@
       if (!pick || pick.disabled) return;
       if (pick.dataset.origin) { ctx.choose({ origin: pick.dataset.origin }, `[data-origin="${pick.dataset.origin}"]`); return; }
       const cr = ctx.current().creation, id = pick.dataset.aug, on = cr.augmentations.includes(id);
-      const max = rules().origins[cr.origin]?.options.find((o) => o.id === cr.option)?.extraAugmentation ? 2 : 1;
+      const max = C.ruleFor(rules().origins, cr.origin)?.options.find((o) => o.id === cr.option)?.extraAugmentation ? 2 : 1;
       // with room for only one, picking another swaps it
       const augmentations = max === 1 && !on ? [id] : toggled(cr.augmentations, id, !on, max);
       ctx.choose({ augmentations }, `[data-aug="${id}"]`);
@@ -234,14 +234,14 @@
         const placements = { ...cr.placements };
         if (id) placements[key] = id; else delete placements[key];
         // a "different skill" pick that now matches this one has to be made again
-        const option = rules().origins[cr.origin]?.options.find((o) => o.id === cr.option);
+        const option = C.ruleFor(rules().origins, cr.origin)?.options.find((o) => o.id === cr.option);
         for (const p of option?.placements ?? []) if (p.differentFrom === key && placements[p.key] === id) delete placements[p.key];
         ctx.choose({ placements }, `[data-place="${key}"]`);
         return;
       }
       const box = e.target.closest("[data-obump]");
       if (box) {
-        const max = rules().origins[cr.origin]?.options.find((o) => o.id === cr.option)?.bumps?.count ?? 0;
+        const max = C.ruleFor(rules().origins, cr.origin)?.options.find((o) => o.id === cr.option)?.bumps?.count ?? 0;
         ctx.choose({ optionBumps: toggled(cr.optionBumps, box.dataset.obump, box.checked, max) }, `[data-obump="${box.dataset.obump}"]`);
       }
     });
@@ -383,6 +383,7 @@
   // pickPortrait() -> Promise<file | null>, renderSummary(el), and the sheet's own pieces: diceIcons(skillState),
   // abilityText(ability) -> HTML, skillGroups(rowHTML) -> every skill in the sheet's columns.
   function render(el, character, hooks) {
+    character = { ...character, creation: C.fullCreation(character.creation) }; // steps can read every creation field
     const step = stepOf(character);
     const keep = LIVE_STEPS.has(step) && shown?.character.id === character.id && el.dataset.step === step;
     shown = { character, hooks, el };

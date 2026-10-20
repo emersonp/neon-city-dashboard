@@ -496,3 +496,33 @@ test("remove deletes one saved character and leaves the rest", () => {
   C.remove(storage, "missing");
   assert.deepEqual(C.load(storage).map((c) => c.id), ["b"]);
 });
+
+test("a partial creation object is filled in rather than throwing", () => {
+  const c = { ...C.newCharacter(), creation: {} };
+  const next = C.withCreation(c, { archetype: "Assassin" }, R, CAT);
+  assert.equal(next.archetype, "Assassin");
+  assert.deepEqual(next.creation.bumps, []);
+  assert.equal(C.stepComplete(c, "skills", R, CAT), false);
+  assert.equal(C.stepComplete(c, "origin", R, CAT), false);
+  assert.ok(C.bumpable({ archetype: "Assassin" }, R).length > 0);
+  assert.deepEqual(C.placeable({}, "x", R), []);
+  assert.equal(C.applyCreation(c, R, CAT).archetype, null);
+});
+
+test("inherited names like constructor aren't archetypes or origins", () => {
+  for (const name of ["constructor", "toString", "__proto__"]) {
+    assert.equal(ok({ archetype: name }, "archetype"), false);
+    assert.equal(ok({ origin: name }, "origin"), false);
+    assert.deepEqual(C.bumpable({ archetype: name }, R), []);
+    assert.deepEqual(C.applyCreation(make({ archetype: name, origin: name }), R, CAT).skills, {});
+  }
+});
+
+test("the Dice tab never rolls as a character in creation", () => {
+  const creating = C.newCharacter();
+  assert.equal(C.playingAs(creating), null);
+  const finished = C.finishCreation({ ...creating, handle: "Ace" });
+  assert.equal(C.playingAs(finished), finished);
+  assert.equal(C.playingAs(null), null);
+  assert.equal(C.playingAs(undefined), null);
+});

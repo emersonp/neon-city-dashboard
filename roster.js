@@ -39,7 +39,8 @@
   let state = "display";  // "display" | "editing" | "running" | "creating"
   let draft = null;       // while editing: a copy holding skill, wound, gear, and ability changes until Save
 
-  const setCurrent = (character) => { current = character; SESSION.character = character; };
+  // A character still in creation stays out of SESSION, so Dice-tab rolls don't post as it; Finish sets it.
+  const setCurrent = (character) => { current = character; SESSION.character = C.playingAs(character); };
 
   // Saves the character right away (changes made while running, and Used). A failed save keeps the old one.
   function commit(next) {
@@ -100,10 +101,10 @@
           <td><a href="#" data-open="${escapeHTML(c.id)}">${escapeHTML(C.label(c))}</a></td>
           <td>${C.isCreating(c) ? `<wa-badge variant="warning" appearance="outlined">In creation</wa-badge>` : escapeHTML(c.archetype)}</td>
           <td>${C.isCreating(c) ? "" : escapeHTML(c.origin)}</td>
-          <td class="actions">
+          <td class="actions">${C.isCreating(c) ? "" : `
             <wa-button size="s" appearance="outlined" data-export="${escapeHTML(c.id)}">
               <wa-icon slot="start" name="file-export"></wa-icon>Export JSON
-            </wa-button>
+            </wa-button>`}
           </td>
         </tr>`).join("")
       : `<tr><td colspan="4" class="empty">No characters yet</td></tr>`;

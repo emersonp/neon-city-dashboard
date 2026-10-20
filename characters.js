@@ -247,17 +247,27 @@
   const isCreating = (character) => character?.creation != null && typeof character.creation === "object";
   const newCreation = () => ({ step: "archetype", archetype: null, knows: [], bumps: [], perk: null, gear: {}, origin: null,
     augmentations: [], option: null, placements: {}, optionBumps: [] });
+  // Fills in anything a stored creation is missing, so a partial one (e.g. `creation: {}`) doesn't throw.
+  const fullCreation = (creation) => ({ ...newCreation(), ...creation });
+  // Rules lookup by name; own keys only, so "constructor" and the like aren't archetypes or origins.
+  const ruleFor = (table, name) => (typeof name === "string" && Object.hasOwn(table, name) ? table[name] : undefined);
+  // Who the Dice tab rolls as: never a character still in creation.
+  const playingAs = (character) => (character && !isCreating(character) ? character : null);
 
-  const optionOf = (creation, rules) => rules.origins[creation.origin]?.options.find((o) => o.id === creation.option) ?? null;
-  const baseValue = (creation, rules, id) => rules.archetypes[creation.archetype]?.skills[id]?.value ?? null;
+  const optionOf = (creation, rules) => ruleFor(rules.origins, creation.origin)?.options.find((o) => o.id === creation.option) ?? null;
+  const baseValue = (creation, rules, id) => ruleFor(rules.archetypes, creation.archetype)?.skills[id]?.value ?? null;
   // Mental and physical skills the archetype leaves below 95 (the initiatives have their own section in the book).
-  const bumpable = (creation, rules) => !rules.archetypes[creation.archetype] ? []
-    : SKILLS.filter((s) => s.type !== "initiative" && shownValue(baseValue(creation, rules, s.id)) < MAX_VALUE).map((s) => s.id);
+  function bumpable(creation, rules) {
+    const cr = fullCreation(creation);
+    return !ruleFor(rules.archetypes, cr.archetype) ? []
+      : SKILLS.filter((s) => s.type !== "initiative" && shownValue(baseValue(cr, rules, s.id)) < MAX_VALUE).map((s) => s.id);
+  }
   // Skills the option's placement `key` may go on. Checked against the archetype's own dice, so the order of picking doesn't matter.
   function placeable(creation, key, rules) {
-    const arch = rules.archetypes[creation.archetype], p = optionOf(creation, rules)?.placements.find((x) => x.key === key);
+    const cr = fullCreation(creation);
+    const arch = ruleFor(rules.archetypes, cr.archetype), p = optionOf(cr, rules)?.placements.find((x) => x.key === key);
     if (!arch || !p) return [];
-    const other = p.differentFrom ? creation.placements?.[p.differentFrom] : null;
+    const other = p.differentFrom ? cr.placements?.[p.differentFrom] : null;
     return SKILLS.filter((s) => s.type === p.category && s.id !== other
       && (arch.skills[s.id]?.[p.kind] ?? 0) + p.count <= MAX_INTRINSIC).map((s) => s.id);
   }
@@ -265,7 +275,8 @@
   const bumped = (s) => ({ ...s, value: Math.min(MAX_VALUE, shownValue(s.value) + STEP) });
   // Builds the sheet from scratch: base skills, initiative, bumps, option bumps, then option dice.
   function applyCreation(character, rules, catalog) {
-    const cr = character.creation, arch = rules.archetypes[cr.archetype], origin = rules.origins[cr.origin], option = optionOf(cr, rules);
+    const cr = fullCreation(character.creation), arch = ruleFor(rules.archetypes, cr.archetype);
+    const origin = ruleFor(rules.origins, cr.origin), option = optionOf(cr, rules);
     const skills = {};
     const put = (id, s) => { if (isNotable(s)) skills[id] = s; };
     for (const [id, s] of Object.entries(arch?.skills ?? {})) put(id, { value: s.value, adv: s.adv, chal: s.chal });
@@ -284,7 +295,7 @@
     const lines = (arch?.gear ?? []).map((line, i) => [i, typeof line === "string" ? line : line.choose[cr.gear?.[i]]]).filter(([, text]) => text);
     const gear = [
       ...lines.map(([i, text]) => ({ ...newProp(text, true), id: `create-gear-${i}` })),
-      ...augs.flatMap((id) => (rules.augmentationGear[id] ?? []).map((text, n) => ({ ...newProp(text, true), id: `create-aug-${id}-${n}` }))),
+      ...augs.flatMap((id) => (ruleFor(rules.augmentationGear, id) ?? []).map((text, n) => ({ ...newProp(text, true), id: `create-aug-${id}-${n}` }))),
     ];
     const luck = DEFAULT_LUCK + (option?.luck ?? 0);
     return {
@@ -301,7 +312,7 @@
   const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
   // Merges changes into creation. A changed archetype, origin or option clears what depended on it (unless the same call sets that too).
   function withCreation(character, changes, rules, catalog) {
-    const cur = character.creation, resets = {};
+    const cur = fullCreation(character.creation), resets = {};
     const changed = (k) => k in changes && !same(changes[k], cur[k]);
     if (changed("archetype")) Object.assign(resets, { knows: [], perk: null, gear: {}, augmentations: [], placements: {} });
     if (changed("origin")) Object.assign(resets, { augmentations: [], option: null, placements: {}, optionBumps: [] });
@@ -316,7 +327,7 @@
     Array.isArray(list) && list.length === size && new Set(list).size === size && list.every((id) => allowed.includes(id));
   // Takes the whole character because the details step needs its handle.
   function stepComplete(character, step, rules, catalog) {
-    const cr = character.creation, arch = rules.archetypes[cr.archetype];
+    const cr = fullCreation(character.creation), arch = ruleFor(rules.archetypes, cr.archetype);
     switch (step) {
       case "archetype": return Boolean(arch);
       case "skills": return Boolean(arch) && isDistinctSet(cr.knows, arch.knows.count, arch.knows.from)
@@ -327,7 +338,7 @@
           && arch.gear.every((line, i) => typeof line === "string" || (Number.isInteger(cr.gear?.[i]) && cr.gear[i] >= 0 && cr.gear[i] < line.choose.length));
       }
       case "origin": {
-        if (!arch || !rules.origins[cr.origin]) return false;
+        if (!arch || !ruleFor(rules.origins, cr.origin)) return false;
         const option = optionOf(cr, rules);
         if (cr.option != null && !option) return false;
         const fits = catalog.filter((a) => a.type === "augmentation" && a.origin === cr.origin && a.archetype === cr.archetype).map((a) => a.id);
@@ -377,7 +388,7 @@
   root.NCD_CHARACTERS = {
     ARCHETYPES, ORIGINS, CULTURES, SKILLS, UNTRAINED, MIN_VALUE, MAX_VALUE, MAX_INTRINSIC,
     randomHandle, randomName, newCharacter, label, load, save, remove, toExport,
-    STEPS, BUMP_COUNT, newCreation, isCreating, applyCreation, withCreation, bumpable, placeable, stepComplete, firstIncomplete, finishCreation,
+    STEPS, BUMP_COUNT, newCreation, fullCreation, ruleFor, isCreating, playingAs, applyCreation, withCreation, bumpable, placeable, stepComplete, firstIncomplete, finishCreation,
     skill, shownValue, isNotable, clampValue, increment, withSkill,
     DEFAULT_LUCK, luck, clampMaxLuck, clampCurrentLuck,
     DEFAULT_INFLUENCE, influence, clampInfluence,
