@@ -41,8 +41,8 @@ node --test tests/dice.test.cjs tests/discord.test.cjs tests/characters.test.cjs
 | `app.js` | Theme, tabs, settings, the dice pools, the roller and result panel, and posting to Discord |
 | `config.js` | Shared settings for everyone: Discord emoji codes and the published address (no webhook) |
 | `dice.js` | Dice rules (no page code, so it's testable in Node) |
-| `characters.js` | Archetypes, origins, random handles and names, saving characters (needs `dice.js`; testable in Node) |
-| `roster.js` | Roster tab and the Character tab |
+| `characters.js` | Archetypes, origins, random handles and names, gear and conditions, saving characters (needs `dice.js`; testable in Node) |
+| `roster.js` | Roster tab and the Character tab, including the condition chips and dialogs |
 | `create.js` | Create mode: a new character built step by step from `rules.js` (step header, Back/Next/Finish, Discard, each step's controls) |
 | `abilities.js` | The perk and augmentation catalog; edit it to add abilities |
 | `rules.js` | Rulebook data for Create: archetype skills, initiative, knows, gear; origin options (needs `characters.js`; testable in Node) |
@@ -52,7 +52,24 @@ node --test tests/dice.test.cjs tests/discord.test.cjs tests/characters.test.cjs
 | `emoji/` | Boon and Drawback PNGs to upload as Discord server emoji |
 | `icons.js`, `icons/` | Game icons (advantage die, challenge die, boon, drawback, heat, influence) |
 
-Things remembered in localStorage (all under `ncd.`): characters (with the ids of their perks and augmentations), the open character, player name, GM toggle, webhook, theme, the last tab, the target number, and the last roll.
+Things remembered in localStorage (all under `ncd.`): characters (with the ids of their perks and augmentations, and the conditions on them and their gear), the open character, player name, GM toggle, webhook, theme, the last tab, the target number, and the last roll.
+
+## Conditions
+
+A character and each piece of their gear can have conditions. Each one has a name, a severity of 1 to 4, and an
+**intrinsic** flag. The name and intrinsic are chosen when the condition is added and can't be changed. To fix a typo,
+remove the condition and add it again.
+
+- **Chips:** each condition shows as a chip, with `x2`, `x3` or `x4` after the name (x1 isn't shown). Intrinsic
+  conditions have their name in *italics*.
+- **Where you change them:** in **Run** and **Edit**, **Add condition** (or **+ condition** on a gear item) adds one,
+  and clicking a chip opens it to raise or lower its severity or remove it. **Detail** only shows them, and **Create**
+  doesn't deal with them.
+- **When it saves:** Run saves right away, and Edit saves on Save. Nothing is posted to Discord.
+- **Adding a name that's already there** (ignoring case) doesn't make a second condition. It worsens the existing one
+  by the added severity, up to x4.
+- **Suggestions:** the Add dialog offers names to click, from `CONDITION_SUGGESTIONS` in `characters.js`. Edit that
+  list to offer more.
 
 ## Adding abilities
 
