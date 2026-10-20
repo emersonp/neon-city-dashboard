@@ -3,6 +3,8 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 require("../dice.js");
 require("../characters.js");
+require("../abilities.js");
+require("../rules.js");
 
 test("gear: props with a description, Starter off unless set", () => {
   const C = globalThis.NCD_CHARACTERS;
@@ -34,10 +36,13 @@ test("archetypes and origins match the rulebook lists", () => {
   assert.deepEqual(C.ORIGINS, ["Cybernetic", "Gene-Spliced", "Psionic", "Synthetic"]);
 });
 
-test("a new character starts as a Cybernetic Assassin with a random handle and name", () => {
+test("a new character starts in creation with no archetype or origin", () => {
   const c = C.newCharacter();
-  assert.equal(c.archetype, "Assassin");
-  assert.equal(c.origin, "Cybernetic");
+  assert.equal(c.archetype, null);
+  assert.equal(c.origin, null);
+  assert.deepEqual(c.creation, C.newCreation());
+  assert.equal(C.isCreating(c), true);
+  assert.equal(C.isCreating({ id: "x" }), false);
   assert.ok(c.id && typeof c.id === "string");
   assert.ok(c.handle.trim().length >= 3);
   assert.match(c.name, /^\S+(\s\S+)+$/); // at least two parts
@@ -284,4 +289,210 @@ test("initiatives are rolled like skills", () => {
   const c = C.withSkill({}, "initiative-in-the-world", { value: 60 });
   assert.equal(C.skill(c, "initiative-in-the-world").value, 60);
   assert.ok(C.canBeUsed(c, "initiative-in-the-world"));
+});
+
+// ---- Create mode ----
+const R = globalThis.NCD_RULES, CAT = globalThis.NCD_ABILITIES;
+const make = (changes = {}) => ({ ...C.newCharacter(), handle: "Zed", creation: { ...C.newCreation(), ...changes } });
+const applied = (changes) => C.applyCreation(make(changes), R, CAT);
+const sk = (c, id) => C.skill(c, id);
+const clone = (x) => JSON.parse(JSON.stringify(x));
+
+test("STEPS and newCreation", () => {
+  assert.deepEqual(C.STEPS, ["archetype", "skills", "perk", "origin", "details", "review"]);
+  assert.deepEqual(C.newCreation(), { step: "archetype", archetype: null, knows: [], bumps: [], perk: null, gear: {}, origin: null,
+    augmentations: [], option: null, placements: {}, optionBumps: [] });
+});
+
+test("applyCreation: archetype sets skills, initiative, gear, luck, influence", () => {
+  const c = applied({ archetype: "Assassin" });
+  assert.deepEqual(sk(c, "shoot-someone"), { value: 65, adv: 2, chal: 0 });
+  assert.equal(sk(c, "initiative-in-the-world").value, 70);
+  assert.equal(sk(c, "initiative-in-the-network").value, null);
+  assert.equal(c.archetype, "Assassin");
+  assert.deepEqual([c.maxLuck, c.currentLuck, c.startingInfluence, c.currentInfluence], [100, 100, 1, 1]);
+  assert.equal(c.gear.length, 2);
+  assert.ok(c.gear.every((g) => g.starter && g.kind === "prop"));
+  const chosen = applied({ archetype: "Assassin", gear: { 0: 1 } });
+  assert.equal(chosen.gear.length, 3);
+  assert.match(chosen.gear[0].description, /^Two plasma swords/);
+  assert.deepEqual(applied({ archetype: "Assassin", gear: { 0: 1 } }).gear.map((g) => g.id), chosen.gear.map((g) => g.id));
+  // handle and name are left alone
+  const d = C.applyCreation({ ...make({ archetype: "Doc" }), handle: "Keep", name: "Me" }, R, CAT);
+  assert.deepEqual([d.handle, d.name], ["Keep", "Me"]);
+});
+
+test("applyCreation: bumps add 5, untrained becomes 55, capped at 95", () => {
+  const c = applied({ archetype: "Assassin", bumps: ["case-the-joint", "lift-or-move-something"] });
+  assert.equal(sk(c, "case-the-joint").value, 65);
+  assert.equal(sk(c, "lift-or-move-something").value, 55);
+  const stacked = applied({ archetype: "Assassin", origin: "Gene-Spliced", option: "artificial-lycanthropy",
+    optionBumps: ["shoot-someone", "run-like-hell"], bumps: ["shoot-someone"] });
+  assert.equal(sk(stacked, "shoot-someone").value, 75);
+  const rules = clone(R);
+  rules.archetypes.Assassin.skills["shoot-someone"].value = 95;
+  const top = C.applyCreation(make({ archetype: "Assassin", bumps: ["shoot-someone"] }), rules, CAT);
+  assert.equal(sk(top, "shoot-someone").value, 95);
+});
+
+test("applyCreation: abilities are perk, automatic augmentations, chosen augmentations, option perk", () => {
+  const c = applied({ archetype: "Assassin", origin: "Synthetic", perk: "deadshot", augmentations: ["extra-arms"], option: "network-native" });
+  assert.deepEqual(c.abilities, ["deadshot", "synthetic-body", "extra-arms", "installation-wizard"]);
+  assert.equal(c.origin, "Synthetic");
+});
+
+test("applyCreation: origin dice add to the archetype's, Moment of Clarity adds 20 luck, Lycanthropy bumps add 5", () => {
+  const c = applied({ archetype: "Assassin", origin: "Cybernetic", option: "new-game-plus",
+    placements: { a: "shoot-someone", b: "run-like-hell", c: "run-like-hell", d: "case-the-joint" } });
+  assert.deepEqual(sk(c, "shoot-someone"), { value: 65, adv: 2, chal: 2 });
+  assert.deepEqual([sk(c, "run-like-hell").adv, sk(c, "run-like-hell").chal], [2, 1]);
+  assert.equal(sk(c, "case-the-joint").value, 60);
+  const capped = applied({ archetype: "Assassin", origin: "Cybernetic", option: "new-game-plus", placements: { c: "shoot-someone" } });
+  assert.equal(sk(capped, "shoot-someone").adv, 2); // clamped at MAX_INTRINSIC
+  const m = applied({ archetype: "Assassin", origin: "Psionic", option: "moment-of-clarity" });
+  assert.deepEqual([m.maxLuck, m.currentLuck], [120, 120]);
+  const l = applied({ archetype: "Assassin", origin: "Gene-Spliced", option: "artificial-lycanthropy", optionBumps: ["run-like-hell", "sneak-around"] });
+  assert.equal(sk(l, "run-like-hell").value, 55);
+  assert.equal(sk(l, "sneak-around").value, 70);
+});
+
+test("applyCreation: augmentation gear is added and goes away with the augmentation", () => {
+  const aug = CAT.find((a) => a.type === "augmentation" && R.augmentationGear[a.id] && a.origin && a.archetype);
+  const base = { archetype: aug.archetype, origin: aug.origin };
+  const without = applied(base);
+  const withAug = applied({ ...base, augmentations: [aug.id] });
+  assert.equal(withAug.gear.length, without.gear.length + R.augmentationGear[aug.id].length);
+  assert.equal(withAug.gear.at(-1).description, R.augmentationGear[aug.id][0]);
+  assert.ok(withAug.gear.at(-1).id.startsWith(`create-aug-${aug.id}-`));
+  assert.equal(applied({ ...base, augmentations: [] }).gear.length, without.gear.length);
+});
+
+test("placeable: a placement is only offered where it fits and honours differentFrom", () => {
+  const c = make({ archetype: "Assassin", origin: "Cybernetic", option: "new-game-plus" }).creation;
+  const cAdv = C.placeable(c, "c", R);
+  assert.ok(!cAdv.includes("shoot-someone") && !cAdv.includes("sneak-around"));
+  assert.ok(cAdv.includes("run-like-hell"));
+  const physical = C.SKILLS.filter((s) => s.type === "physical").map((s) => s.id);
+  assert.ok(cAdv.every((id) => physical.includes(id)));
+  assert.ok(C.placeable(c, "a", R).includes("shoot-someone")); // challenge has room there
+  assert.ok(!C.placeable({ ...c, placements: { a: "run-like-hell" } }, "b", R).includes("run-like-hell"));
+  assert.deepEqual(C.placeable({ ...c, option: null }, "a", R), []);
+});
+
+test("bumpable: mental and physical skills below 95 only", () => {
+  const b = C.bumpable({ ...C.newCreation(), archetype: "Assassin" }, R);
+  assert.ok(b.includes("case-the-joint") && b.includes("lift-or-move-something"));
+  assert.ok(!b.some((id) => id.startsWith("initiative")));
+  assert.deepEqual(C.bumpable(C.newCreation(), R), []);
+  const rules = clone(R);
+  rules.archetypes.Assassin.skills["shoot-someone"].value = 95;
+  assert.ok(!C.bumpable({ ...C.newCreation(), archetype: "Assassin" }, rules).includes("shoot-someone"));
+});
+
+test("withCreation resets downstream choices", () => {
+  const full = { archetype: "Assassin", knows: ["Criminals"], bumps: ["case-the-joint"], perk: "deadshot", gear: { 0: 1 }, origin: "Cybernetic",
+    augmentations: ["active-camouflage"], option: "chop-shop", placements: { a: "case-the-joint" }, optionBumps: ["run-like-hell"] };
+  const c = make(full);
+  const arch = C.withCreation(c, { archetype: "Bruiser" }, R, CAT);
+  assert.deepEqual([arch.creation.knows, arch.creation.perk, arch.creation.gear, arch.creation.augmentations, arch.creation.placements], [[], null, {}, [], {}]);
+  assert.deepEqual([arch.creation.bumps, arch.creation.origin, arch.creation.option], [["case-the-joint"], "Cybernetic", "chop-shop"]);
+  assert.equal(arch.archetype, "Bruiser");
+  // a bump that is no longer legal is dropped
+  const rules = clone(R);
+  rules.archetypes.Bruiser.skills["lift-or-move-something"] = { value: 95, adv: 0, chal: 0 };
+  const dropped = C.withCreation(make({ ...full, bumps: ["case-the-joint", "lift-or-move-something"] }), { archetype: "Bruiser" }, rules, CAT);
+  assert.deepEqual(dropped.creation.bumps, ["case-the-joint"]);
+  const org = C.withCreation(c, { origin: "Psionic" }, R, CAT).creation;
+  assert.deepEqual([org.augmentations, org.option, org.placements, org.optionBumps], [[], null, {}, []]);
+  assert.deepEqual([org.archetype, org.perk, org.bumps], ["Assassin", "deadshot", ["case-the-joint"]]);
+  const two = make({ ...full, augmentations: ["active-camouflage", "kinetic-trajectory-calculator"] });
+  const opt = C.withCreation(two, { option: "new-game-plus" }, R, CAT).creation;
+  assert.deepEqual([opt.placements, opt.optionBumps, opt.augmentations], [{}, [], ["active-camouflage"]]);
+  assert.equal(C.withCreation(two, { option: null }, R, CAT).creation.augmentations.length, 1);
+  assert.deepEqual(C.withCreation(two, { option: "chop-shop" }, R, CAT).creation, two.creation); // same value: nothing reset
+  assert.deepEqual(C.withCreation(c, { archetype: "Assassin", origin: "Cybernetic" }, R, CAT).creation, c.creation);
+  assert.equal(C.withCreation(c, { step: "skills" }, R, CAT).creation.step, "skills");
+});
+
+const done = {
+  archetype: "Assassin", knows: ["Criminals", "Weapons", "Medicine"], bumps: ["case-the-joint", "lift-or-move-something", "run-like-hell", "sneak-around"],
+  perk: "deadshot", gear: { 0: 0 }, origin: "Cybernetic", augmentations: ["active-camouflage"],
+};
+const ok = (changes, step) => C.stepComplete(make({ ...done, ...changes }), step, R, CAT);
+
+test("stepComplete", () => {
+  assert.equal(ok({ archetype: null }, "archetype"), false);
+  assert.equal(ok({}, "archetype"), true);
+  // skills
+  assert.equal(ok({}, "skills"), true);
+  assert.equal(ok({ knows: ["Criminals", "Weapons"] }, "skills"), false);
+  assert.equal(ok({ knows: ["Criminals", "Weapons", "Citizens"] }, "skills"), false); // not on the list
+  assert.equal(ok({ knows: ["Criminals", "Criminals", "Weapons"] }, "skills"), false);
+  assert.equal(ok({ bumps: done.bumps.slice(0, 3) }, "skills"), false);
+  assert.equal(ok({ bumps: [...done.bumps, "analyze-data"] }, "skills"), false);
+  assert.equal(ok({ bumps: ["case-the-joint", "case-the-joint", "run-like-hell", "sneak-around"] }, "skills"), false);
+  assert.equal(ok({ bumps: [...done.bumps.slice(0, 3), "initiative-in-the-world"] }, "skills"), false);
+  assert.equal(C.stepComplete(make({ archetype: "Mastermind", knows: ["Citizens", "Computers", "Network", "Weapons"], bumps: done.bumps }), "skills", R, CAT), true);
+  // perk
+  assert.equal(ok({}, "perk"), true);
+  assert.equal(ok({ perk: null }, "perk"), false);
+  assert.equal(ok({ perk: "virus" }, "perk"), false); // a Hacker perk
+  assert.equal(ok({ perk: "installation-wizard" }, "perk"), false);
+  assert.equal(ok({ gear: {} }, "perk"), false); // choice unanswered
+  assert.equal(ok({ gear: { 0: 5 } }, "perk"), false);
+  // origin
+  assert.equal(ok({}, "origin"), true);
+  assert.equal(ok({ origin: null }, "origin"), false);
+  assert.equal(ok({ augmentations: [] }, "origin"), false);
+  assert.equal(ok({ augmentations: ["armor-plating"] }, "origin"), false); // origin-only
+  assert.equal(ok({ augmentations: ["extra-arms"] }, "origin"), false); // wrong origin
+  assert.equal(ok({ augmentations: ["active-camouflage", "kinetic-trajectory-calculator"] }, "origin"), false);
+  const chop = { option: "chop-shop", augmentations: ["active-camouflage", "kinetic-trajectory-calculator"], placements: { a: "case-the-joint", b: "run-like-hell" } };
+  assert.equal(ok(chop, "origin"), true);
+  assert.equal(ok({ ...chop, augmentations: ["active-camouflage", "active-camouflage"] }, "origin"), false);
+  assert.equal(ok({ ...chop, augmentations: ["active-camouflage"] }, "origin"), false);
+  assert.equal(ok({ ...chop, placements: { a: "case-the-joint" } }, "origin"), false); // unfilled
+  assert.equal(ok({ ...chop, placements: { a: "run-like-hell", b: "run-like-hell" } }, "origin"), false); // wrong category
+  const lyc = { origin: "Gene-Spliced", option: "artificial-lycanthropy", augmentations: [CAT.find((a) => a.origin === "Gene-Spliced" && a.archetype === "Assassin").id],
+    placements: { a: "case-the-joint", b: "run-like-hell" }, optionBumps: ["run-like-hell", "sneak-around"] };
+  assert.equal(ok(lyc, "origin"), true);
+  assert.equal(ok({ ...lyc, optionBumps: ["run-like-hell"] }, "origin"), false);
+  assert.equal(ok({ ...lyc, optionBumps: ["run-like-hell", "run-like-hell"] }, "origin"), false);
+  assert.equal(ok({ ...lyc, optionBumps: ["run-like-hell", "case-the-joint"] }, "origin"), false); // wrong category
+  assert.equal(ok({ ...chop, optionBumps: ["run-like-hell"] }, "origin"), false); // option has no bumps
+  // details
+  assert.equal(ok({}, "details"), true);
+  assert.equal(C.stepComplete({ ...make(done), handle: "  " }, "details", R, CAT), false);
+  // review
+  assert.equal(ok({}, "review"), true);
+  assert.equal(ok({ perk: null }, "review"), false);
+  assert.equal(C.stepComplete({ ...make(done), handle: "" }, "review", R, CAT), false);
+  assert.equal(ok({}, "nonsense"), false);
+});
+
+test("firstIncomplete returns the first unfinished step, or null", () => {
+  assert.equal(C.firstIncomplete(make(), R, CAT), "archetype");
+  assert.equal(C.firstIncomplete(make({ ...done, perk: null }), R, CAT), "perk");
+  assert.equal(C.firstIncomplete(make({ ...done, bumps: [] }), R, CAT), "skills");
+  assert.equal(C.firstIncomplete(make(done), R, CAT), null);
+});
+
+test("finishCreation drops creation and keeps the sheet", () => {
+  const c = applied(done);
+  const f = C.finishCreation(c);
+  assert.equal("creation" in f, false);
+  assert.equal(C.isCreating(f), false);
+  const { creation, ...rest } = c;
+  assert.deepEqual(f, rest);
+  assert.equal(C.isCreating(c), true); // original untouched
+});
+
+test("remove deletes one saved character and leaves the rest", () => {
+  const storage = memoryStorage();
+  C.save(storage, { id: "a", handle: "A" });
+  C.save(storage, { id: "b", handle: "B" });
+  C.remove(storage, "a");
+  assert.deepEqual(C.load(storage).map((c) => c.id), ["b"]);
+  C.remove(storage, "missing");
+  assert.deepEqual(C.load(storage).map((c) => c.id), ["b"]);
 });

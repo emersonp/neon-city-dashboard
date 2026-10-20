@@ -220,8 +220,8 @@
       id: newId(),
       handle: randomHandle(),
       name: randomName(),
-      archetype: "Assassin",
-      origin: "Cybernetic",
+      archetype: null,
+      origin: null,
       maxLuck: DEFAULT_LUCK,
       currentLuck: DEFAULT_LUCK,
       startingInfluence: DEFAULT_INFLUENCE,
@@ -237,8 +237,112 @@
       skills: {},
       createdAt: now,
       updatedAt: now,
+      creation: newCreation(),
     };
   }
+
+  // ---- Create mode: choices live in character.creation; applyCreation derives the sheet from them ----
+  const STEPS = ["archetype", "skills", "perk", "origin", "details", "review"];
+  const BUMP_COUNT = 4;
+  const isCreating = (character) => character?.creation != null && typeof character.creation === "object";
+  const newCreation = () => ({ step: "archetype", archetype: null, knows: [], bumps: [], perk: null, gear: {}, origin: null,
+    augmentations: [], option: null, placements: {}, optionBumps: [] });
+
+  const optionOf = (creation, rules) => rules.origins[creation.origin]?.options.find((o) => o.id === creation.option) ?? null;
+  const baseValue = (creation, rules, id) => rules.archetypes[creation.archetype]?.skills[id]?.value ?? null;
+  // Mental and physical skills the archetype leaves below 95 (the initiatives have their own section in the book).
+  const bumpable = (creation, rules) => !rules.archetypes[creation.archetype] ? []
+    : SKILLS.filter((s) => s.type !== "initiative" && shownValue(baseValue(creation, rules, s.id)) < MAX_VALUE).map((s) => s.id);
+  // Skills the option's placement `key` may go on. Checked against the archetype's own dice, so the order of picking doesn't matter.
+  function placeable(creation, key, rules) {
+    const arch = rules.archetypes[creation.archetype], p = optionOf(creation, rules)?.placements.find((x) => x.key === key);
+    if (!arch || !p) return [];
+    const other = p.differentFrom ? creation.placements?.[p.differentFrom] : null;
+    return SKILLS.filter((s) => s.type === p.category && s.id !== other
+      && (arch.skills[s.id]?.[p.kind] ?? 0) + p.count <= MAX_INTRINSIC).map((s) => s.id);
+  }
+
+  const bumped = (s) => ({ ...s, value: Math.min(MAX_VALUE, shownValue(s.value) + STEP) });
+  // Builds the sheet from scratch: base skills, initiative, bumps, option bumps, then option dice.
+  function applyCreation(character, rules, catalog) {
+    const cr = character.creation, arch = rules.archetypes[cr.archetype], origin = rules.origins[cr.origin], option = optionOf(cr, rules);
+    const skills = {};
+    const put = (id, s) => { if (isNotable(s)) skills[id] = s; };
+    for (const [id, s] of Object.entries(arch?.skills ?? {})) put(id, { value: s.value, adv: s.adv, chal: s.chal });
+    if (arch) {
+      const init = (n) => (n === UNTRAINED ? null : n);
+      put("initiative-in-the-world", { value: init(arch.initiative.world), adv: 0, chal: 0 });
+      put("initiative-in-the-network", { value: init(arch.initiative.network), adv: 0, chal: 0 });
+    }
+    const get = (id) => skills[id] ?? { value: null, adv: 0, chal: 0 };
+    for (const id of [...cr.bumps, ...cr.optionBumps]) skills[id] = bumped(get(id));
+    for (const p of option?.placements ?? []) {
+      const id = cr.placements?.[p.key];
+      if (id) skills[id] = { ...get(id), [p.kind]: Math.min(MAX_INTRINSIC, get(id)[p.kind] + p.count) };
+    }
+    const augs = [...(origin?.augmentations ?? []), ...cr.augmentations];
+    const lines = (arch?.gear ?? []).map((line, i) => [i, typeof line === "string" ? line : line.choose[cr.gear?.[i]]]).filter(([, text]) => text);
+    const gear = [
+      ...lines.map(([i, text]) => ({ ...newProp(text, true), id: `create-gear-${i}` })),
+      ...augs.flatMap((id) => (rules.augmentationGear[id] ?? []).map((text, n) => ({ ...newProp(text, true), id: `create-aug-${id}-${n}` }))),
+    ];
+    const luck = DEFAULT_LUCK + (option?.luck ?? 0);
+    return {
+      ...character,
+      archetype: cr.archetype, origin: cr.origin, skills,
+      knows: [...cr.knows],
+      abilities: [cr.perk, ...augs, option?.perk].filter(Boolean),
+      gear,
+      maxLuck: luck, currentLuck: luck,
+      startingInfluence: DEFAULT_INFLUENCE, currentInfluence: DEFAULT_INFLUENCE,
+    };
+  }
+
+  const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+  // Merges changes into creation. A changed archetype, origin or option clears what depended on it (unless the same call sets that too).
+  function withCreation(character, changes, rules, catalog) {
+    const cur = character.creation, resets = {};
+    const changed = (k) => k in changes && !same(changes[k], cur[k]);
+    if (changed("archetype")) Object.assign(resets, { knows: [], perk: null, gear: {}, augmentations: [], placements: {} });
+    if (changed("origin")) Object.assign(resets, { augmentations: [], option: null, placements: {}, optionBumps: [] });
+    if (changed("option")) Object.assign(resets, { placements: {}, optionBumps: [] });
+    const next = { ...cur, ...resets, ...changes };
+    if (changed("archetype")) { const legal = bumpable(next, rules); next.bumps = next.bumps.filter((id) => legal.includes(id)); }
+    if (changed("option") && !optionOf(next, rules)?.extraAugmentation) next.augmentations = next.augmentations.slice(0, 1);
+    return applyCreation({ ...character, creation: next }, rules, catalog);
+  }
+
+  const isDistinctSet = (list, size, allowed) =>
+    Array.isArray(list) && list.length === size && new Set(list).size === size && list.every((id) => allowed.includes(id));
+  // Takes the whole character because the details step needs its handle.
+  function stepComplete(character, step, rules, catalog) {
+    const cr = character.creation, arch = rules.archetypes[cr.archetype];
+    switch (step) {
+      case "archetype": return Boolean(arch);
+      case "skills": return Boolean(arch) && isDistinctSet(cr.knows, arch.knows.count, arch.knows.from)
+        && isDistinctSet(cr.bumps, BUMP_COUNT, bumpable(cr, rules));
+      case "perk": {
+        const perk = catalog.find((a) => a.id === cr.perk);
+        return Boolean(arch) && perk?.type === "perk" && perk.archetype === cr.archetype
+          && arch.gear.every((line, i) => typeof line === "string" || (Number.isInteger(cr.gear?.[i]) && cr.gear[i] >= 0 && cr.gear[i] < line.choose.length));
+      }
+      case "origin": {
+        if (!arch || !rules.origins[cr.origin]) return false;
+        const option = optionOf(cr, rules);
+        if (cr.option != null && !option) return false;
+        const fits = catalog.filter((a) => a.type === "augmentation" && a.origin === cr.origin && a.archetype === cr.archetype).map((a) => a.id);
+        if (!isDistinctSet(cr.augmentations, option?.extraAugmentation ? 2 : 1, fits)) return false;
+        if (!(option?.placements ?? []).every((p) => placeable(cr, p.key, rules).includes(cr.placements?.[p.key]))) return false;
+        const bumps = option?.bumps;
+        return isDistinctSet(cr.optionBumps, bumps?.count ?? 0, SKILLS.filter((s) => s.type === bumps?.category).map((s) => s.id));
+      }
+      case "details": return String(character.handle ?? "").trim() !== "";
+      case "review": return STEPS.slice(0, -1).every((s) => stepComplete(character, s, rules, catalog));
+      default: return false;
+    }
+  }
+  const firstIncomplete = (character, rules, catalog) => STEPS.find((s) => !stepComplete(character, s, rules, catalog)) ?? null;
+  const finishCreation = ({ creation, ...character }) => character;
 
   const label = (c) => (c?.handle && String(c.handle).trim()) || "Character";
 
@@ -261,6 +365,10 @@
     return saved;
   }
 
+  function remove(storage, id) {
+    storage.setItem(KEY, JSON.stringify(load(storage).filter((c) => c.id !== id)));
+  }
+
   function toExport(character) {
     const base = String(character.handle ?? "").trim().replace(/[^\w.-]+/g, "-").replace(/^-+|-+$/g, "");
     return { filename: `${base || "character"}.json`, json: JSON.stringify(character, null, 2) };
@@ -268,7 +376,8 @@
 
   root.NCD_CHARACTERS = {
     ARCHETYPES, ORIGINS, CULTURES, SKILLS, UNTRAINED, MIN_VALUE, MAX_VALUE, MAX_INTRINSIC,
-    randomHandle, randomName, newCharacter, label, load, save, toExport,
+    randomHandle, randomName, newCharacter, label, load, save, remove, toExport,
+    STEPS, newCreation, isCreating, applyCreation, withCreation, bumpable, placeable, stepComplete, firstIncomplete, finishCreation,
     skill, shownValue, isNotable, clampValue, increment, withSkill,
     DEFAULT_LUCK, luck, clampMaxLuck, clampCurrentLuck,
     DEFAULT_INFLUENCE, influence, clampInfluence,
