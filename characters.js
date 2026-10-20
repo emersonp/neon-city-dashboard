@@ -117,6 +117,36 @@
   }
   const withoutGear = (character, id) => ({ ...character, gear: gear(character).filter((g) => g.id !== id) });
 
+  // ---- abilities (perks and augmentations): ids from the catalog in abilities.js ----
+  // The saved ids, without junk or repeats. Ids no longer in the catalog are skipped where it's passed in.
+  const abilityIds = (character) => [...new Set((Array.isArray(character?.abilities) ? character.abilities : [])
+    .filter((id) => typeof id === "string"))];
+  // The character's abilities as catalog entries, in the order they were added.
+  const abilities = (character, catalog) =>
+    abilityIds(character).map((id) => catalog.find((a) => a.id === id)).filter(Boolean);
+  const withAbility = (character, id) =>
+    ({ ...character, abilities: abilityIds(character).includes(id) ? abilityIds(character) : [...abilityIds(character), id] });
+  const withoutAbility = (character, id) => ({ ...character, abilities: abilityIds(character).filter((a) => a !== id) });
+  // "Augmentation · Cybernetic · Assassin"
+  const abilityTag = (a) => [a.type === "perk" ? "Perk" : "Augmentation", a.origin, a.archetype].filter(Boolean).join(" · ");
+  // For the picker: abilities whose name contains the query, minus the excluded ids, grouped like the rulebook
+  // ("Cybernetic Assassin Augmentations"): perks first, then by origin and archetype in list order (none first), names sorted.
+  function findAbilities(catalog, query = "", exclude = []) {
+    const q = String(query).trim().toLowerCase();
+    const rank = (list, v) => (v == null ? -1 : list.indexOf(v));
+    const order = (a) => [a.type === "perk" ? 0 : 1, rank(ORIGINS, a.origin), rank(ARCHETYPES, a.archetype)];
+    const groups = new Map();
+    for (const a of catalog) {
+      if (exclude.includes(a.id) || !a.name.toLowerCase().includes(q)) continue;
+      const heading = [a.origin, a.archetype, a.type === "perk" ? "Perks" : "Augmentations"].filter(Boolean).join(" ");
+      if (!groups.has(heading)) groups.set(heading, { heading, key: order(a), items: [] });
+      groups.get(heading).items.push(a);
+    }
+    const byKey = (x, y) => x.key.reduce((diff, v, i) => diff || v - y.key[i], 0);
+    return [...groups.values()].sort(byKey)
+      .map(({ heading, items }) => ({ heading, items: items.sort((x, y) => x.name.localeCompare(y.name)) }));
+  }
+
   // ---- used skills: marked while running (by hand, or by rolling the skill) ----
   // Only trained skills (a value above 50) can be used; dice alone don't count.
   const canBeUsed = (character, id) => skill(character, id).value != null;
@@ -196,6 +226,7 @@
       portrait: null,
       knows: [],
       gear: [],
+      abilities: [],
       xpSpent: 0,
       xpAvailable: 0,
       appearance: { pronouns: "", physical: "", network: "" },
@@ -241,6 +272,7 @@
     canBeUsed, isUsed, withUsed,
     KNOWLEDGE, knows, xp, clampXp, appearance,
     gear, newProp, withGear, withoutGear,
+    abilities, withAbility, withoutAbility, abilityTag, findAbilities,
     DEFAULT_PORTRAIT, ADMIN_PORTRAIT, PORTRAIT_DIR, availablePortraits, portraitFile, portraitLabel,
   };
 })(globalThis);
