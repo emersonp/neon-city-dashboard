@@ -18,7 +18,7 @@ const EMOJI = { boon: "<:ncd_boon:1>", drawback: "<:ncd_drawback:2>" };
 
 test("words when no emoji are configured", () => {
   const r = roll({ target: 45, advantage: 2, challenge: 1 }, seq(3, 2, 0, 2, 7));
-  assert.deepEqual(lines(r, "Parker", undefined, 50), {
+  assert.deepEqual(lines(r, { player: "Parker", luck: 50 }), {
     intro: "Parker rolled against 45 and got a",
     result: "Success! 32 with two boons",
     detail: "Luck: 50 · Rolled: two boons",
@@ -27,27 +27,27 @@ test("words when no emoji are configured", () => {
 
 test("inline emoji for leftover symbols and each pool die", () => {
   const r = roll({ target: 45, advantage: 2, challenge: 2 }, seq(7, 8, 1, 0, 3, 0));
-  const l = lines(r, "Parker", EMOJI, 50);
+  const l = lines(r, { player: "Parker", emoji: EMOJI, luck: 50 });
   assert.equal(l.result, "Failure. 78 · <:ncd_drawback:2>");
   assert.equal(l.detail, "Luck: 50 · Rolled: <:ncd_boon:1> <:ncd_drawback:2> <:ncd_drawback:2>");
 });
 
 test("cancelled symbols and no target", () => {
   const r = roll({ advantage: 1, challenge: 1 }, seq(0, 0, 0, 0));
-  assert.equal(lines(r, "Parker", EMOJI, 50).result, "100 · all symbols cancelled");
-  assert.equal(lines(r, "Parker", undefined, 50).intro, "Parker rolled and got a");
-  assert.equal(lines(r, "Parker", EMOJI, 50).detail, "Luck: 50 · Rolled: <:ncd_boon:1> <:ncd_drawback:2>");
+  assert.equal(lines(r, { player: "Parker", emoji: EMOJI, luck: 50 }).result, "100 · all symbols cancelled");
+  assert.equal(lines(r, { player: "Parker", luck: 50 }).intro, "Parker rolled and got a");
+  assert.equal(lines(r, { player: "Parker", emoji: EMOJI, luck: 50 }).detail, "Luck: 50 · Rolled: <:ncd_boon:1> <:ncd_drawback:2>");
 });
 
 test("no symbols rolled means no Rolled part, even with dice in the pool", () => {
   const r = roll({ target: 60, advantage: 2, challenge: 1 }, seq(2, 4, 1, 3, 8));
-  assert.equal(lines(r, "Parker", EMOJI, 50).detail, "Luck: 50");
-  assert.equal(lines(r, "Parker", undefined, 50).detail, "Luck: 50");
+  assert.equal(lines(r, { player: "Parker", emoji: EMOJI, luck: 50 }).detail, "Luck: 50");
+  assert.equal(lines(r, { player: "Parker", luck: 50 }).detail, "Luck: 50");
 });
 
 test("words list boons and drawbacks together", () => {
   const r = roll({ target: 50, advantage: 1, challenge: 2 }, seq(2, 4, 0, 0, 1));
-  assert.equal(lines(r, "Parker", undefined, 50).detail, "Luck: 50 · Rolled: one boon, two drawbacks");
+  assert.equal(lines(r, { player: "Parker", luck: 50 }).detail, "Luck: 50 · Rolled: one boon, two drawbacks");
 });
 
 test("footer always shows Luck, target or not", () => {
@@ -59,7 +59,7 @@ test("footer always shows Luck, target or not", () => {
 
 test("half-configured emoji falls back to words", () => {
   const r = roll({ advantage: 1 }, seq(1, 1, 0));
-  assert.equal(lines(r, "Parker", { boon: "<:ncd_boon:1>", drawback: "" }, 50).result, "11 with one boon");
+  assert.equal(lines(r, { player: "Parker", emoji: { boon: "<:ncd_boon:1>", drawback: "" }, luck: 50 }).result, "11 with one boon");
 });
 
 test("message is a components container colored by outcome", () => {
@@ -74,7 +74,7 @@ test("message is a components container colored by outcome", () => {
 
 test("GM rolls (no luck) leave Luck out of the footer", () => {
   const r = roll({ target: 50, advantage: 1 }, seq(2, 4, 0));
-  assert.equal(lines(r, "The GM", EMOJI, null).detail, "Rolled: <:ncd_boon:1>");
+  assert.equal(lines(r, { player: "The GM", emoji: EMOJI, luck: null }).detail, "Rolled: <:ncd_boon:1>");
 });
 
 test("GM roll with no symbols has no footer at all", () => {
@@ -86,9 +86,9 @@ test("GM roll with no symbols has no footer at all", () => {
 
 test("a skill roll names the skill, in italics, in the intro", () => {
   const r = roll({ target: 65, advantage: 0 }, seq(2, 4));
-  assert.equal(lines(r, "Parker", EMOJI, 50, "Shoot Someone").intro, "Parker rolled *Shoot Someone* against 65 and got a");
+  assert.equal(lines(r, { player: "Parker", emoji: EMOJI, luck: 50, skill: "Shoot Someone" }).intro, "Parker rolled *Shoot Someone* against 65 and got a");
   const untargeted = roll({}, seq(2, 4));
-  assert.equal(lines(untargeted, "Parker", EMOJI, 50, "Anything else").intro, "Parker rolled *Anything else* and got a");
+  assert.equal(lines(untargeted, { player: "Parker", emoji: EMOJI, luck: 50, skill: "Anything else" }).intro, "Parker rolled *Anything else* and got a");
   const m = buildMessage(r, "Parker", { luck: 50, skill: "Shoot Someone" });
   assert.match(m.components[0].components[0].content, /^-# Parker rolled \*Shoot Someone\* against 65 and got a\n/);
 });
@@ -110,15 +110,15 @@ test("messages never ping anyone", () => {
 
 test("leftover emoji in the result line are spaced like the footer", () => {
   const r = roll({ target: 50, advantage: 2 }, seq(2, 4, 0, 0));
-  assert.equal(lines(r, "Parker", EMOJI, 50).result, "Success! 24 · <:ncd_boon:1> <:ncd_boon:1>");
+  assert.equal(lines(r, { player: "Parker", emoji: EMOJI, luck: 50 }).result, "Success! 24 · <:ncd_boon:1> <:ncd_boon:1>");
 });
 
 test("footer shows Luck, then Influence, then what was rolled", () => {
   const r = roll({ target: 50, advantage: 1 }, seq(2, 4, 0));
-  assert.equal(lines(r, "Parker", EMOJI, 94, null, 2).detail, "Luck: 94 · Influence: 2 · Rolled: <:ncd_boon:1>");
+  assert.equal(lines(r, { player: "Parker", emoji: EMOJI, luck: 94, influence: 2 }).detail, "Luck: 94 · Influence: 2 · Rolled: <:ncd_boon:1>");
   const plain = roll({ target: 50 }, seq(2, 4));
-  assert.equal(lines(plain, "Parker", EMOJI, 94, null, 0).detail, "Luck: 94 · Influence: 0");
-  assert.equal(lines(plain, "The GM", EMOJI, null, null, null).detail, "");
+  assert.equal(lines(plain, { player: "Parker", emoji: EMOJI, luck: 94, influence: 0 }).detail, "Luck: 94 · Influence: 0");
+  assert.equal(lines(plain, { player: "The GM", emoji: EMOJI, luck: null, influence: null }).detail, "");
   const m = buildMessage(r, "Parker", { emoji: EMOJI, luck: 94, influence: 2 });
   assert.equal(m.components[0].components.at(-1).content, "-# Luck: 94 · Influence: 2 · Rolled: <:ncd_boon:1>");
 });

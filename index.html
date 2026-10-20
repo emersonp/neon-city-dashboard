@@ -6,11 +6,11 @@
 <title>Neon City Dashboard</title>
 <link rel="icon" href="icons/advantage-die.svg" type="image/svg+xml">
 
+<script src="shared.js"></script>
 <!-- Pick the theme before anything paints so there's no light/dark flash. -->
 <script>
   (function () {
-    let saved = null;
-    try { saved = localStorage.getItem("ncd.theme"); } catch {}
+    const saved = NCD_STORE.get("theme");
     const dark = saved ? saved === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
     document.documentElement.classList.add(dark ? "wa-dark" : "wa-light");
   })();
@@ -51,13 +51,9 @@
             <wa-input id="target" label="Target ≤" placeholder="none" inputmode="numeric" maxlength="3"
               autocomplete="off" with-clear></wa-input>
 
-            <wa-radio-group id="adv" class="pool adv" orientation="horizontal" value="0">
-              <span slot="label" class="pool-label"><span data-icon="advantage-die"></span>Advantage dice</span>
-            </wa-radio-group>
+            <wa-radio-group id="adv" class="pool adv" orientation="horizontal" value="0" data-pool="adv"></wa-radio-group>
 
-            <wa-radio-group id="chal" class="pool chal" orientation="horizontal" value="0">
-              <span slot="label" class="pool-label"><span data-icon="challenge-die"></span>Challenge dice</span>
-            </wa-radio-group>
+            <wa-radio-group id="chal" class="pool chal" orientation="horizontal" value="0" data-pool="chal"></wa-radio-group>
 
             <wa-button id="roll" variant="brand" size="l" class="roll-button">
               <wa-icon slot="start" name="dice-d20"></wa-icon>
@@ -119,7 +115,7 @@
             <h2>Montage actions</h2>
             <ul>
               <li><b>Blow off Steam:</b> Recover all luck by de-stressing in a manner the player describes</li>
-              <li><b>Coordinate with Allies:</b> When a player chooses this action, the Administrator sets a 3-minute timer and allows players to freely discuss their next steps based just as they would in a planning scene. No more than 2 crew members can choose this action in a single day.</li>
+              <li><b>Coordinate with Allies:</b> When a player chooses this action, the Administrator sets a 3-minute timer and allows players to freely discuss their next steps just as they would in a planning scene. No more than 2 crew members can choose this action in a single day.</li>
               <li><b>Cultivate Contacts:</b> If a character has 0 Influence, they can gain 1 influence from the supply</li>
               <li><b>Go Shopping:</b> Acquire 1 item of common gear</li>
               <li><b>Load:</b> The character loads into a shell they have access to, overlaying the appropriate shell sheet</li>
@@ -150,7 +146,8 @@
           <!-- Shown in Display and Running: who they are on the left, stats on the right -->
           <div id="character-fields" class="sheet-head">
             <div class="sheet-who">
-              <span class="portrait-frame"><img id="portrait" class="portrait" alt=""></span>
+              <span class="portrait-frame"><img id="portrait" class="portrait" alt=""><span class="portrait portrait-missing"
+                role="img" aria-label="No portrait"><wa-icon name="user"></wa-icon></span></span>
               <dl class="sheet-identity">
                 <div class="sheet-field wide"><dt>Handle</dt><dd data-field="handle"></dd></div>
                 <div class="sheet-field wide"><dt>Name</dt><dd data-field="name"></dd></div>
@@ -242,8 +239,10 @@
             <div class="sheet-head">
               <div class="sheet-who">
                 <div class="portrait-pick">
-                  <span class="portrait-frame"><img id="portrait-preview" class="portrait" alt=""></span>
-                  <wa-select name="portrait" label="Portrait" size="s"></wa-select>
+                  <span class="portrait-frame"><img id="portrait-preview" class="portrait" alt=""><span class="portrait portrait-missing"
+                    role="img" aria-label="No portrait"><wa-icon name="user"></wa-icon></span><wa-button id="portrait-choose"
+                    class="portrait-edit" size="s" title="Choose portrait"><wa-icon name="pen" label="Choose portrait"></wa-icon></wa-button></span>
+                  <input type="hidden" name="portrait">
                 </div>
                 <div class="sheet-identity">
                   <wa-input class="wide" name="handle" label="Handle" autocomplete="off">
@@ -326,12 +325,8 @@
   </main>
 
   <wa-dialog id="dice-dialog" label="Intrinsic dice" light-dismiss>
-    <wa-radio-group id="dice-adv" class="pool adv" orientation="horizontal">
-      <span slot="label" class="pool-label"><span data-icon="advantage-die"></span>Advantage dice</span>
-    </wa-radio-group>
-    <wa-radio-group id="dice-chal" class="pool chal" orientation="horizontal">
-      <span slot="label" class="pool-label"><span data-icon="challenge-die"></span>Challenge dice</span>
-    </wa-radio-group>
+    <wa-radio-group id="dice-adv" class="pool adv" orientation="horizontal" data-pool="adv"></wa-radio-group>
+    <wa-radio-group id="dice-chal" class="pool chal" orientation="horizontal" data-pool="chal"></wa-radio-group>
     <wa-button slot="footer" variant="brand" data-dialog="close">Done</wa-button>
   </wa-dialog>
 
@@ -347,6 +342,11 @@
     </wa-button>
   </wa-dialog>
 
+  <!-- Edit: every portrait in portraits/portraits.js; picking one closes the dialog -->
+  <wa-dialog id="portrait-dialog" label="Choose a portrait" light-dismiss>
+    <div id="portrait-choices" class="portrait-choices"></div>
+  </wa-dialog>
+
   <wa-dialog id="appearance-dialog" label="Appearance" light-dismiss>
     <dl class="appearance stacked"></dl>
   </wa-dialog>
@@ -355,12 +355,8 @@
     <div class="skill-roll">
       <wa-input id="skill-target" label="Target ≤" placeholder="none" inputmode="numeric" maxlength="3"
         autocomplete="off" with-clear></wa-input>
-      <wa-radio-group id="skill-adv" class="pool adv" orientation="horizontal" value="0">
-        <span slot="label" class="pool-label"><span data-icon="advantage-die"></span>Advantage dice</span>
-      </wa-radio-group>
-      <wa-radio-group id="skill-chal" class="pool chal" orientation="horizontal" value="0">
-        <span slot="label" class="pool-label"><span data-icon="challenge-die"></span>Challenge dice</span>
-      </wa-radio-group>
+      <wa-radio-group id="skill-adv" class="pool adv" orientation="horizontal" value="0" data-pool="adv"></wa-radio-group>
+      <wa-radio-group id="skill-chal" class="pool chal" orientation="horizontal" value="0" data-pool="chal"></wa-radio-group>
       <section class="result" id="skill-result" aria-live="polite" hidden></section>
     </div>
     <wa-button slot="footer" id="skill-roll" variant="brand">
@@ -371,6 +367,7 @@
 
   <wa-toast id="toast" placement="bottom-center"></wa-toast>
 
+  <!-- shared.js is loaded in <head> -->
   <script src="config.js"></script>
   <script src="portraits/portraits.js"></script>
   <script src="icons.js"></script>

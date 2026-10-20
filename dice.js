@@ -38,5 +38,5 @@
     };
   }
 
-  root.NCD_DICE = { MAX_POOL, rand10, roll, fmtTens };
+  root.NCD_DICE = { MAX_POOL, clampPool, rand10, roll, fmtTens };
 })(globalThis);

@@ -3,10 +3,13 @@
 // Skill changes made while editing live in `draft` until Save.
 (function () {
   const C = window.NCD_CHARACTERS;
-  const $ = (id) => document.getElementById(id);
-  // localStorage itself can throw when storage is blocked; the character helpers handle a null store.
-  const storage = (() => { try { return window.localStorage; } catch { return null; } })();
-  const remember = (key, value) => { try { value == null ? storage.removeItem(key) : storage.setItem(key, value); } catch {} };
+  const APP = window.NCD_APP;
+  const store = window.NCD_STORE;
+  const SESSION = window.NCD_SESSION;
+  const { $, text, escapeHTML } = window.NCD_UTIL;
+  const icon = window.NCD_ICONS.svg;
+  // The character helpers take localStorage itself, and handle it being null.
+  const storage = store.raw;
 
   const tabs = $("tabs");
   const tab = $("character-tab");
@@ -30,22 +33,60 @@
 
   let current = null;     // the character in the Character tab
   let state = "display";  // "display" | "editing" | "running"
-  let draft = null;       // while editing: a copy holding skill changes until Save
+  let draft = null;       // while editing: a copy holding skill, wound, and gear changes until Save
 
-  const escapeHTML = (s) => String(s ?? "").replace(/[&<>"']/g, (ch) => `&#${ch.charCodeAt(0)};`);
+  const setCurrent = (character) => { current = character; SESSION.character = character; };
+
+  // Saves the character right away (changes made while running, and Used). A failed save keeps the old one.
+  function commit(next) {
+    try {
+      setCurrent(C.save(storage, next));
+      return true;
+    } catch (err) {
+      console.error(err);
+      APP.toast("Couldn't save the character.", "danger");
+      return false;
+    }
+  }
 
   const portraits = C.availablePortraits(window.NCD_PORTRAITS);
   const portraitSrc = (file) => C.PORTRAIT_DIR + file;
-  const portraitOptions = portraits.map((file) => [file, C.portraitLabel(file)]);
-  const plain = (values) => values.map((value) => [value, value]);
-  for (const [name, options] of [["archetype", plain(C.ARCHETYPES)], ["origin", plain(C.ORIGINS)], ["portrait", portraitOptions]]) {
-    for (const [value, text] of options) {
+  // Shows the portrait in an <img> inside a .portrait-frame, or the frame's placeholder when there's no file.
+  function showPortrait(img, file, alt = "") {
+    img.closest(".portrait-frame").classList.toggle("missing", !file);
+    if (file) img.src = portraitSrc(file); else img.removeAttribute("src");
+    img.alt = alt;
+  }
+  for (const [name, values] of [["archetype", C.ARCHETYPES], ["origin", C.ORIGINS]]) {
+    for (const value of values) {
       const option = document.createElement("wa-option");
       option.value = value;
-      option.textContent = text;
+      option.textContent = value;
       field(name).append(option);
     }
   }
+
+  // ---- the character's fields ----
+  // Each editor field: how it's filled from the character (`load`), and how Save writes it back (`save`).
+  // Save runs in this order, so Current Luck and Current Influence are checked against the new Max and Starting values.
+  // The sheet's [data-field] boxes show the same `load` values.
+  const textField = (name) => ({ name, load: (c) => c[name] ?? "", save: (e, v) => { e[name] = text(v); } });
+  const appearanceField = (name) => ({
+    name, load: (c) => C.appearance(c)[name], save: (e, v) => { e.appearance = { ...C.appearance(e), [name]: text(v) }; },
+  });
+  const FIELDS = [
+    ...["handle", "name", "archetype", "origin"].map(textField),
+    { name: "maxLuck", load: (c) => C.luck(c).max, save: (e, v) => { e.maxLuck = C.clampMaxLuck(v); } },
+    { name: "currentLuck", load: (c) => C.luck(c).current, save: (e, v) => { e.currentLuck = C.clampCurrentLuck(v, e.maxLuck); } },
+    { name: "startingInfluence", load: (c) => C.influence(c).starting, save: (e, v) => { e.startingInfluence = C.clampInfluence(v); } },
+    { name: "currentInfluence", load: (c) => C.influence(c).current,
+      save: (e, v) => { e.currentInfluence = C.clampInfluence(v, e.startingInfluence); } },
+    { name: "xpAvailable", load: (c) => C.xp(c).available, save: (e, v) => { e.xpAvailable = C.clampXp(v); } },
+    { name: "xpSpent", load: (c) => C.xp(c).spent, save: (e, v) => { e.xpSpent = C.clampXp(v); } },
+    // No portrait is stored as null.
+    { name: "portrait", load: (c) => C.portraitFile(c, portraits) ?? "", save: (e, v) => { e.portrait = v || null; } },
+    ...["pronouns", "physical", "network"].map(appearanceField),
+  ];
 
   // ---- roster ----
   function renderRoster() {
@@ -80,7 +121,7 @@
     if (open) {
       e.preventDefault();
       const c = find(open.dataset.open);
-      if (c) { remember("ncd.openCharacter", c.id); show(c, "display"); }
+      if (c) { store.set("openCharacter", c.id); show(c, "display"); }
     } else if (exp) {
       const c = find(exp.dataset.export);
       if (c) download(C.toExport(c));
@@ -93,7 +134,7 @@
   const setLabel = (handle) => { tab.textContent = C.label({ handle }); };
 
   function show(character, mode, { activate = true } = {}) {
-    current = character;
+    setCurrent(character);
     state = mode;
     tab.hidden = false;
     setLabel(current.handle);
@@ -109,24 +150,12 @@
     fields.dataset.state = state;
     if (state === "editing") {
       draft = { skills: { ...(current.skills ?? {}) }, wounds: C.wounds(current), gear: C.gear(current) };
-      for (const name of ["handle", "name", "archetype", "origin"]) field(name).value = current[name] ?? "";
-      const luck = C.luck(current);
-      field("maxLuck").value = String(luck.max);
-      field("currentLuck").value = String(luck.current);
-      const inf = C.influence(current);
-      field("startingInfluence").value = String(inf.starting);
-      field("currentInfluence").value = String(inf.current);
-      field("portrait").value = C.portraitFile(current, portraits);
-      $("portrait-preview").src = portraitSrc(field("portrait").value);
+      for (const f of FIELDS) field(f.name).value = String(f.load(current));
+      showPortrait($("portrait-preview"), field("portrait").value);
       woundsEdit.innerHTML = woundBoxes(draft.wounds, true);
       const known = C.knows(current);
       for (const box of knowsEdit.querySelectorAll("wa-checkbox")) box.checked = known.includes(box.value);
-      const xp = C.xp(current);
-      field("xpAvailable").value = String(xp.available);
-      field("xpSpent").value = String(xp.spent);
       showXpTotal();
-      const look = C.appearance(current);
-      for (const name of ["pronouns", "physical", "network"]) field(name).value = look[name];
       renderSkillsEdit();
       renderGear($("gear-edit"), draft, { editable: true });
     } else {
@@ -145,13 +174,9 @@
 
   // Handle, name, etc. Current Luck, Current Influence, and Wounds can be changed while running, and are saved right away.
   function renderFields() {
-    $("portrait").src = portraitSrc(C.portraitFile(current, portraits));
-    $("portrait").alt = `Portrait of ${C.label(current)}`;
-    const luck = C.luck(current);
-    const inf = C.influence(current);
-    const xp = C.xp(current);
-    const values = { ...current, maxLuck: luck.max, currentLuck: luck.current, startingInfluence: inf.starting, currentInfluence: inf.current,
-      xpTotal: xp.total, xpAvailable: xp.available, xpSpent: xp.spent };
+    showPortrait($("portrait"), C.portraitFile(current, portraits), `Portrait of ${C.label(current)}`);
+    const values = Object.fromEntries(FIELDS.map((f) => [f.name, f.load(current)]));
+    values.xpTotal = C.xp(current).total;
     const known = C.knows(current);
     $("knows-field").hidden = !known.length;
     $("knows").textContent = known.join(", ");
@@ -167,13 +192,12 @@
     $("luck-label").textContent = editable ? "Luck" : "Current Luck";
     $("influence-label").textContent = editable ? "Influence" : "Current Influence";
     for (const button of currentLuck.querySelectorAll("[data-luck]")) {
-      const step = Number(button.dataset.luck);
       button.hidden = !editable;
-      button.disabled = step < 0 ? luck.current <= 0 : luck.current >= luck.max;
+      button.disabled = Number(button.dataset.luck) < 0 ? values.currentLuck <= 0 : values.currentLuck >= values.maxLuck;
     }
     for (const button of currentInfluence.querySelectorAll("[data-influence]")) {
       button.hidden = !editable;
-      button.disabled = Number(button.dataset.influence) < 0 && inf.current <= 0;
+      button.disabled = Number(button.dataset.influence) < 0 && values.currentInfluence <= 0;
     }
     woundsFields.innerHTML = woundBoxes(C.wounds(current), editable);
   }
@@ -194,12 +218,7 @@
   woundsFields.addEventListener("click", (e) => {
     const n = clickedWound(e);
     if (!n || state !== "running") return;
-    try {
-      current = C.save(storage, { ...current, wounds: C.clickWound(C.wounds(current), n) });
-    } catch (err) {
-      console.error(err);
-    }
-    renderFields();
+    if (commit({ ...current, wounds: C.clickWound(C.wounds(current), n) })) renderFields();
   });
   woundsEdit.addEventListener("click", (e) => {
     const n = clickedWound(e);
@@ -207,31 +226,25 @@
     draft.wounds = C.clickWound(draft.wounds, n);
     woundsEdit.innerHTML = woundBoxes(draft.wounds, true);
   });
-  currentLuck.addEventListener("click", (e) => {
-    const step = Number(e.target.closest("[data-luck]")?.dataset.luck);
-    if (!step || state !== "running") return;
-    const luck = C.luck(current);
-    const value = C.clampCurrentLuck(luck.current + step, luck.max);
-    try {
-      current = C.save(storage, { ...current, currentLuck: value });
-    } catch (err) {
-      console.error(err);
-    }
-    renderFields();
+
+  // Running: the −/+ buttons beside a stat (data-<attr>="step"). `value` reads the stat, `clamp` keeps it in range,
+  // and `changed(delta, after)` runs once the new value is saved.
+  function stepper(el, attr, { key, value, clamp, changed = () => {} }) {
+    el.addEventListener("click", (e) => {
+      const step = Number(e.target.closest(`[data-${attr}]`)?.dataset[attr]);
+      if (!step || state !== "running") return;
+      const before = value(), after = clamp(before + step);
+      if (after === before || !commit({ ...current, [key]: after })) return;
+      renderFields();
+      changed(after - before, after);
+    });
+  }
+  stepper(currentLuck, "luck", {
+    key: "currentLuck", value: () => C.luck(current).current, clamp: (n) => C.clampCurrentLuck(n, C.luck(current).max),
   });
-  currentInfluence.addEventListener("click", (e) => {
-    const step = Number(e.target.closest("[data-influence]")?.dataset.influence);
-    if (!step || state !== "running") return;
-    const before = C.influence(current).current;
-    const after = C.clampInfluence(before + step);
-    if (after === before) return;
-    try {
-      current = C.save(storage, { ...current, currentInfluence: after });
-    } catch (err) {
-      console.error(err);
-    }
-    renderFields();
-    window.NCD_ROLLER.postInfluence(after - before, after); // only while running; changes in Edit aren't posted
+  // Only changes made while running are posted to Discord; changes in Edit aren't.
+  stepper(currentInfluence, "influence", {
+    key: "currentInfluence", value: () => C.influence(current).current, clamp: (n) => C.clampInfluence(n), changed: APP.postInfluence,
   });
 
   $("character-edit").addEventListener("click", () => { state = "editing"; render(); });
@@ -280,18 +293,14 @@
     gearDialog.open = true;
   }
   function saveGear() {
-    const description = String(gearDescription.value ?? "").trim();
+    const description = text(gearDescription.value);
     if (!description) { gearDescription.focus(); return; }
     if (state === "editing") {
       const starter = gearStarter.checked;
       draft = C.withGear(draft, gearChanging ? { ...gearChanging, description, starter } : C.newProp(description, starter));
       renderGear($("gear-edit"), draft, { editable: true });
     } else if (state === "running") {
-      try {
-        current = C.save(storage, C.withGear(current, C.newProp(description)));
-      } catch (err) {
-        console.error(err);
-      }
+      if (!commit(C.withGear(current, C.newProp(description)))) return;
       renderGear($("gear-run"), current);
     }
     gearDialog.open = false;
@@ -318,14 +327,14 @@
   }
 
   // ---- skills ----
-  const icon = window.NCD_ICONS.svg;
   const GROUPS = { mental: "Mental", physical: "Physical", initiative: "Initiative" };
   // Mental fills the first column; Physical and the (short) Initiative group share the second.
   const COLUMNS = [["mental"], ["physical", "initiative"]];
   const columns = (groupHTML) => COLUMNS.map((types) => types.map(groupHTML).join(""))
     .filter(Boolean).map((html) => `<div class="skill-column">${html}</div>`).join("");
   const diceIcons = (st) => (st.adv || st.chal)
-    ? `<span class="skill-dice">${`<span class="adv">${icon("advantage-die")}</span>`.repeat(st.adv)}${`<span class="chal">${icon("challenge-die")}</span>`.repeat(st.chal)}</span>`
+    ? `<span class="skill-dice">${["adv", "chal"].map((kind) =>
+        `<span class="${kind}">${icon(APP.KINDS[kind].die)}</span>`.repeat(st[kind])).join("")}</span>`
     : "";
 
   // Display: only skills with a value or intrinsic dice, then "Anything else" at 50%.
@@ -409,15 +418,6 @@
   // ---- intrinsic dice dialog ----
   const dialog = $("dice-dialog");
   const dicePools = { adv: $("dice-adv"), chal: $("dice-chal") };
-  for (const group of Object.values(dicePools)) {
-    for (let n = 0; n <= C.MAX_DICE; n++) {
-      const radio = document.createElement("wa-radio");
-      radio.value = String(n);
-      radio.setAttribute("appearance", "button");
-      radio.textContent = n;
-      group.append(radio);
-    }
-  }
   let diceSkill = null;
   function openDiceDialog(id) {
     diceSkill = id;
@@ -433,15 +433,16 @@
 
   // ---- rolling a skill (running) ----
   // The dialog starts at the skill's value and intrinsic dice; the dice go back to those after each roll.
-  const R = window.NCD_ROLLER;
   const rollDialog = $("skill-dialog");
   const rollTarget = $("skill-target");
   const rollPools = { adv: $("skill-adv"), chal: $("skill-chal") };
   const rollResult = $("skill-result");
-  Object.values(rollPools).forEach(R.fillPool);
-  const readRollTarget = R.targetField(rollTarget);
   let rollSkill = null; // { id, name, adv, chal }
 
+  const resetRollPools = () => {
+    rollPools.adv.value = String(rollSkill.adv);
+    rollPools.chal.value = String(rollSkill.chal);
+  };
   function openRollDialog(id) {
     const sk = C.SKILLS.find((s) => s.id === id);
     const st = sk ? C.skill(current, id) : { value: null, adv: 0, chal: 0 };
@@ -453,19 +454,11 @@
     rollResult.innerHTML = "";
     rollDialog.open = true;
   }
-  const resetRollPools = () => {
-    rollPools.adv.value = String(rollSkill.adv);
-    rollPools.chal.value = String(rollSkill.chal);
-  };
 
   // Used is saved right away; rolling a skill marks it used.
   function setUsed(id, used) {
     if (!C.canBeUsed(current, id)) return; // also covers "Anything else", which isn't a skill
-    try {
-      current = C.save(storage, C.withUsed(current, id, used));
-    } catch (err) {
-      console.error(err);
-    }
+    commit(C.withUsed(current, id, used));
     if (state === "running") renderSkillsDisplay($("skills-run"), { links: true });
   }
   $("skills-run").addEventListener("change", (e) => {
@@ -480,30 +473,20 @@
     openRollDialog(link.dataset.roll);
   });
 
-  let skillRolling = false;
-  async function rollSkillAndPost() {
-    if (skillRolling || !rollSkill) return;
-    skillRolling = true;
-    $("skill-roll").loading = true;
-    try {
-      const r = window.NCD_DICE.roll({ target: readRollTarget(), advantage: rollPools.adv.value, challenge: rollPools.chal.value });
-      resetRollPools();
-      rollResult.hidden = false;
-      const spinning = R.spin(rollResult);
-      rollResult.scrollIntoView({ block: "nearest" });
-      await spinning;
-      R.showResult(r, true, rollResult);
-      rollResult.scrollIntoView({ block: "nearest" }); // on phones the result is below the fold
-      setUsed(rollSkill.id, true);
-      await R.postToDiscord(r, rollSkill.name);
-    } finally {
-      skillRolling = false;
-      $("skill-roll").loading = false;
-    }
-  }
+  const rollSkillAndPost = APP.makeRoller({
+    button: $("skill-roll"),
+    readTarget: APP.targetField(rollTarget),
+    pools: rollPools,
+    result: rollResult,
+    resetPools: resetRollPools,
+    scroll: true,
+    onRoll: () => setUsed(rollSkill.id, true),
+    skill: () => rollSkill.name,
+  });
   $("skill-roll").addEventListener("click", rollSkillAndPost);
   rollTarget.addEventListener("keydown", (e) => { if (e.key === "Enter") rollSkillAndPost(); });
 
+  // ---- editing ----
   form.addEventListener("click", (e) => {
     const button = e.target.closest("[data-reroll]");
     if (!button) return;
@@ -513,46 +496,48 @@
   });
   field("handle").addEventListener("input", () => setLabel(field("handle").value));
   for (const name of ["xpAvailable", "xpSpent"]) field(name).addEventListener("input", showXpTotal);
-  field("portrait").addEventListener("change", () => { $("portrait-preview").src = portraitSrc(field("portrait").value); });
+
+  // ---- portrait picker: a dialog showing every portrait; picking one closes it ----
+  const portraitDialog = $("portrait-dialog");
+  const portraitChoices = $("portrait-choices");
+  portraitChoices.innerHTML = portraits.map((file) =>
+    `<button type="button" class="portrait-choice" data-portrait="${escapeHTML(file)}" aria-pressed="false">
+      <img class="portrait" src="${escapeHTML(portraitSrc(file))}" alt="${escapeHTML(C.portraitLabel(file))}">
+    </button>`).join("");
+  $("portrait-choose").hidden = !portraits.length;
+  $("portrait-choose").addEventListener("click", () => {
+    for (const button of portraitChoices.querySelectorAll("[data-portrait]")) {
+      button.setAttribute("aria-pressed", String(button.dataset.portrait === field("portrait").value));
+    }
+    portraitDialog.open = true;
+  });
+  portraitChoices.addEventListener("click", (e) => {
+    const file = e.target.closest("[data-portrait]")?.dataset.portrait;
+    if (!file) return;
+    field("portrait").value = file;
+    showPortrait($("portrait-preview"), file);
+    portraitDialog.open = false;
+  });
 
   form.addEventListener("submit", (e) => {
     e.preventDefault();
     const edited = { ...current };
-    for (const name of ["handle", "name", "archetype", "origin"]) edited[name] = String(field(name).value ?? "").trim();
-    edited.maxLuck = C.clampMaxLuck(field("maxLuck").value);
-    edited.currentLuck = C.clampCurrentLuck(field("currentLuck").value, edited.maxLuck);
-    edited.startingInfluence = C.clampInfluence(field("startingInfluence").value);
-    edited.currentInfluence = C.clampInfluence(field("currentInfluence").value, edited.startingInfluence);
-    // The default is stored as null, so a character follows it if default.png ever changes.
-    edited.portrait = field("portrait").value === C.DEFAULT_PORTRAIT ? null : field("portrait").value;
-    edited.wounds = draft.wounds;
-    edited.xpAvailable = C.clampXp(field("xpAvailable").value);
-    edited.xpSpent = C.clampXp(field("xpSpent").value);
-    edited.appearance = { pronouns: String(field("pronouns").value ?? "").trim(),
-      physical: String(field("physical").value ?? "").trim(), network: String(field("network").value ?? "").trim() };
+    for (const f of FIELDS) f.save(edited, field(f.name).value);
     edited.knows = [...knowsEdit.querySelectorAll("wa-checkbox")].filter((box) => box.checked).map((box) => box.value);
+    edited.wounds = draft.wounds;
     edited.skills = draft.skills;
     edited.gear = draft.gear;
-    try {
-      current = C.save(storage, edited);
-    } catch (err) {
-      console.error(err);
-      return;
-    }
-    remember("ncd.openCharacter", current.id);
+    if (!commit(edited)) return;
+    store.set("openCharacter", current.id);
     state = "display";
     setLabel(current.handle);
     render();
     renderRoster();
   });
 
-  // For the Discord message: the character open in the Character tab, if any.
-  window.NCD_ACTIVE_CHARACTER = () => current;
-
   // ---- start up: reopen the last saved character, if any ----
   renderRoster();
-  let openId = null;
-  try { openId = storage.getItem("ncd.openCharacter"); } catch {}
+  const openId = store.get("openCharacter");
   const reopen = C.load(storage).find((c) => c.id === openId);
   if (reopen) show(reopen, "display", { activate: false });
   customElements.whenDefined("wa-tab-group").then(() => {

@@ -37,10 +37,11 @@ node --test tests/dice.test.cjs tests/discord.test.cjs tests/characters.test.cjs
 | --- | --- |
 | `index.html` | Page shell: header, theme toggle, tabs, and the dialogs |
 | `styles.css` | Light cyberpunk accents on top of the Web Awesome default theme |
-| `app.js` | Theme, tabs, the roller and result panel, and posting to Discord |
+| `shared.js` | Loaded first: localStorage access, the session (player, GM, open character), small helpers |
+| `app.js` | Theme, tabs, settings, the dice pools, the roller and result panel, and posting to Discord |
 | `config.js` | Shared settings for everyone: Discord emoji codes and the published address (no webhook) |
 | `dice.js` | Dice rules (no page code, so it's testable in Node) |
-| `characters.js` | Archetypes, origins, random handles and names, saving characters (testable in Node) |
+| `characters.js` | Archetypes, origins, random handles and names, saving characters (needs `dice.js`; testable in Node) |
 | `roster.js` | Roster tab and the Character tab |
 | `docs/character-sheet.md` | Markdown version of the paper character sheet |
 | `discord.js` | Builds the Discord message and posts it to the webhook |
@@ -76,8 +77,10 @@ Changes made in Edit aren't posted. No message ever pings anyone.
 ### Character portraits
 
 Portraits live in `portraits/`. To add one, put the image there (a 256×256 square works best) and add its file
-name to `portraits/portraits.js`; it then shows up in the Portrait picker when editing a character. Characters
-without one use `portraits/default.png`.
+name to `portraits/portraits.js`; it then shows up in the portrait picker (Choose portrait, when editing a
+character). In the app, a character without one shows a placeholder; their Discord messages use
+`portraits/default.png`. The GM's messages use `portraits/administrator.png`. Don't list either of those two in
+`portraits.js`; characters can't pick them.
 
 Discord shows the portrait as the message's avatar, but it has to load the image from a public link. On GitHub Pages
 that's automatic. A local copy sends no avatar unless `publicUrl` in `config.js` points at the published site.

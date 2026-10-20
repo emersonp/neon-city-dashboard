@@ -1,6 +1,7 @@
 // Run with: node --test tests/characters.test.cjs
 const test = require("node:test");
 const assert = require("node:assert/strict");
+require("../dice.js");
 require("../characters.js");
 
 test("gear: props with a description, Starter off unless set", () => {
@@ -230,14 +231,20 @@ test("influence is a whole number, never negative", () => {
 
 // ---- portraits ----
 
-test("portraits fall back to the default unless the chosen one is listed", () => {
+test("a character has no portrait unless the chosen one is listed", () => {
   const available = C.availablePortraits(["razor.png"]);
-  assert.deepEqual(available, ["default.png", "razor.png"]);
-  assert.deepEqual(C.availablePortraits(undefined), ["default.png"]);
+  assert.deepEqual(available, ["razor.png"]);
+  assert.deepEqual(C.availablePortraits(undefined), []);
   assert.equal(C.portraitFile({ portrait: "razor.png" }, available), "razor.png");
-  assert.equal(C.portraitFile({ portrait: "gone.png" }, available), "default.png");
-  assert.equal(C.portraitFile({ portrait: null }, available), "default.png");
+  assert.equal(C.portraitFile({ portrait: "gone.png" }, available), null);
+  assert.equal(C.portraitFile({ portrait: null }, available), null);
   assert.equal(C.newCharacter().portrait, null);
+});
+
+test("characters can't pick the default or administrator portraits", () => {
+  const available = C.availablePortraits(["default.png", "administrator.png", "razor.png", "razor.png"]);
+  assert.deepEqual(available, ["razor.png"]);
+  assert.equal(C.portraitFile({ portrait: "administrator.png" }, available), null);
 });
 
 test("portrait labels come from the file name", () => {

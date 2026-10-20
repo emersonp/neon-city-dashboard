@@ -16,11 +16,11 @@
   // Player names and handles are typed in by hand, so messages never ping anyone (no @everyone).
   const hasEmoji = (emoji) => Boolean(emoji?.boon && emoji?.drawback);
 
-  // Leftover symbols after Boons and Drawbacks cancel.
-  function netText(r, emoji) {
-    if (!r.net) return r.cancelled ? "all symbols cancelled" : "";
+  // Leftover symbols after Boons and Drawbacks cancel, to follow the total: " · [boon]" or " with one boon".
+  function netSuffix(r, emoji) {
+    if (!r.net) return r.cancelled ? " · all symbols cancelled" : "";
     const name = r.net > 0 ? "boon" : "drawback", n = Math.abs(r.net);
-    return hasEmoji(emoji) ? Array(n).fill(emoji[name]).join(THIN) : `with ${count(n, name)}`;
+    return hasEmoji(emoji) ? ` · ${Array(n).fill(emoji[name]).join(THIN)}` : ` with ${count(n, name)}`;
   }
 
   // Every Boon and Drawback that came up, before cancelling; blanks aren't shown.
@@ -35,24 +35,28 @@
   // The three lines: small intro, big result, and a subtle footer.
   // `luck` and `influence` are null for the GM (or with no character open), so the footer can end up empty.
   // `skill` is the skill's name, if any.
-  function lines(r, player, emoji, luck, skill, influence) {
+  function lines(r, { player, emoji, luck = null, influence = null, skill } = {}) {
     const verdict = { success: "Success!", failure: "Failure.", none: "" }[outcomeOf(r)];
-    const net = netText(r, emoji);
     return {
       intro: `${player} rolled${skill ? ` *${skill}*` : ""}${r.target == null ? "" : ` against ${r.target}`} and got a`,
-      result: [verdict, String(r.total)].filter(Boolean).join(" ") + (net ? (net.startsWith("with") ? ` ${net}` : ` · ${net}`) : ""),
+      result: [verdict, String(r.total)].filter(Boolean).join(" ") + netSuffix(r, emoji),
       detail: [luck != null && `Luck: ${luck}`, influence != null && `Influence: ${influence}`, rolledText(r, emoji)]
         .filter(Boolean).join(" · "),
     };
   }
 
+  // What every message starts with: who it's from, and no pings.
   // avatarUrl must be a public link Discord can fetch (a GitHub Pages URL, not localhost).
+  const from = ({ username, avatarUrl }) => ({
+    ...(username && { username }),
+    ...(avatarUrl && { avatar_url: avatarUrl }),
+    allowed_mentions: NO_PINGS,
+  });
+
   function buildMessage(r, player, { emoji, username, avatarUrl, luck, influence, skill } = {}) {
-    const l = lines(r, player, emoji, luck, skill, influence);
+    const l = lines(r, { player, emoji, luck, influence, skill });
     return {
-      ...(username && { username }),
-      ...(avatarUrl && { avatar_url: avatarUrl }),
-      allowed_mentions: NO_PINGS,
+      ...from({ username, avatarUrl }),
       flags: 1 << 15, // IS_COMPONENTS_V2
       components: [{
         type: 17, // container
@@ -73,9 +77,7 @@
   function influenceMessage(player, delta, remaining, { emoji, username, avatarUrl } = {}) {
     const icon = emoji?.influence ? ` ${emoji.influence}` : "";
     return {
-      ...(username && { username }),
-      ...(avatarUrl && { avatar_url: avatarUrl }),
-      allowed_mentions: NO_PINGS,
+      ...from({ username, avatarUrl }),
       content: `${player} ${delta > 0 ? "gained" : "spent"} an Influence.${icon} ${remaining} remaining.`,
     };
   }

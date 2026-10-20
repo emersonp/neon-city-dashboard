@@ -1,20 +1,38 @@
-// Page wiring: theme toggle, tabs, the dice roller, and posting rolls to Discord.
+// Page wiring: theme toggle, tabs, settings, the dice roller, and posting to Discord.
 (function () {
   const DICE = window.NCD_DICE;
+  const C = window.NCD_CHARACTERS;
   const { buildMessage, influenceMessage, isWebhookUrl, send } = window.NCD_DISCORD;
   const { svg: icon } = window.NCD_ICONS;
-  const $ = (id) => document.getElementById(id);
+  const store = window.NCD_STORE;
+  const SESSION = window.NCD_SESSION;
+  const { $, text } = window.NCD_UTIL;
 
-  // localStorage can be missing or throw (private windows, blocked storage); never let that break the page.
-  const store = {
-    get(key, fallback = null) { try { return localStorage.getItem(`ncd.${key}`) ?? fallback; } catch { return fallback; } },
-    set(key, value) { try { localStorage.setItem(`ncd.${key}`, value); } catch {} },
+  // The two kinds of pool die, and the symbol each one rolls.
+  const KINDS = {
+    adv: { die: "advantage-die", label: "Advantage dice", symbol: "boon", title: "Boon" },
+    chal: { die: "challenge-die", label: "Challenge dice", symbol: "drawback", title: "Drawback" },
   };
 
   // The webhook lives only in Settings (this browser's localStorage), never in a file.
-  const webhookUrl = () => String(store.get("webhook") ?? "").trim();
+  const webhookUrl = () => text(store.get("webhook"));
 
   document.querySelectorAll("[data-icon]").forEach((el) => { el.innerHTML = icon(el.dataset.icon); });
+
+  // Every dice pool on the page (data-pool="adv" or "chal") gets its label and 0-4 button choices.
+  document.querySelectorAll("[data-pool]").forEach((group) => {
+    const kind = KINDS[group.dataset.pool];
+    const label = Object.assign(document.createElement("span"), { slot: "label", className: "pool-label" });
+    label.innerHTML = icon(kind.die) + kind.label;
+    group.append(label);
+    for (let n = 0; n <= DICE.MAX_POOL; n++) {
+      const radio = document.createElement("wa-radio");
+      radio.value = String(n);
+      radio.setAttribute("appearance", "button");
+      radio.textContent = n;
+      group.append(radio);
+    }
+  });
 
   // ---- theme ----
   const html = document.documentElement;
@@ -29,10 +47,27 @@
   });
   syncThemeIcon();
 
+  // ---- settings ----
+  const playerInput = $("player-name");
+  const gmSwitch = $("gm");
+  SESSION.playerName = store.get("playerName", "");
+  SESSION.gm = store.get("gm") === "1";
+  playerInput.value = SESSION.playerName;
+  if (SESSION.gm) gmSwitch.setAttribute("checked", "");
+  playerInput.addEventListener("input", () => { SESSION.playerName = playerInput.value; store.set("playerName", playerInput.value); });
+  gmSwitch.addEventListener("change", () => { SESSION.gm = gmSwitch.checked; store.set("gm", gmSwitch.checked ? "1" : "0"); });
+  const webhookInput = $("webhook");
+  webhookInput.value = store.get("webhook", "");
+  webhookInput.placeholder = "https://discord.com/api/webhooks/…";
+  const checkWebhook = () => customElements.whenDefined("wa-input").then(() =>
+    webhookInput.setCustomValidity(isWebhookUrl(webhookUrl()) ? "" : "Not a Discord webhook address"));
+  webhookInput.addEventListener("input", () => { store.set("webhook", text(webhookInput.value)); checkWebhook(); });
+  checkWebhook();
+
   // ---- tabs ----
   // Start on Settings until there's a player name and a working webhook.
   const tabs = $("tabs");
-  const needsSetup = () => !String(store.get("playerName") ?? "").trim() || !isWebhookUrl(webhookUrl());
+  const needsSetup = () => !text(SESSION.playerName) || !isWebhookUrl(webhookUrl());
   let forced = false; // a forced trip to Settings isn't remembered as the last tab
   customElements.whenDefined("wa-tab-group").then(() => {
     forced = needsSetup();
@@ -44,58 +79,9 @@
     store.set("tab", e.detail.name);
   });
 
-  // ---- settings ----
-  const playerInput = $("player-name");
-  const gmSwitch = $("gm");
-  playerInput.value = store.get("playerName", "");
-  if (store.get("gm") === "1") gmSwitch.setAttribute("checked", "");
-  const playerName = () => String(playerInput.value ?? "").trim() || "Player";
-  const isGM = () => gmSwitch.checked;
-  playerInput.addEventListener("input", () => store.set("playerName", playerInput.value));
-  const webhookInput = $("webhook");
-  webhookInput.value = store.get("webhook", "");
-  webhookInput.placeholder = "https://discord.com/api/webhooks/…";
-  const checkWebhook = () => customElements.whenDefined("wa-input").then(() =>
-    webhookInput.setCustomValidity(isWebhookUrl(webhookUrl()) ? "" : "Not a Discord webhook address"));
-  webhookInput.addEventListener("input", () => { store.set("webhook", String(webhookInput.value ?? "").trim()); checkWebhook(); });
-  checkWebhook();
-  gmSwitch.addEventListener("change", () => store.set("gm", gmSwitch.checked ? "1" : "0"));
-
   // ---- toasts ----
   const toast = (message, variant = "neutral") =>
     customElements.whenDefined("wa-toast").then(() => $("toast").create(message, { variant, duration: 4000 }));
-
-  // ---- roller inputs ----
-  // Target sticks between rolls (and reloads) until cleared; the dice pools reset after every roll.
-  const targetInput = $("target");
-  targetInput.value = store.get("target", "");
-  // Keeps a target box to digits only; onChange gets the cleaned value.
-  function targetField(input, onChange = () => {}) {
-    const clean = () => {
-      const v = String(input.value ?? "").replace(/\D/g, "").slice(0, 3);
-      if (v !== input.value) input.value = v;
-      onChange(v);
-    };
-    input.addEventListener("input", clean);
-    input.addEventListener("wa-clear", () => queueMicrotask(clean));
-    return () => (input.value === "" ? null : Number(input.value));
-  }
-  const readTarget = targetField(targetInput, (v) => store.set("target", v));
-  targetInput.addEventListener("keydown", (e) => { if (e.key === "Enter") rollAndPost(); });
-
-  // Fills a radio group with 0-4 button choices.
-  function fillPool(group) {
-    for (let n = 0; n <= DICE.MAX_POOL; n++) {
-      const radio = document.createElement("wa-radio");
-      radio.value = String(n);
-      radio.setAttribute("appearance", "button");
-      radio.textContent = n;
-      group.append(radio);
-    }
-  }
-  const pools = { adv: $("adv"), chal: $("chal") };
-  Object.values(pools).forEach(fillPool);
-  const resetPools = () => { for (const group of Object.values(pools)) group.value = "0"; };
 
   // ---- result panel ----
   const D10 = (cls, n) => `<div class="d10 ${cls}"><svg viewBox="0 0 100 100" aria-hidden="true">
@@ -105,11 +91,10 @@
       <line class="facet" x1="50" y1="70" x2="50" y2="97"/>
       <text class="num" x="50" y="44">${n}</text></svg></div>`;
   const dicePair = (tens, ones) => `<div class="d10s">${D10("tens", tens)}${D10("ones", ones)}</div>`;
+  const symbol = (kind, cls = "") => `<span class="${kind}${cls}" title="${KINDS[kind].title}">${icon(KINDS[kind].symbol)}</span>`;
 
   // Each pool die shows what it landed on: a Boon / Drawback, or an empty slot for a blank face.
-  const face = (kind, hit) => hit
-    ? `<span class="${kind}" title="${kind === "adv" ? "Boon" : "Drawback"}">${icon(kind === "adv" ? "boon" : "drawback")}</span>`
-    : `<span class="${kind} blank" title="Blank"></span>`;
+  const face = (kind, hit) => (hit ? symbol(kind) : `<span class="${kind} blank" title="Blank"></span>`);
   function facesHTML(r) {
     const adv = r.adv.map((hit) => face("adv", hit));
     const chal = r.chal.map((hit) => face("chal", hit));
@@ -120,9 +105,8 @@
   // Boons and Drawbacks cancel one for one; survivors are bright, cancelled pairs are greyed out.
   function netHTML(r) {
     if (!r.adv.length && !r.chal.length) return "";
-    const live = Array(Math.abs(r.net)).fill(r.net > 0 ? "boon" : "drawback")
-      .map((name) => `<span class="${name === "boon" ? "adv" : "chal"}">${icon(name)}</span>`).join("");
-    const pairs = Array(r.cancelled).fill(`<span class="adv cancelled">${icon("boon")}</span><span class="chal cancelled">${icon("drawback")}</span>`).join("");
+    const live = symbol(r.net > 0 ? "adv" : "chal").repeat(Math.abs(r.net));
+    const pairs = (symbol("adv", " cancelled") + symbol("chal", " cancelled")).repeat(r.cancelled);
     const label =
       r.net > 0 ? [`+${r.net} Boon${r.net > 1 ? "s" : ""}`, "boon"] :
       r.net < 0 ? [`+${-r.net} Drawback${r.net < -1 ? "s" : ""}`, "drawback"] :
@@ -131,7 +115,7 @@
     return `<div class="net">${icons ? `<div class="net-icons">${icons}</div>` : ""}<div class="net-label ${label[1]}">${label[0]}</div></div>`;
   }
 
-  function showResult(r, animate, el = $("result")) {
+  function showResult(r, animate, el) {
     const verdict = r.success == null ? "" : `<div class="verdict ${r.success ? "success" : "failure"}">${r.success ? "Success" : "Failure"}</div>`;
     el.className = "result" + (animate ? " reveal" : "");
     el.innerHTML = dicePair(DICE.fmtTens(r.tens), r.ones) + `<div class="total">${r.total}</div>` + verdict + facesHTML(r) + netHTML(r);
@@ -139,7 +123,7 @@
 
   const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
   // Spins the d10 faces for a moment before the real result lands.
-  function spin(el = $("result"), ms = 650) {
+  function spin(el, ms = 650) {
     if (reducedMotion.matches) return Promise.resolve();
     el.className = "result rolling";
     el.innerHTML = dicePair("–", "–");
@@ -151,37 +135,31 @@
     return new Promise((resolve) => setTimeout(() => { clearInterval(timer); resolve(); }, ms));
   }
 
-  let lastRoll = null;
-  try { lastRoll = JSON.parse(store.get("lastRoll")); } catch {}
-  if (lastRoll) showResult(lastRoll, false);
-
   // ---- Discord ----
-  // Luck and the posting name come from the character open in the Character tab (roster.js).
-  // The GM posts as Administrator; for the GM or with no character open, Luck and Influence are left out.
-  const activeCharacter = () => window.NCD_ACTIVE_CHARACTER?.();
-  function postingName() {
-    const handle = String(activeCharacter()?.handle ?? "").trim();
-    return isGM() ? "Administrator" : handle || "Neon City Dashboard";
-  }
-  // The character's portrait as the message avatar. Discord fetches it itself, so it needs a public link:
-  // the site's own address on GitHub Pages (https), or publicUrl in config.js. Locally, no avatar is sent.
-  function avatarUrl() {
-    const character = activeCharacter();
+  const emoji = window.NCD_CONFIG?.emoji;
+  const playerName = () => text(SESSION.playerName) || "Player";
+
+  // The message avatar: administrator.png for the GM, otherwise the character's portrait, or default.png if they
+  // haven't picked one. Discord fetches it itself, so it needs a public link: the site's own address on GitHub Pages
+  // (https), or publicUrl in config.js. Locally, no avatar is sent.
+  function avatarUrl(character) {
     const base = window.NCD_CONFIG?.publicUrl || (location.protocol === "https:" ? location.href : "");
-    if (isGM() || !character || !base) return undefined;
-    const C = window.NCD_CHARACTERS;
-    return new URL(C.PORTRAIT_DIR + C.portraitFile(character, C.availablePortraits(window.NCD_PORTRAITS)), base).href;
+    const file = SESSION.gm ? C.ADMIN_PORTRAIT
+      : character && (C.portraitFile(character, C.availablePortraits(window.NCD_PORTRAITS)) ?? C.DEFAULT_PORTRAIT);
+    if (!file || !base) return undefined;
+    return new URL(C.PORTRAIT_DIR + file, base).href;
   }
-  function messageFor(r, skill) {
-    const character = activeCharacter();
-    return buildMessage(r, playerName(), {
-      skill,
-      luck: isGM() || !character ? null : window.NCD_CHARACTERS.luck(character).current,
-      influence: isGM() || !character ? null : window.NCD_CHARACTERS.influence(character).current,
-      emoji: window.NCD_CONFIG?.emoji,
-      username: postingName(),
-      avatarUrl: avatarUrl(),
-    });
+
+  // Who a message is from: the character open in the Character tab (its handle and portrait), "Administrator"
+  // for the GM, or "Neon City Dashboard" with no character open. The GM never has a character, so their
+  // messages leave out Luck and Influence.
+  function sender() {
+    const character = SESSION.gm ? null : SESSION.character;
+    return {
+      character,
+      username: SESSION.gm ? "Administrator" : text(character?.handle) || "Neon City Dashboard",
+      avatarUrl: avatarUrl(character),
+    };
   }
 
   async function post(payload, what) {
@@ -194,33 +172,83 @@
       toast(`Discord: ${err.message}`, "danger");
     }
   }
-  const postToDiscord = (r, skill) => post(messageFor(r, skill), "Rolled");
-  // delta is +1 (gained) or -1 (spent).
-  const postInfluence = (delta, remaining) => post(
-    influenceMessage(playerName(), delta, remaining, { emoji: window.NCD_CONFIG?.emoji, username: postingName(), avatarUrl: avatarUrl() }),
-    "Influence changed");
 
-  // ---- rolling ----
-  let rolling = false;
-  async function rollAndPost() {
-    if (rolling) return;
-    rolling = true;
-    $("roll").loading = true;
-    try {
-      const r = DICE.roll({ target: readTarget(), advantage: pools.adv.value, challenge: pools.chal.value });
-      resetPools();
-      await spin();
-      showResult(r, true);
-      lastRoll = r;
-      store.set("lastRoll", JSON.stringify(r));
-      await postToDiscord(r);
-    } finally {
-      rolling = false;
-      $("roll").loading = false;
-    }
+  function postRoll(r, skill) {
+    const { character, username, avatarUrl } = sender();
+    return post(buildMessage(r, playerName(), {
+      skill, emoji, username, avatarUrl,
+      luck: character ? C.luck(character).current : null,
+      influence: character ? C.influence(character).current : null,
+    }), "Rolled");
   }
 
+  // delta is +1 (gained) or -1 (spent).
+  function postInfluence(delta, remaining) {
+    const { username, avatarUrl } = sender();
+    return post(influenceMessage(playerName(), delta, remaining, { emoji, username, avatarUrl }), "Influence changed");
+  }
+
+  // ---- rolling ----
+  // Keeps a target box to digits only; onChange gets the cleaned value. Returns a reader for the target (null if blank).
+  function targetField(input, onChange = () => {}) {
+    const clean = () => {
+      const v = String(input.value ?? "").replace(/\D/g, "").slice(0, 3);
+      if (v !== input.value) input.value = v;
+      onChange(v);
+    };
+    input.addEventListener("input", clean);
+    input.addEventListener("wa-clear", () => queueMicrotask(clean));
+    return () => (input.value === "" ? null : Number(input.value));
+  }
+
+  // A roll button's whole job: roll, reset the pools, spin, show the result, then post it. One roll at a time.
+  // `scroll` brings the result into view (the skill dialog, where on phones it's below the fold).
+  // `onRoll` runs once the result shows; `skill` names the skill for the message, if any.
+  function makeRoller({ button, readTarget, pools, result, resetPools, scroll = false, onRoll = () => {}, skill = () => undefined }) {
+    let busy = false;
+    const reveal = () => { if (scroll) result.scrollIntoView({ block: "nearest" }); };
+    return async function rollAndPost() {
+      if (busy) return;
+      busy = true;
+      button.loading = true;
+      try {
+        const r = DICE.roll({ target: readTarget(), advantage: pools.adv.value, challenge: pools.chal.value });
+        resetPools();
+        result.hidden = false;
+        const spinning = spin(result);
+        reveal();
+        await spinning;
+        showResult(r, true, result);
+        reveal();
+        onRoll(r);
+        await postRoll(r, skill());
+      } finally {
+        busy = false;
+        button.loading = false;
+      }
+    };
+  }
+
+  // ---- the Dice tab ----
+  // Target sticks between rolls (and reloads) until cleared; the dice pools reset after every roll.
+  const targetInput = $("target");
+  targetInput.value = store.get("target", "");
+  const pools = { adv: $("adv"), chal: $("chal") };
+  const rollAndPost = makeRoller({
+    button: $("roll"),
+    readTarget: targetField(targetInput, (v) => store.set("target", v)),
+    pools,
+    result: $("result"),
+    resetPools: () => { for (const group of Object.values(pools)) group.value = "0"; },
+    onRoll: (r) => store.set("lastRoll", JSON.stringify(r)),
+  });
+  try {
+    const last = JSON.parse(store.get("lastRoll"));
+    if (last) showResult(last, false, $("result"));
+  } catch {}
+
   $("roll").addEventListener("click", rollAndPost);
+  targetInput.addEventListener("keydown", (e) => { if (e.key === "Enter") rollAndPost(); });
 
   // R rolls from anywhere on the Dice tab, except while typing or using a control.
   document.addEventListener("keydown", (e) => {
@@ -231,6 +259,6 @@
     rollAndPost();
   });
 
-  // For the character tab's skill rolls (roster.js).
-  window.NCD_ROLLER = { fillPool, targetField, spin, showResult, postToDiscord, postInfluence };
+  // For the Character tab (roster.js).
+  window.NCD_APP = { KINDS, toast, targetField, makeRoller, postInfluence };
 })();

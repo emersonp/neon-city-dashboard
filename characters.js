@@ -1,6 +1,7 @@
 // Characters: rulebook lists, random handles and names, and saving to localStorage.
-// No page code here, so it can be tested in Node.
+// No page code here, so it can be tested in Node. Needs dice.js (for the dice pool limits).
 (function (root) {
+  const { clampPool } = root.NCD_DICE;
   const ARCHETYPES = ["Assassin", "Bruiser", "Doc", "Gearhead", "Grifter", "Hacker", "Mastermind", "Merc", "Operator", "Thief"];
   const ORIGINS = ["Cybernetic", "Gene-Spliced", "Psionic", "Synthetic"];
   const KEY = "ncd.characters";
@@ -22,7 +23,10 @@
   ];
   const UNTRAINED = 50;              // what a null skill (and "Anything else") rolls at
   const MIN_VALUE = 55, MAX_VALUE = 95, STEP = 5;
-  const MAX_DICE = 4;
+
+  // Numbers typed into the sheet: whole numbers, kept between min and max; blanks and junk become the fallback.
+  const toInt = (v) => (v === "" || v == null || !Number.isFinite(Number(v)) ? null : Math.round(Number(v)));
+  const clampInt = (v, { min = 0, max = Infinity, fallback = min } = {}) => Math.max(min, Math.min(max, toInt(v) ?? fallback));
 
   // A skill's stored state: value is null (untrained) or 55-95; adv/chal are intrinsic dice, 0-4.
   function skill(character, id) {
@@ -32,19 +36,14 @@
   const shownValue = (value) => value ?? UNTRAINED;
   const isNotable = (s) => s.value != null || s.adv > 0 || s.chal > 0;
 
-  function clampValue(v) {
-    if (v === "" || v == null) return null;
-    const n = Math.round(Number(v));
-    return Number.isFinite(n) ? Math.max(MIN_VALUE, Math.min(MAX_VALUE, n)) : null;
-  }
+  const clampValue = (v) => (toInt(v) == null ? null : clampInt(v, { min: MIN_VALUE, max: MAX_VALUE }));
   const increment = (value) => Math.min(MAX_VALUE, value + STEP);
-  const clampDice = (n) => Math.max(0, Math.min(MAX_DICE, Math.trunc(Number(n) || 0)));
 
   // Returns a copy of the character with one skill changed. Skills back at the default are dropped.
   function withSkill(character, id, changes) {
     const next = { ...skill(character, id), ...changes };
-    next.adv = clampDice(next.adv);
-    next.chal = clampDice(next.chal);
+    next.adv = clampPool(next.adv);
+    next.chal = clampPool(next.chal);
     const skills = { ...(character?.skills ?? {}) };
     if (isNotable(next)) skills[id] = next; else delete skills[id];
     return { ...character, skills };
@@ -52,9 +51,8 @@
 
   // ---- luck: current is kept between 0 and max ----
   const DEFAULT_LUCK = 100;
-  const toInt = (v) => (v === "" || v == null || !Number.isFinite(Number(v)) ? null : Math.round(Number(v)));
-  const clampMaxLuck = (v) => Math.max(0, toInt(v) ?? DEFAULT_LUCK);
-  const clampCurrentLuck = (v, max) => Math.max(0, Math.min(max, toInt(v) ?? max));
+  const clampMaxLuck = (v) => clampInt(v, { fallback: DEFAULT_LUCK });
+  const clampCurrentLuck = (v, max) => clampInt(v, { max, fallback: max });
   // Older saves have no luck yet; they start full.
   function luck(character) {
     const max = clampMaxLuck(character?.maxLuck);
@@ -63,7 +61,7 @@
 
   // ---- influence: whole numbers, 0 or more ----
   const DEFAULT_INFLUENCE = 1;
-  const clampInfluence = (v, fallback = DEFAULT_INFLUENCE) => Math.max(0, toInt(v) ?? fallback);
+  const clampInfluence = (v, fallback = DEFAULT_INFLUENCE) => clampInt(v, { fallback });
   // Older saves have no influence yet; current starts at the starting value.
   function influence(character) {
     const starting = clampInfluence(character?.startingInfluence);
@@ -71,18 +69,22 @@
   }
 
   // ---- portraits: image files in portraits/, listed in portraits/portraits.js ----
+  // default.png is only the Discord avatar for a character without a portrait; the app shows a placeholder instead.
+  // administrator.png is the GM's Discord avatar. Neither can be picked for a character.
   const DEFAULT_PORTRAIT = "default.png";
+  const ADMIN_PORTRAIT = "administrator.png";
   const PORTRAIT_DIR = "portraits/";
-  // The listed portraits, always including the default.
-  const availablePortraits = (listed) => [...new Set([DEFAULT_PORTRAIT, ...(Array.isArray(listed) ? listed : [])])];
-  // The character's portrait if it's still listed, otherwise the default. null means "use the default".
-  const portraitFile = (character, available = [DEFAULT_PORTRAIT]) =>
-    available.includes(character?.portrait) ? character.portrait : DEFAULT_PORTRAIT;
+  // The portraits a character can pick: the listed ones, minus the default and the administrator's.
+  const availablePortraits = (listed) =>
+    [...new Set(Array.isArray(listed) ? listed : [])].filter((file) => file !== DEFAULT_PORTRAIT && file !== ADMIN_PORTRAIT);
+  // The character's portrait if it's still listed, otherwise null (they haven't picked one).
+  const portraitFile = (character, available = []) =>
+    available.includes(character?.portrait) ? character.portrait : null;
   // "street-samurai.png" -> "Street Samurai"
   const portraitLabel = (file) => file.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ").replace(/\b\w/g, (ch) => ch.toUpperCase());
 
   // ---- XP: total = spent + available ----
-  const clampXp = (v) => Math.max(0, toInt(v) ?? 0);
+  const clampXp = (v) => clampInt(v);
   function xp(character) {
     const spent = clampXp(character?.xpSpent), available = clampXp(character?.xpAvailable);
     return { spent, available, total: spent + available };
@@ -127,7 +129,7 @@
 
   // ---- wounds: 0-4; clicking box n marks boxes 1..n, clicking the last marked box unmarks it ----
   const MAX_WOUNDS = 4;
-  const wounds = (character) => Math.max(0, Math.min(MAX_WOUNDS, Math.trunc(Number(character?.wounds) || 0)));
+  const wounds = (character) => clampInt(character?.wounds, { max: MAX_WOUNDS });
   const clickWound = (current, n) => (n === current ? n - 1 : n);
 
   const pick = (list, rng = Math.random) => list[Math.floor(rng() * list.length)];
@@ -230,7 +232,7 @@
   }
 
   root.NCD_CHARACTERS = {
-    ARCHETYPES, ORIGINS, CULTURES, SKILLS, UNTRAINED, MIN_VALUE, MAX_VALUE, MAX_DICE,
+    ARCHETYPES, ORIGINS, CULTURES, SKILLS, UNTRAINED, MIN_VALUE, MAX_VALUE,
     randomHandle, randomName, newCharacter, label, load, save, toExport,
     skill, shownValue, isNotable, clampValue, increment, withSkill,
     DEFAULT_LUCK, luck, clampMaxLuck, clampCurrentLuck,
@@ -239,6 +241,6 @@
     canBeUsed, isUsed, withUsed,
     KNOWLEDGE, knows, xp, clampXp, appearance,
     gear, newProp, withGear, withoutGear,
-    DEFAULT_PORTRAIT, PORTRAIT_DIR, availablePortraits, portraitFile, portraitLabel,
+    DEFAULT_PORTRAIT, ADMIN_PORTRAIT, PORTRAIT_DIR, availablePortraits, portraitFile, portraitLabel,
   };
 })(globalThis);
