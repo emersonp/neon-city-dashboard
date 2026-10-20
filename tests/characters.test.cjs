@@ -21,7 +21,58 @@ test("gear: props with a description, Starter off unless set", () => {
   c = C.withGear(c, { ...coat, description: "Duster", starter: true });
   assert.deepEqual(C.gear(c).map((g) => [g.description, g.starter]), [["Duster", true], ["Burner phone", false]]);
   assert.deepEqual(C.gear(C.withoutGear(c, coat.id)).map((g) => g.description), ["Burner phone"]);
-  assert.deepEqual(C.gear({ gear: [null, { id: 1, description: "Old" }] }), [{ id: 1, kind: "prop", description: "Old", starter: false }]);
+  assert.deepEqual(C.gear({ gear: [null, { id: 1, description: "Old" }] }), [{ id: 1, kind: "prop", description: "Old", starter: false, conditions: [] }]);
+});
+
+test("conditions: added with a name, severity 1-4, and intrinsic off unless set", () => {
+  const C = globalThis.NCD_CHARACTERS;
+  assert.deepEqual(C.conditions({}), []);
+  assert.deepEqual(C.newCharacter().conditions, []);
+  let c = C.withCondition({ id: "c" }, { name: "  Exhausted " });
+  const [ex] = C.conditions(c);
+  assert.equal(ex.name, "Exhausted");
+  assert.equal(ex.severity, 1);
+  assert.equal(ex.intrinsic, false);
+  assert.ok(ex.id);
+  c = C.withCondition(c, { name: "Difficulty in Tight Spaces", severity: 2, intrinsic: true });
+  assert.deepEqual(C.conditions(c).map((x) => [x.name, x.severity, x.intrinsic]),
+    [["Exhausted", 1, false], ["Difficulty in Tight Spaces", 2, true]]);
+  assert.equal(C.withCondition(c, { name: "   " }), c);
+});
+
+test("conditions: adding a name that's there worsens it, up to x4, keeping spelling and intrinsic", () => {
+  const C = globalThis.NCD_CHARACTERS;
+  let c = C.withCondition({}, { name: "Exhausted", severity: 3, intrinsic: true });
+  c = C.withCondition(c, { name: " exhausted ", severity: 2, intrinsic: false });
+  assert.deepEqual(C.conditions(c).map((x) => [x.name, x.severity, x.intrinsic]), [["Exhausted", 4, true]]);
+});
+
+test("conditions: severity changes are clamped; removing drops one; the original is untouched", () => {
+  const C = globalThis.NCD_CHARACTERS;
+  const c = C.withCondition({}, { name: "Damaged" });
+  const id = C.conditions(c)[0].id;
+  assert.equal(C.conditions(C.withSeverity(c, id, 9))[0].severity, 4);
+  assert.equal(C.conditions(C.withSeverity(c, id, 0))[0].severity, 1);
+  assert.deepEqual(C.conditions(C.withoutCondition(c, id)), []);
+  assert.equal(C.conditions(c)[0].severity, 1);
+});
+
+test("conditions: labels hide x1", () => {
+  const C = globalThis.NCD_CHARACTERS;
+  assert.deepEqual([1, 2, 3, 4].map(C.severityLabel), ["", "x2", "x3", "x4"]);
+});
+
+test("conditions: junk and old saves load cleanly, on characters and gear", () => {
+  const C = globalThis.NCD_CHARACTERS;
+  assert.deepEqual(C.conditions({ conditions: "nope" }), []);
+  assert.deepEqual(C.conditions({ conditions: [null, { id: "a", name: " " }, { id: "b", name: "Poisoned", severity: "9", intrinsic: "yes" }] }),
+    [{ id: "b", name: "Poisoned", severity: 4, intrinsic: false }]);
+  assert.deepEqual(C.gear({ gear: [{ id: 1, description: "Pistol" }] })[0].conditions, []);
+  const item = C.withCondition(C.newProp("Pistol"), { name: "Damaged", severity: 2 });
+  const c = C.withGear({}, item);
+  assert.deepEqual(C.gear(c)[0].conditions.map((x) => [x.name, x.severity]), [["Damaged", 2]]);
+  // changing the description keeps conditions
+  assert.equal(C.gear(C.withGear(c, { ...C.gear(c)[0], description: "Heavy pistol" }))[0].conditions.length, 1);
 });
 const C = globalThis.NCD_CHARACTERS;
 
