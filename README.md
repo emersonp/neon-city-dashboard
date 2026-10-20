@@ -28,7 +28,7 @@ Press <kbd>R</kbd> on the Dice tab to roll.
 ## Tests
 
 ```
-node --test tests/dice.test.cjs tests/discord.test.cjs tests/characters.test.cjs
+node --test tests/dice.test.cjs tests/discord.test.cjs tests/characters.test.cjs tests/format.test.cjs tests/abilities.test.cjs
 ```
 
 ## What's here
@@ -43,12 +43,41 @@ node --test tests/dice.test.cjs tests/discord.test.cjs tests/characters.test.cjs
 | `dice.js` | Dice rules (no page code, so it's testable in Node) |
 | `characters.js` | Archetypes, origins, random handles and names, saving characters (needs `dice.js`; testable in Node) |
 | `roster.js` | Roster tab and the Character tab |
+| `abilities.js` | The perk and augmentation catalog; edit it to add abilities |
+| `format.js` | Turns ability descriptions into HTML: paragraphs, bold, italic, lists, icon tokens (testable in Node) |
 | `docs/character-sheet.md` | Markdown version of the paper character sheet |
 | `discord.js` | Builds the Discord message and posts it to the webhook |
 | `emoji/` | Boon and Drawback PNGs to upload as Discord server emoji |
 | `icons.js`, `icons/` | Game icons (advantage die, challenge die, boon, drawback, heat, influence) |
 
-Things remembered in localStorage (all under `ncd.`): characters, the open character, player name, GM toggle, webhook, theme, the last tab, the target number, and the last roll.
+Things remembered in localStorage (all under `ncd.`): characters (with the ids of their perks and augmentations), the open character, player name, GM toggle, webhook, theme, the last tab, the target number, and the last roll.
+
+## Adding abilities
+
+Perks and augmentations (called *abilities* in the code) live in `abilities.js`. A character can pick any of them in
+**Edit → Add ability**; the sheet shows them by name under **Perks** and **Augmentations**, and clicking one opens its text.
+
+Each entry:
+
+```js
+{
+  id: "g-force-adaptation",   // what characters save: lowercase words joined by "-"
+  type: "augmentation",       // "perk" or "augmentation"
+  name: "G-Force Adaptation",
+  origin: "Gene-Spliced",     // one of the origins, or null
+  archetype: null,            // one of the archetypes, or null
+  summary: "One line",        // optional, plain text
+  description: `Full text`,   // optional, formatted (below)
+}
+```
+
+- Augmentations always have an origin, and often an archetype. Perks have an origin or an archetype, never both.
+- Every entry needs a summary, a description, or both.
+- Don't change an id once characters use it: a saved id that isn't in the list just stops showing.
+
+Descriptions: a blank line starts a new paragraph, lines starting with `- ` make a bullet list, `**bold**`, `*italic*`,
+and these icons: `[advantage]` `[challenge]` `[boon]` `[drawback]` `[heat]` `[influence]`. Anything else shows as typed.
+`tests/abilities.test.cjs` checks every entry against these rules.
 
 ## Discord messages
 

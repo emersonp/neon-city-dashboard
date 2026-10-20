@@ -35,7 +35,7 @@
 
   let current = null;     // the character in the Character tab
   let state = "display";  // "display" | "editing" | "running"
-  let draft = null;       // while editing: a copy holding skill, wound, and gear changes until Save
+  let draft = null;       // while editing: a copy holding skill, wound, gear, and ability changes until Save
 
   const setCurrent = (character) => { current = character; SESSION.character = character; };
 
@@ -151,7 +151,11 @@
     fields.hidden = state === "editing";
     fields.dataset.state = state;
     if (state === "editing") {
-      draft = { skills: { ...(current.skills ?? {}) }, wounds: C.wounds(current), gear: C.gear(current) };
+      draft = {
+        skills: { ...(current.skills ?? {}) }, wounds: C.wounds(current), gear: C.gear(current),
+        // ids no longer in the catalog are dropped here, so the next Save removes them
+        abilities: C.abilities(current, ABILITIES).map((a) => a.id),
+      };
       for (const f of FIELDS) field(f.name).value = String(f.load(current));
       showPortrait($("portrait-preview"), field("portrait").value);
       showSteppers();
@@ -161,6 +165,7 @@
       showXpTotal();
       renderSkillsEdit();
       renderGear($("gear-edit"), draft, { editable: true });
+      renderAbilitiesEdit();
     } else {
       renderFields();
       if (state === "display") {
@@ -357,6 +362,56 @@
       if (id) openAbility(id);
     });
   }
+
+  // Edit: the draft's abilities with a remove button each, and the picker for adding more (kept in the draft until Save).
+  function renderAbilitiesEdit() {
+    const list = C.abilities(draft, ABILITIES);
+    $("abilities-edit").innerHTML = list.length
+      ? `<ul class="gear-list">${list.map((a) => `<li data-ability-row="${escapeHTML(a.id)}">
+          <span class="gear-text"><button type="button" class="ability-name" data-ability="${escapeHTML(a.id)}">${escapeHTML(a.name)}</button>
+            <span class="gear-kind">${escapeHTML(C.abilityTag(a))}</span></span>
+          <wa-button size="s" appearance="plain" variant="danger" data-ability-action="remove" title="Remove">
+            <wa-icon name="trash" label="Remove"></wa-icon></wa-button>
+        </li>`).join("")}</ul>`
+      : `<p class="gear-empty">None</p>`;
+  }
+  $("abilities-edit").addEventListener("click", (e) => {
+    const id = e.target.closest("[data-ability-row]")?.dataset.abilityRow;
+    if (!id) return;
+    if (e.target.closest("[data-ability-action='remove']")) {
+      draft = C.withoutAbility(draft, id);
+      renderAbilitiesEdit();
+    } else if (e.target.closest("[data-ability]")) openAbility(id);
+  });
+
+  const picker = $("ability-picker");
+  const search = $("ability-search");
+  const choices = $("ability-choices");
+  function renderChoices() {
+    const groups = C.findAbilities(ABILITIES, search.value, draft.abilities);
+    choices.innerHTML = groups.length
+      ? groups.map((g) => `<h4>${escapeHTML(g.heading)}</h4><ul class="ability-choices">${g.items.map((a) => `<li>
+          <button type="button" class="ability-choice" data-ability="${escapeHTML(a.id)}">
+            <span class="ability-choice-name">${escapeHTML(a.name)}</span>
+            ${a.summary ? `<span class="ability-summary">${escapeHTML(a.summary)}</span>` : ""}
+          </button></li>`).join("")}</ul>`).join("")
+      : `<p class="gear-empty">No matches</p>`;
+  }
+  form.addEventListener("click", (e) => {
+    if (!e.target.closest("[data-add-ability]")) return;
+    search.value = "";
+    renderChoices();
+    picker.open = true;
+  });
+  search.addEventListener("input", renderChoices);
+  search.addEventListener("wa-clear", renderChoices);
+  choices.addEventListener("click", (e) => {
+    const id = e.target.closest("[data-ability]")?.dataset.ability;
+    if (!id) return;
+    draft = C.withAbility(draft, id);
+    renderAbilitiesEdit();
+    picker.open = false;
+  });
 
   // ---- editing Luck and Influence: the same −/+ buttons as Running, each value kept in its hidden field ----
   // In this order, so lowering Max Luck pulls Current Luck down with it.
@@ -589,6 +644,7 @@
     edited.wounds = draft.wounds;
     edited.skills = draft.skills;
     edited.gear = draft.gear;
+    edited.abilities = draft.abilities;
     if (!commit(edited)) return;
     store.set("openCharacter", current.id);
     state = "display";

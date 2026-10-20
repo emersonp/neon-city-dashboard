@@ -339,6 +339,16 @@
               </div>
               <div id="gear-edit"></div>
             </section>
+            <section class="gear">
+              <div class="gear-head">
+                <h3>Perks &amp; Augmentations</h3>
+                <wa-button size="s" appearance="outlined" data-add-ability>
+                  <wa-icon slot="start" name="plus"></wa-icon>
+                  Add ability
+                </wa-button>
+              </div>
+              <div id="abilities-edit"></div>
+            </section>
             <wa-button type="submit" variant="brand">
               <wa-icon slot="start" name="floppy-disk"></wa-icon>
               Save
@@ -373,6 +383,12 @@
       <wa-icon slot="start" name="floppy-disk"></wa-icon>
       Save
     </wa-button>
+  </wa-dialog>
+
+  <!-- Picking an ability to add (Edit). Any character can pick any ability. -->
+  <wa-dialog id="ability-picker" label="Add an ability" light-dismiss>
+    <wa-input id="ability-search" type="search" label="Search" autocomplete="off" with-clear autofocus></wa-input>
+    <div id="ability-choices"></div>
   </wa-dialog>
 
   <!-- An ability's full text (Display and Run). -->
