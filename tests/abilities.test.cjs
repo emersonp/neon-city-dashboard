@@ -4,18 +4,33 @@ const assert = require("node:assert/strict");
 require("../dice.js");
 require("../characters.js");
 require("../abilities.js");
+require("../shared.js");
+require("../format.js");
 
 const C = globalThis.NCD_CHARACTERS, CATALOG = globalThis.NCD_ABILITIES;
 const perk = (id, extra) => ({ id, type: "perk", name: id, origin: null, archetype: "Bruiser", summary: "s", ...extra });
 
-test("catalog: seed is the 30 Cybernetic and 4 Gene-Spliced augmentations", () => {
-  assert.equal(CATALOG.length, 34);
-  const cyber = CATALOG.filter((a) => a.origin === "Cybernetic");
-  assert.equal(cyber.length, 30);
-  for (const arch of C.ARCHETYPES) assert.equal(cyber.filter((a) => a.archetype === arch).length, 3, arch);
-  assert.deepEqual(CATALOG.filter((a) => a.origin === "Gene-Spliced").map((a) => a.name).sort(),
-    ["G-Force Adaptation", "Hypertense Tendons", "Melanophore Control", "Musculoskeletal Chemical Refinement"]);
+test("catalog: the rulebook's archetype perks and origin augmentations", () => {
+  assert.equal(CATALOG.length, 176);
+  const perks = CATALOG.filter((a) => a.type === "perk");
+  for (const arch of C.ARCHETYPES) assert.equal(perks.filter((a) => a.archetype === arch).length, 5, arch);
+  assert.deepEqual(perks.filter((a) => a.origin).map((a) => a.name).sort(), ["Device Driver", "Installation Wizard"]);
+  // Every origin has 3 augmentations per archetype, plus a few that belong to no archetype.
+  for (const origin of C.ORIGINS) {
+    const augs = CATALOG.filter((a) => a.type === "augmentation" && a.origin === origin);
+    for (const arch of C.ARCHETYPES) assert.equal(augs.filter((a) => a.archetype === arch).length, 3, `${origin} ${arch}`);
+  }
   assert.equal(CATALOG.find((a) => a.id === "fastreact").summary, "Always succeed on initiative");
+  assert.equal(CATALOG.find((a) => a.id === "g-force-adaptation").archetype, "Operator");
+});
+
+test("catalog: descriptions use only known icon tokens and no leftover icon gaps", () => {
+  const { ICON_TOKENS } = globalThis.NCD_FORMAT;
+  for (const a of CATALOG) {
+    const d = a.description ?? "";
+    assert.doesNotMatch(d, /\(\s*\)/, `${a.id}: empty ( ) where an icon was`);
+    for (const [, name] of d.matchAll(/\[(\w+)\]/g)) assert.ok(name in ICON_TOKENS, `${a.id}: unknown icon [${name}]`);
+  }
 });
 
 test("catalog: every entry is valid", () => {
