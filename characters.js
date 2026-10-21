@@ -151,7 +151,10 @@
   // ---- conditions: on a character or a gear item (a "holder"); the name and intrinsic never change once added ----
   // Severity is 1-4; 1 isn't shown. Suggestions are offered when adding one.
   const MAX_SEVERITY = 4;
-  const CONDITION_SUGGESTIONS = { character: ["Exhausted"], gear: ["Damaged", "Hard to Work On", "Not Quite Right", "Bulky"] };
+  const CONDITION_SUGGESTIONS = {
+    character: ["Exhausted", "Memory Loss", "Debilitated", "Overloaded", "Poisoned", "Sickened", "Heavily Encumbered"],
+    gear: ["Damaged", "Hard to Work On", "Not Quite Right", "Bulky", "Overclocked", "Overloaded"],
+  };
   const clampSeverity = (v) => clampInt(v, { min: 1, max: MAX_SEVERITY, fallback: 1 });
   const conditionKey = (name) => String(name ?? "").trim().toLowerCase();
   const conditions = (holder) => (Array.isArray(holder?.conditions) ? holder.conditions : [])
