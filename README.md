@@ -183,7 +183,16 @@ in Edit mid-job still counts. After that, the button says **Run**.
   improvement (an untrained skill to 55%, +10 maximum luck, or 1 XP) and whether the job succeeded. A success earns the
   XP entered and a reward (a distinctive feature, which does nothing yet; a new starting prop; or the Cybernetic keyword on
   a piece of starting gear that can take it). A failure earns 1 XP and the next job starts with 1 less Influence.
-  **Confirm** saves it all, resets to starting values and gear, and ends the job.
+  **Confirm** saves it all, resets to starting values and gear, ends the job, and goes on to Spend XP.
+- **Spend XP** lists every benefit from the XP table with its cost (worked out as earlier purchases leave the
+  character: a second perk costs more) and a **Buy** button, and what's been bought so far, each removable. Until
+  it's confirmed, the character is saved as spending XP (a badge on the Roster) and only opens to this page, and the gear
+  picked up on the job is kept so it can be bought as starting gear. **Done**, or spending the last XP, asks to confirm
+  the purchases and shows the XP left; Confirm moves the XP spent from Available to Spent and goes to Detail.
+
+The XP table is one table for every origin (the book has one per origin): `advancement.js` holds it, with the costs
+that differ by origin in `ORIGIN_COST`, and the rules for each purchase. The Databank's **XP** tab shows it.
+`tests/advancement.test.cjs` checks it.
 - **Abandon Job** (Roster, for a character on a job) asks first, then ends the job without finishing it: starting
   values and gear, with no XP or improvement.
 

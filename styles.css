@@ -508,6 +508,29 @@ wa-tab[hidden] { display: none; }
 .finish-note { margin: 0; color: var(--wa-color-text-quiet); }
 .session-bumped { margin: 0; padding-inline-start: var(--wa-space-l); }
 
+/* ---- Spend XP: XP left at the top, what's bought, then a row per benefit: text, picks, cost, Buy ---- */
+.character-spend { display: flex; flex-direction: column; gap: var(--wa-space-l); }
+.character-spend[hidden] { display: none; }
+.spend-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--wa-space-s); }
+.spend-head h2, .character-spend h3 { margin: 0 0 var(--wa-space-xs); }
+.spend-xp { margin: 0; font-family: var(--font-mono); font-size: var(--wa-font-size-l); }
+#spend-remaining { color: var(--wa-color-brand); font-weight: 700; }
+.spend-list, .spend-bought { list-style: none; margin: 0; padding: 0; }
+.spend-list li, .spend-bought li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--wa-space-xs) var(--wa-space-s);
+  min-height: 2.4rem;
+  padding: var(--wa-space-2xs) 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--wa-color-surface-border) 60%, transparent);
+}
+.spend-text { flex: 1 1 18rem; min-width: 0; }
+.spend-picks { display: flex; flex-wrap: wrap; align-items: center; gap: var(--wa-space-2xs); }
+.spend-picks wa-select { width: 14rem; max-width: 100%; }
+.spend-cost { font-family: var(--font-mono); min-width: 3.5rem; text-align: right; color: var(--wa-color-text-quiet); }
+.spend-left { margin: var(--wa-space-m) 0 0; }
+
 /* ---- create: step header, one step's controls, then Discard | Back, Next / Finish ---- */
 .create { display: flex; flex-direction: column; gap: var(--wa-space-l); }
 .create[hidden] { display: none; }

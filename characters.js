@@ -506,7 +506,7 @@
   }
 
   root.NCD_CHARACTERS = {
-    ARCHETYPES, ORIGINS, CULTURES, SKILLS, UNTRAINED, MIN_VALUE, MAX_VALUE, MAX_INTRINSIC,
+    ARCHETYPES, ORIGINS, CULTURES, SKILLS, UNTRAINED, MIN_VALUE, MAX_VALUE, STEP, MAX_INTRINSIC,
     randomHandle, randomName, newCharacter, label, load, save, remove, toExport,
     STEPS, BUMP_COUNT, newCreation, fullCreation, ruleFor, isCreating, playingAs, applyCreation, withCreation, bumpable, placeable, stepComplete, firstIncomplete, finishCreation,
     skill, shownValue, isNotable, clampValue, increment, withSkill,

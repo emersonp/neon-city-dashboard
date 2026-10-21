@@ -1,6 +1,7 @@
 // Roster tab (the saved characters) and the Character tab, which appears once a character is opened.
-// A character in the Character tab is in one of five states: display, editing, running, finishing (Finish Job's page),
-// or creating. Run starts a job (C.startJob) if they aren't on one.
+// A character in the Character tab is in one of six states: display, editing, running, finishing (Finish Job's page),
+// spending (Spend XP, after Finish Job), or creating. Run starts a job (C.startJob) if they aren't on one.
+// A character saved while spending XP (A.isSpending) is only shown in Spend XP until it's confirmed, like one in creation.
 // Skill changes made while editing live in `draft` until Save. A character still being created (C.isCreating) is only
 // ever shown in Create (create.js), never Edit or Run.
 (function () {
@@ -26,6 +27,8 @@
   const fields = $("character-fields");
   const create = $("character-create");
   const finish = $("character-finish");
+  const spend = $("character-spend");
+  const A = window.NCD_ADVANCEMENT;
   const currentLuck = $("current-luck");
   const currentInfluence = $("current-influence");
   const woundsFields = $("wounds-fields");
@@ -41,7 +44,7 @@
   const field = (name) => form.querySelector(`[name="${name}"]`);
 
   let current = null;     // the character in the Character tab
-  let state = "display";  // "display" | "editing" | "running" | "finishing" | "creating"
+  let state = "display";  // "display" | "editing" | "running" | "finishing" | "spending" | "creating"
   let draft = null;       // while editing: a copy holding skill, wound, gear, and ability changes until Save
 
   // A character still in creation stays out of SESSION, so Dice-tab rolls don't post as it; Finish sets it.
@@ -103,7 +106,8 @@
     const list = C.load(storage);
     rows.innerHTML = list.length
       ? list.map((c) => `<tr>
-          <td><a href="#" data-open="${escapeHTML(c.id)}">${escapeHTML(C.label(c))}</a></td>
+          <td><a href="#" data-open="${escapeHTML(c.id)}">${escapeHTML(C.label(c))}</a>${A.isSpending(c)
+            ? ` <wa-badge variant="brand" appearance="outlined">Spending XP</wa-badge>` : ""}</td>
           <td>${C.isCreating(c) ? `<wa-badge variant="warning" appearance="outlined">In creation</wa-badge>` : escapeHTML(c.archetype)}</td>
           <td>${C.isCreating(c) ? "" : escapeHTML(c.origin)}</td>
           <td class="actions">${!C.inJob(c) ? "" : `
@@ -223,8 +227,9 @@
 
   function show(character, mode, { activate = true } = {}) {
     setCurrent(character);
-    // In creation: Create only. Finished: never Create.
-    state = C.isCreating(character) ? "creating" : mode === "creating" ? "display" : mode;
+    // In creation: Create only. Finished: never Create. Spending XP: Spend XP only, and only then.
+    state = C.isCreating(character) ? "creating" : A.isSpending(character) ? "spending"
+      : mode === "creating" || mode === "spending" ? "display" : mode;
     tab.hidden = false;
     setLabel(current.handle);
     render();
@@ -245,8 +250,9 @@
     form.hidden = state !== "editing";
     running.hidden = state !== "running";
     finish.hidden = state !== "finishing";
+    spend.hidden = state !== "spending";
     create.hidden = state !== "creating";
-    fields.hidden = state === "editing" || state === "creating" || state === "finishing";
+    fields.hidden = ["editing", "creating", "finishing", "spending"].includes(state);
     fields.dataset.state = state;
     if (state === "creating") {
       window.NCD_CREATE.render(create, current, createHooks);
@@ -269,6 +275,8 @@
       renderAbilitiesEdit();
     } else if (state === "finishing") {
       renderFinish();
+    } else if (state === "spending") {
+      renderSpend();
     } else {
       renderFields();
       if (state === "display") {
@@ -365,8 +373,9 @@
     key: "currentInfluence", value: () => C.influence(current).current, clamp: (n) => C.clampInfluence(n), changed: APP.postInfluence,
   });
 
-  // Edit and Run aren't for a character still being created.
-  const enter = (mode) => () => { if (C.isCreating(current)) return; state = mode; render(); };
+  // Edit and Run aren't for a character still being created, or spending XP.
+  const settled = () => !C.isCreating(current) && !A.isSpending(current);
+  const enter = (mode) => () => { if (!settled()) return; state = mode; render(); };
 
   // ---- appearance: shown in full on the sheet, and in a dialog while running ----
   const APPEARANCE = [["pronouns", "Pronouns"], ["physical", "Physical Appearance"], ["network", "Network Default"]];
@@ -391,7 +400,7 @@
   const toDisplay = () => { state = "display"; render(); };
   // Run, from Display (Start Job until they're on a job) or Finish Job's Back.
   function run() {
-    if (C.isCreating(current)) return;
+    if (!settled()) return;
     if (!C.inJob(current)) {
       if (!commit(C.startJob(current))) return;
       renderRoster();
@@ -401,11 +410,11 @@
   }
   const SHEET_ACTIONS = { edit: enter("editing"), run, stop: toDisplay, "discard-edit": toDisplay,
     appearance: openAppearance, close: closeCharacter, "end-session": endSession, "finish-job": enter("finishing"),
-    "confirm-finish": confirmFinish };
+    "confirm-finish": confirmFinish, "spend-done": openSpendConfirm };
   $("character-card").addEventListener("click", (e) => SHEET_ACTIONS[e.target.closest("[data-sheet-action]")?.dataset.sheetAction]?.());
   function copyActions() {
     const topActions = $("character-actions-top");
-    const bar = [display, running, finish, form].find((section) => !section.hidden)?.querySelector(":scope > .character-actions");
+    const bar = [display, running, finish, spend, form].find((section) => !section.hidden)?.querySelector(":scope > .character-actions");
     topActions.hidden = !bar;
     topActions.replaceChildren(...(bar ? [...bar.querySelectorAll(":scope > :not([data-bottom-only])")].map((button) => button.cloneNode(true)) : []));
   }
@@ -521,7 +530,9 @@
   function openGearDialog(item = null) {
     gearChanging = item;
     working = item ? { ...item } : C.newGear({ description: "" });
-    gearDialog.label = item ? "Change gear" : "New gear";
+    // Spend XP's common gear: a new starting item with no keywords.
+    gearDialog.label = item ? "Change gear" : state === "spending" ? "Common gear (no keywords)" : "New gear";
+    gearKeywords.hidden = state === "spending";
     gearKind.value = working.kind;
     autoName = !item;
     gearDescription.value = working.description;
@@ -592,6 +603,10 @@
     } else if (state === "running") {
       if (!commit(C.withGear(current, C.newGear({ ...working, description, quantity, starter: gearChanging?.starter ?? false })))) return;
       renderGear($("gear-run"), current, { running: true });
+    } else if (state === "spending") {
+      gearDialog.open = false;
+      buy("common-gear", { ...working, description, quantity, keywords: [] });
+      return;
     }
     gearDialog.open = false;
   }
@@ -1093,11 +1108,150 @@
       APP.toast("Make every choice before confirming.", "warning");
       return;
     }
-    if (!commit(C.finishJob(current, choices).character)) return;
-    state = "display";
+    // Saved as spending XP, keeping the gear acquired on the job until Spend XP is confirmed.
+    if (!commit(A.beginSpending(current, C.finishJob(current, choices).character))) return;
+    spendPurchases = [];
+    state = "spending";
     render();
     renderRoster();
   }
+
+  // ---- Spend XP: purchases (A.BENEFITS) are kept in spendPurchases and applied in order, saved on Confirm ----
+  // Removing one re-applies the rest, dropping any that no longer work (a keyword on gear that's no longer kept, say).
+  let spendPurchases = [];
+  const spendBenefits = $("spend-benefits");
+  const spendResult = () => A.applyPurchases(current, spendPurchases, { catalog: ABILITIES, acquired: A.acquiredGear(current) });
+  // What was picked, by name: [benefit's short name, pick].
+  function purchaseLabel({ benefit, value }, result) {
+    const b = A.BENEFIT[benefit];
+    const gearName = (id) => [...C.gear(result.character), ...A.acquiredGear(current)].find((g) => String(g.id) === String(id))?.description ?? "";
+    switch (b.pick) {
+      case "ability": return [b.short, ABILITIES.find((a) => a.id === value)?.name ?? value];
+      case "skill": return [b.short, skillNameOf(value)];
+      case "gear": return [b.short, gearName(value)];
+      case "keyword": return [b.short, `${value.keyword} on ${gearName(value.gear)}`];
+      case "item": return [b.short, value.description];
+      default: return [b.short, ""];
+    }
+  }
+  const boughtHTML = (result) => result.purchases.length
+    ? `<ul class="spend-bought">${result.purchases.map((p, i) => {
+        const [name, pick] = purchaseLabel(p, result);
+        return `<li><span class="gear-text">${escapeHTML(name)}${pick ? `: <b>${escapeHTML(pick)}</b>` : ""}</span>
+          <span class="spend-cost">${p.cost} XP</span>
+          <wa-button size="s" appearance="plain" variant="danger" data-unbuy="${i}" title="Remove">
+            <wa-icon name="xmark" label="Remove"></wa-icon></wa-button></li>`;
+      }).join("")}</ul>`
+    : `<p class="gear-empty">Nothing yet</p>`;
+  // A select of a benefit's options, grouped by their `group` (abilities: origin and archetype).
+  function pickSelect(name, label, options) {
+    if (!options.length) return `<span class="gear-empty">None available</span>`;
+    let group = null;
+    return `<wa-select size="s" data-pick="${name}" placeholder="${escapeHTML(label)}…" aria-label="${escapeHTML(label)}">${options.map((o) => {
+      const heading = o.group && o.group !== group ? `<small>${escapeHTML((group = o.group))}</small>` : "";
+      return `${heading}<wa-option value="${escapeHTML(o.value)}">${escapeHTML(o.label)}</wa-option>`;
+    }).join("")}</wa-select>`;
+  }
+  const PICK_LABEL = { ability: "Choose", skill: "Skill", gear: "Gear", item: "" };
+  function benefitHTML(b, result) {
+    let picks = "";
+    if (b.pick === "keyword") {
+      picks = pickSelect("gear", "Starting gear", b.options(result, ABILITIES))
+        + `<wa-select size="s" data-pick="keyword" placeholder="Keyword…" aria-label="Keyword" disabled></wa-select>`;
+    } else if (b.options) {
+      picks = pickSelect("value", PICK_LABEL[b.pick], b.options(result, ABILITIES));
+      if (b.pick === "ability") picks += `<wa-button size="s" appearance="plain" data-spend-info title="Read it" disabled>
+          <wa-icon name="circle-info" label="Read it"></wa-icon></wa-button>`;
+    }
+    return `<li data-benefit="${b.id}">
+        <span class="spend-text">${escapeHTML(b.text)}</span>
+        <span class="spend-picks">${picks}</span>
+        <span class="spend-cost"></span>
+        <wa-button size="s" variant="brand" appearance="outlined" data-buy>Buy</wa-button>
+      </li>`;
+  }
+  // The row's pick, as its purchase's value (undefined until picked).
+  function rowValue(row) {
+    const b = A.BENEFIT[row.dataset.benefit];
+    const pick = (name) => row.querySelector(`[data-pick="${name}"]`)?.value || undefined;
+    return b.pick === "keyword" ? { gear: pick("gear"), keyword: pick("keyword") } : pick("value");
+  }
+  // A row's cost (for its pick, once there is one) and whether Buy works. Common gear's Buy opens the gear dialog.
+  function refreshRow(row, result) {
+    const b = A.BENEFIT[row.dataset.benefit], value = rowValue(row);
+    const cost = b.cost(result, value, ABILITIES);
+    row.querySelector(".spend-cost").textContent = `${cost} XP`;
+    const possible = b.pick === "item" || A.canBuy(b, result, value, ABILITIES);
+    row.querySelector("[data-buy]").disabled = !possible || cost > result.remaining;
+    const info = row.querySelector("[data-spend-info]");
+    if (info) info.disabled = !value;
+  }
+  function renderSpend() {
+    const result = spendResult();
+    spendPurchases = result.purchases.map(({ cost, ...p }) => p);
+    $("spend-total").textContent = C.xp(current).available;
+    $("spend-remaining").textContent = result.remaining;
+    $("spend-bought").innerHTML = boughtHTML(result);
+    spendBenefits.innerHTML = A.BENEFITS.map((b) => benefitHTML(b, result)).join("");
+    for (const row of spendBenefits.querySelectorAll("[data-benefit]")) refreshRow(row, result);
+  }
+  function buy(benefit, value) {
+    spendPurchases = [...spendPurchases, { benefit, value }];
+    renderSpend();
+    // all spent: straight to the confirmation
+    if (spendResult().remaining === 0) openSpendConfirm();
+  }
+  spendBenefits.addEventListener("change", (e) => {
+    const row = e.target.closest("[data-benefit]");
+    if (!row) return;
+    const result = spendResult();
+    if (e.target.closest('[data-pick="gear"]') && row.dataset.benefit === "keyword") {
+      const keyword = row.querySelector('[data-pick="keyword"]');
+      const names = A.BENEFIT.keyword.keywords(result, rowValue(row).gear);
+      keyword.innerHTML = names.map((k) => `<wa-option value="${escapeHTML(k)}">${escapeHTML(k)}</wa-option>`).join("");
+      keyword.value = "";
+      keyword.disabled = !names.length;
+    }
+    refreshRow(row, result);
+  });
+  spendBenefits.addEventListener("click", (e) => {
+    const row = e.target.closest("[data-benefit]");
+    if (!row) return;
+    if (e.target.closest("[data-spend-info]")) { const id = rowValue(row); if (id) openAbility(id); return; }
+    if (!e.target.closest("[data-buy]")) return;
+    if (row.dataset.benefit === "common-gear") { openGearDialog(); return; }
+    buy(row.dataset.benefit, rowValue(row));
+  });
+  $("spend-bought").addEventListener("click", (e) => {
+    const i = e.target.closest("[data-unbuy]")?.dataset.unbuy;
+    if (i == null) return;
+    spendPurchases = spendPurchases.filter((_, n) => n !== Number(i));
+    renderSpend();
+  });
+
+  const spendDialog = $("spend-dialog");
+  function openSpendConfirm() {
+    if (state !== "spending") return;
+    const result = spendResult();
+    $("spend-summary").innerHTML = `${result.purchases.length
+      ? `<ul class="spend-bought">${result.purchases.map((p) => {
+          const [name, pick] = purchaseLabel(p, result);
+          return `<li><span class="gear-text">${escapeHTML(name)}${pick ? `: <b>${escapeHTML(pick)}</b>` : ""}</span><span class="spend-cost">${p.cost} XP</span></li>`;
+        }).join("")}</ul>`
+      : `<p class="gear-empty">Nothing bought.</p>`}
+      <p class="spend-left"><b>${result.remaining}</b> XP left unspent${result.acquired.length
+        ? `. Not kept, so lost: ${escapeHTML(result.acquired.map((g) => g.description).join(", "))}` : ""}.</p>`;
+    spendDialog.open = true;
+  }
+  $("spend-confirm").addEventListener("click", () => {
+    if (state !== "spending") return;
+    if (!commit(A.finishSpending(current, spendPurchases, ABILITIES).character)) return;
+    spendDialog.open = false;
+    spendPurchases = [];
+    state = "display";
+    render();
+    renderRoster();
+  });
 
   // `skill` is one of the item's (G.rollOf) skills.
   function openGearRoll(item, skill) {

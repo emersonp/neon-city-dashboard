@@ -204,10 +204,12 @@
           <wa-tab panel="databank-armory">Armory</wa-tab>
           <wa-tab panel="databank-garage">Garage</wa-tab>
           <wa-tab panel="databank-keywords">Keywords</wa-tab>
+          <wa-tab panel="databank-xp">XP</wa-tab>
           <wa-tab-panel name="databank-gear"><div class="cheat-sheet databank" id="databank-gear"></div></wa-tab-panel>
           <wa-tab-panel name="databank-armory"><div class="cheat-sheet databank" id="databank-armory"></div></wa-tab-panel>
           <wa-tab-panel name="databank-garage"><div class="cheat-sheet databank" id="databank-garage"></div></wa-tab-panel>
           <wa-tab-panel name="databank-keywords"><div class="cheat-sheet databank" id="databank-keywords"></div></wa-tab-panel>
+          <wa-tab-panel name="databank-xp"><div class="cheat-sheet databank" id="databank-xp"></div></wa-tab-panel>
         </wa-tab-group>
       </wa-tab-panel>
 
@@ -403,6 +405,29 @@
               <wa-button data-sheet-action="confirm-finish" variant="brand" data-bottom-only>
                 <wa-icon slot="start" name="check"></wa-icon>
                 Confirm
+              </wa-button>
+            </div>
+          </div>
+
+          <!-- Spend XP: after Finish Job. What's been bought so far, then every benefit with its cost and Buy (roster.js) -->
+          <div id="character-spend" class="character-spend" hidden>
+            <div class="spend-head">
+              <h2>Spend XP</h2>
+              <p class="spend-xp"><span id="spend-remaining"></span> <span class="sheet-label">of</span> <span id="spend-total"></span>
+                <span class="sheet-label">XP left</span></p>
+            </div>
+            <section class="finish-part">
+              <h3>Bought</h3>
+              <div id="spend-bought"></div>
+            </section>
+            <section class="spend-benefits">
+              <h3>Benefits</h3>
+              <ul id="spend-benefits" class="spend-list"></ul>
+            </section>
+            <div class="character-actions">
+              <wa-button data-sheet-action="spend-done" variant="brand">
+                <wa-icon slot="start" name="check"></wa-icon>
+                Done
               </wa-button>
             </div>
           </div>
@@ -696,6 +721,16 @@
     </wa-button>
   </wa-dialog>
 
+  <!-- Spend XP: what was bought and the XP left, before it's saved -->
+  <wa-dialog id="spend-dialog" label="Confirm XP spending">
+    <div id="spend-summary"></div>
+    <wa-button slot="footer" variant="neutral" data-dialog="close">Keep shopping</wa-button>
+    <wa-button slot="footer" id="spend-confirm" variant="brand">
+      <wa-icon slot="start" name="check"></wa-icon>
+      Confirm
+    </wa-button>
+  </wa-dialog>
+
   <!-- End Session: the skills that went up -->
   <wa-dialog id="session-dialog" label="Session ended">
     <div id="session-bumped"></div>
@@ -744,6 +779,7 @@
   <script src="databank.js"></script>
   <script src="tables.js"></script>
   <script src="gear.js"></script>
+  <script src="advancement.js"></script>
   <script src="overlay-rules.js"></script>
   <script src="admin.js"></script>
   <script src="admin-overlay.js"></script>

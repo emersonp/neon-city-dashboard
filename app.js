@@ -382,9 +382,9 @@
     const rollButton = (n, die) => `<span class="table-roller"><span class="table-roll" aria-live="polite"></span>
         <wa-button appearance="plain" size="s" data-roll-table="${n}" title="Roll d${die}">
         <wa-icon name="dice" label="Roll d${die}"></wa-icon></wa-button></span>`;
-    // `after` is HTML under the table (the Tables tab's buttons).
-    const section = ({ title, kind = "", intro, entries = [], table: t, roll, after = "" }) => `
-      <section class="sheet-column databank-section${entries.length > 6 ? " wide" : ""}">
+    // `after` is HTML under the table (the Tables tab's buttons). A card is the full width with `wide`, or many entries.
+    const section = ({ title, kind = "", intro, entries = [], table: t, roll, after = "", wide = entries.length > 6 }) => `
+      <section class="sheet-column databank-section${wide ? " wide" : ""}">
         <h2 class="${kind}${roll != null ? " rollable" : ""}">${escapeHTML(title)}${roll != null ? rollButton(roll, DICE.tableDie(t)) : ""}</h2>
         ${intro ? rich(intro) : ""}${t ? table(t) : ""}${after}
         ${entries.length ? `<div class="databank-entries">${entries.map(entry).join("")}</div>` : ""}
@@ -429,6 +429,10 @@
         }),
       }),
     ].join("");
+
+    // One XP table for every origin (advancement.js), with the costs that differ by origin noted.
+    const ADVANCEMENT = window.NCD_ADVANCEMENT;
+    $("databank-xp").innerHTML = section({ title: "Advancement XP expenditures", intro: ADVANCEMENT.TABLE_INTRO, table: ADVANCEMENT.TABLE, wide: true });
 
     // ---- the Tables tab: tables to roll on or look up (tables.js), in the Databank's style ----
     const TABLES = window.NCD_TABLES;
