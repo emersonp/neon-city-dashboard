@@ -381,7 +381,7 @@ wa-tab[hidden], wa-radio[hidden] { display: none; }
 
 /* ---- character ---- */
 .character-card { max-width: 72rem; }
-.character-actions { display: flex; gap: var(--wa-space-s); }
+.character-actions { display: flex; flex-wrap: wrap; gap: var(--wa-space-s); }
 /* the copy of the mode's buttons at the top of the card */
 .character-actions.top { justify-content: flex-end; margin-bottom: var(--wa-space-l); }
 .character-actions.top[hidden] { display: none; }
