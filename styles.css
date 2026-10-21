@@ -537,6 +537,10 @@ button.condition:hover, button.condition:focus-visible { background: color-mix(i
 .ability-text .icon.adv { --ink: var(--ncd-good); }
 .ability-text .icon.chal { --ink: var(--ncd-bad); }
 .ability-text ul { padding-inline-start: 1.5em; }
+/* The ability dialog: title, tag, lead and rules text sit close together */
+#ability-dialog::part(body) { padding-top: 0; }
+#ability-body > p, #ability-body .ability-text > :is(p, ul) { margin-block: 0 var(--wa-space-s); }
+#ability-body .ability-text > :last-child { margin-bottom: 0; }
 
 /* the picker: a search box over a scrolling list of every ability, grouped like the rulebook */
 #ability-choices { max-height: 60vh; overflow: auto; margin-top: var(--wa-space-m); }
