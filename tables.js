@@ -7,6 +7,8 @@
 //                 one here of the same name (any case); X-ray scanners are described but in no tier.
 // liabilities     the liability table: [range, liability]. A character picks (or rolls) one at their first End Session
 //                 or Finish Job.
+// distinctiveTraits the distinctive visual traits table: [range, trait]. Create's physical appearance can take one, and a
+//                 successful job's distinctive feature reward adds one to it.
 (function (root) {
   const randomKeywordsIntro = "When the crew acquires a piece of gear during a session, you can give it a positive and a negative keyword and describe what makes the item different: roll twice on this table (once for each), or just pick two that make sense. Re-roll a keyword that doesn't make sense for the item or the situation.";
   const randomKeywords = [
@@ -71,5 +73,46 @@
     ["96-100", "Your default body has a recurring physical condition as a result of a glitch in the cloning or manufacturing process that created it"],
   ];
 
-  root.NCD_TABLES = { randomKeywordsIntro, randomKeywords, securityTiers, securityTiersOutro, securityDefenses, liabilities };
+  const distinctiveTraits = [
+    ["01-03", "Glowing tattoos created by subdermal LCD injections"],
+    ["04-05", "Longer fingers with an extra joint"],
+    ["06-08", "Metal horns resembling a ram’s or demon’s horns"],
+    ["09-10", "Flexible carbon fiber tail grafted to your lower back"],
+    ["11-13", "Eyes augmented with light-reflecting irises or grafted-on mirrored shades"],
+    ["14-16", "A mohawk made of metal plates or spines"],
+    ["17-19", "Artificially textured skin designed to look like reptile or dragon scales"],
+    ["20-22", "Fiber-optic hair implants that glow in colors you control and change"],
+    ["23-25", "Blacklight-reactive permanent makeup facial tattoos"],
+    ["26-28", "One-way LCD film over one eye displaying simple images"],
+    ["29-31", "A metal mechanical prosthetic arm or leg with no artificial flesh covering it"],
+    ["32-33", "Reverse-jointed legs"],
+    ["34-36", "Pointed or unusually-shaped ears"],
+    ["37-39", "Woven nylon cord hair replacements"],
+    ["40-42", "Solid steel teeth"],
+    ["43-45", "A large, disfiguring scar from a life-altering injury"],
+    ["46-48", "Eyes that have glowing neon rings around the pupils or irises"],
+    ["49-51", "Solid subdermal implants that create ridges on your nose, arms, etc."],
+    ["52-54", "Visible animal fur on often-exposed patches of skin"],
+    ["55-56", "A third eye implanted at the center of your forehead"],
+    ["57-58", "Retractable metal spines on your head, face, shoulders, or arms"],
+    ["59-61", "Irises shaped like an icon or symbol"],
+    ["62-64", "Visible metallic cyberware contact points, antennae, wires, traces, or plugs on your skin"],
+    ["65-67", "Metal plating across the sides and back of your head to protect your brain"],
+    ["68-69", "Animal tusks made of bone or metal"],
+    ["70-71", "A chrome-plated arm or leg"],
+    ["72-74", "Ears resembling a cat’s or fox’s, positioned higher up on your head"],
+    ["75-77", "Artificial skin pigmentation in an unusual color, metallic tone, or unique pattern"],
+    ["78-80", "Eyes or a limb that are crudely mechanical instead of human-like"],
+    ["81-83", "Eyes resembling those of a cat, crow, raccoon, or other recognizable animal"],
+    ["84-85", "Brightly-colored feathers instead of hair"],
+    ["86-87", "Teeth coated with unusually-colored or multicolored enamel"],
+    ["88-89", "Neon LED implants that light up the inside of your mouth when you talk"],
+    ["90-91", "Unusually-colored sclera or eyes without visible pupils or irises"],
+    ["92-93", "Prosthetic shins or forearms displaying arcing electricity inside glass tubes"],
+    ["94-96", "Animated tattoos created by pigment-releasing nanomachines"],
+    ["97-98", "Retractable vampire fangs"],
+    ["99-100", "A patch of exposed metal or circuitry on an otherwise flesh-covered surface"],
+  ];
+
+  root.NCD_TABLES = { randomKeywordsIntro, randomKeywords, securityTiers, securityTiersOutro, securityDefenses, liabilities, distinctiveTraits };
 })(globalThis);

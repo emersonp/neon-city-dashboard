@@ -378,13 +378,27 @@
       </div>
       <div class="appearance appearance-edit">${APPEARANCE.map(([key, label]) => key === "pronouns"
         ? `<wa-input data-detail="${key}" label="${label}" autocomplete="off"></wa-input>`
-        : `<wa-textarea data-detail="${key}" label="${label}" rows="3" resize="auto"></wa-textarea>`).join("")}</div>`;
+        : `<wa-textarea data-detail="${key}" label="${label}" rows="3" resize="auto" ${key === "physical" ? "required" : ""}></wa-textarea>`).join("")}</div>
+      <section class="create-traits">
+        <h3>Distinctive visual trait</h3>
+        <p class="create-traits-note">Adds one to the physical appearance; another pick swaps it.</p>
+        <div class="create-trait-picker"></div>
+      </section>`;
     const look = C.appearance(character);
     for (const el of body.querySelectorAll("[data-detail]")) {
       const key = el.dataset.detail;
       el.value = key === "handle" || key === "name" ? character[key] ?? "" : look[key];
     }
     showPortrait(body, C.portraitFile(character, portraits()));
+
+    // A picked (or rolled) trait goes at the end of the physical appearance; the next pick replaces it while it's still there.
+    let trait = "";
+    root.NCD_APP.tablePicker(body.querySelector(".create-trait-picker"), { head: ["d100", "Distinctive visual trait"], rows: root.NCD_TABLES.distinctiveTraits }, ([, picked]) => {
+      const physical = body.querySelector('[data-detail="physical"]');
+      physical.value = C.withTrait(physical.value, picked, trait);
+      trait = picked;
+      saveDetail("physical", physical.value);
+    });
 
     const saveDetail = (key, value) => {
       const c = ctx.current();

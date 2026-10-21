@@ -1058,13 +1058,14 @@
   const bumpedHTML = (ids) => ids.length
     ? `<ul class="session-bumped">${ids.map((id) => `<li>${escapeHTML(skillNameOf(id))}</li>`).join("")}</ul>`
     : `<p class="gear-empty">No skills were used.</p>`;
-  // A liability for a character without one (End Session and Finish Job): the table to pick from or roll on, in el.
-  // Returns a function giving the pick so far ("" until there is one).
-  function liabilityPicker(el) {
+  // A table to pick from or roll on (tables.js), in el. Returns a function giving the pick so far ("" until there is one).
+  function rowPicker(el, title, rows) {
     let picked = "";
-    APP.tablePicker(el, { head: ["d100", "Liability"], rows: window.NCD_TABLES.liabilities }, (row) => { picked = row[1]; });
+    APP.tablePicker(el, { head: ["d100", title], rows }, (row) => { picked = row[1]; });
     return () => picked;
   }
+  // A liability for a character without one (End Session and Finish Job).
+  const liabilityPicker = (el) => rowPicker(el, "Liability", window.NCD_TABLES.liabilities);
 
   // End Session: each used skill goes up by 1 and Used is cleared; a dialog lists them, over Display.
   // A character without a liability picks one there too: the dialog stays open until they do, and OK saves it.
@@ -1101,13 +1102,16 @@
   const finishReward = $("finish-reward");
   const finishProp = $("finish-prop");
   const finishGear = $("finish-gear");
+  const finishFeatureEl = $("finish-feature");
   const radio = (group, value) => group.querySelector(`wa-radio[value="${value}"]`);
   let finishLiability = () => "";
+  let finishFeature = () => ""; // the distinctive feature reward's trait, added to the physical appearance
   function renderFinish() {
     $("finish-bumped").innerHTML = bumpedHTML(C.endSession(current).bumped);
     const needs = C.needsLiability(current);
     $("finish-liability-part").hidden = !needs;
     finishLiability = needs ? liabilityPicker($("finish-liability")) : () => "";
+    finishFeature = rowPicker(finishFeatureEl, "Distinctive visual trait", window.NCD_TABLES.distinctiveTraits);
     const untrained = C.untrainedSkills(current);
     finishSkill.innerHTML = untrained.map((id) => `<wa-option value="${id}">${escapeHTML(skillNameOf(id))}</wa-option>`).join("");
     const targets = C.cyberneticTargets(current);
@@ -1127,6 +1131,7 @@
     finishXp.disabled = success === "no";
     $("finish-failed-note").hidden = success !== "no";
     $("finish-reward-part").hidden = success !== "yes";
+    finishFeatureEl.hidden = finishReward.value !== "feature";
     finishProp.hidden = finishReward.value !== "prop";
     finishGear.hidden = finishReward.value !== "cybernetic";
   }
@@ -1141,14 +1146,14 @@
     if (v !== finishXp.value) finishXp.value = v;
   });
   const FINISH_CONTROLS = { liability: $("finish-liability"), improvement: finishImprovement, skill: finishSkill, success: finishSuccess, reward: finishReward,
-    prop: finishProp, gear: finishGear };
+    feature: finishFeatureEl, prop: finishProp, gear: finishGear };
   function confirmFinish() {
     if (state !== "finishing") return;
     const success = finishSuccess.value;
     const choices = {
       liability: finishLiability(), improvement: finishImprovement.value, skill: finishSkill.value,
       successful: success === "yes" ? true : success === "no" ? false : null,
-      xp: finishXp.value, reward: finishReward.value, prop: text(finishProp.value), gearId: finishGear.value,
+      xp: finishXp.value, reward: finishReward.value, feature: finishFeature(), prop: text(finishProp.value), gearId: finishGear.value,
     };
     const missing = C.finishMissing(current, choices);
     if (missing) {

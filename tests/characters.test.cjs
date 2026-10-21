@@ -340,6 +340,17 @@ test("appearance fields default to empty text", () => {
   assert.equal(C.appearance({ appearance: { pronouns: "they/them" } }).pronouns, "they/them");
 });
 
+test("withTrait adds a trait to the physical appearance as a sentence, and swaps the last one while it's at the end", () => {
+  assert.equal(C.withTrait("", "Solid steel teeth"), "Solid steel teeth.");
+  assert.equal(C.withTrait("Tall and wiry. ", "Solid steel teeth"), "Tall and wiry. Solid steel teeth.");
+  assert.equal(C.withTrait("Tall", "Ridges on your nose, arms, etc."), "Tall Ridges on your nose, arms, etc.");
+  assert.equal(C.withTrait("Tall. Solid steel teeth.", "Reverse-jointed legs", "Solid steel teeth"), "Tall. Reverse-jointed legs.");
+  assert.equal(C.withTrait("Solid steel teeth.", "Reverse-jointed legs", "Solid steel teeth"), "Reverse-jointed legs.");
+  // edited since: the old trait isn't at the end any more, so it stays
+  assert.equal(C.withTrait("Tall. Solid steel teeth. Grins a lot.", "Reverse-jointed legs", "Solid steel teeth"),
+    "Tall. Solid steel teeth. Grins a lot. Reverse-jointed legs.");
+});
+
 test("initiatives are rolled like skills, but never marked used", () => {
   const c = C.withSkill({}, "initiative-in-the-world", { value: 60 });
   assert.equal(C.skill(c, "initiative-in-the-world").value, 60);
@@ -348,7 +359,7 @@ test("initiatives are rolled like skills, but never marked used", () => {
 
 // ---- Create mode ----
 const R = globalThis.NCD_RULES, CAT = globalThis.NCD_ABILITIES;
-const make = (changes = {}) => ({ ...C.newCharacter(), handle: "Zed", creation: { ...C.newCreation(), ...changes } });
+const make = (changes = {}) => ({ ...C.newCharacter(), handle: "Zed", appearance: { physical: "Tall" }, creation: { ...C.newCreation(), ...changes } });
 const applied = (changes) => C.applyCreation(make(changes), R, CAT);
 const sk = (c, id) => C.skill(c, id);
 const clone = (x) => JSON.parse(JSON.stringify(x));
@@ -509,6 +520,7 @@ test("stepComplete", () => {
   // details
   assert.equal(ok({}, "details"), true);
   assert.equal(C.stepComplete({ ...make(done), handle: "  " }, "details", R, CAT), false);
+  assert.equal(C.stepComplete({ ...make(done), appearance: { physical: " " } }, "details", R, CAT), false); // physical appearance required
   // review
   assert.equal(ok({}, "review"), true);
   assert.equal(ok({ perk: null }, "review"), false);
@@ -754,6 +766,7 @@ test("jobs: Finish Job applies the improvement and reward, and leaves the job", 
   assert.equal(C.finishMissing(run, { improvement: "skill", skill: "sneak-around" }), "skill");
   assert.equal(C.finishMissing(run, { improvement: "luck" }), "success");
   assert.equal(C.finishMissing(run, { improvement: "luck", successful: true }), "reward");
+  assert.equal(C.finishMissing(run, { improvement: "luck", successful: true, reward: "feature" }), "feature");
   assert.equal(C.finishMissing(run, { improvement: "luck", successful: true, reward: "prop", prop: " " }), "prop");
   assert.equal(C.finishMissing(run, { improvement: "luck", successful: true, reward: "cybernetic", gearId: "nope" }), "gear");
   assert.equal(C.finishMissing(run, { improvement: "luck", successful: false }), null);
@@ -774,6 +787,13 @@ test("jobs: Finish Job applies the improvement and reward, and leaves the job", 
   assert.equal(C.luck(f).max, 110);
   assert.equal(f.currentLuck, 110);
   assert.deepEqual(C.gear(f)[0].keywords, ["Cybernetic"]);
+
+  // a distinctive feature: the trait goes at the end of the physical appearance, as a sentence
+  ({ character: f } = C.finishJob({ ...run, appearance: { physical: "Tall." } }, { improvement: "luck", successful: true, xp: 0, reward: "feature", feature: "Solid steel teeth" }));
+  assert.equal(C.appearance(f).physical, "Tall. Solid steel teeth.");
+  // and not on a failed job
+  ({ character: f } = C.finishJob({ ...run, appearance: { physical: "Tall." } }, { improvement: "luck", successful: false, reward: "feature", feature: "Solid steel teeth" }));
+  assert.equal(C.appearance(f).physical, "Tall.");
 
   // failed: 1 XP whatever's entered, and the next job starts with 1 less Influence
   ({ character: f } = C.finishJob(run, { improvement: "xp", successful: false, xp: 9 }));

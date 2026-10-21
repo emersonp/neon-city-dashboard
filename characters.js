@@ -98,6 +98,19 @@
     const a = character?.appearance ?? {};
     return { pronouns: String(a.pronouns ?? ""), physical: String(a.physical ?? ""), network: String(a.network ?? "") };
   };
+  // A distinctive trait (tables.js) as it's added to the physical appearance: a sentence, after a space unless it's the first.
+  const asSentence = (trait) => { const t = String(trait ?? "").trim(); return !t || /[.!?]$/.test(t) ? t : `${t}.`; };
+  // The physical appearance text with a trait added at the end. With `replacing` (the trait added last time), that trait
+  // is taken off the end first, so picking again swaps it; if it's no longer at the end, the new one is just added.
+  function withTrait(physical, trait, replacing = "") {
+    let text = String(physical ?? "").trimEnd();
+    const old = asSentence(replacing);
+    if (old && text.endsWith(old)) text = text.slice(0, -old.length).trimEnd();
+    const add = asSentence(trait);
+    return !add ? text : text ? `${text} ${add}` : add;
+  }
+  const withFeature = (character, trait) =>
+    ({ ...character, appearance: { ...appearance(character), physical: withTrait(appearance(character).physical, trait) } });
 
   // ---- liability: free text, picked (or rolled) from tables.js's table at the first End Session or Finish Job ----
   const liability = (character) => String(character?.liability ?? "").trim();
@@ -248,8 +261,8 @@
   }
 
   // Finish Job's choices. Improvement: an untrained skill to 55%, +10 maximum luck, or 1 XP.
-  // A successful job earns the XP entered and a reward: a distinctive feature (nothing yet), a new starting prop, or
-  // the Cybernetic keyword on a piece of starting gear. A failed one earns 1 XP, and the next job starts with 1 less Influence.
+  // A successful job earns the XP entered and a reward: a distinctive feature (a trait added to the physical appearance),
+  // a new starting prop, or the Cybernetic keyword on a piece of starting gear. A failed one earns 1 XP, and the next job starts with 1 less Influence.
   const IMPROVEMENTS = ["skill", "luck", "xp"];
   const REWARDS = ["feature", "prop", "cybernetic"];
   const JOB_LUCK = 10;
@@ -258,15 +271,16 @@
   const untrainedSkills = (character) => SKILLS.filter((s) => !isInitiative(s.id) && skill(character, s.id).value == null).map((s) => s.id);
   // Starting gear that could take the Cybernetic keyword (gear.js is loaded after this file, so looked up when needed).
   const cyberneticTargets = (character) => starterGear(character).filter((g) => root.NCD_GEAR.canAdd(g, CYBERNETIC));
-  // What's missing before Finish Job can be confirmed ("liability", "improvement", "skill", "success", "reward", "prop",
-  // "gear"), or null. A liability is only asked for when the character has none.
-  function finishMissing(character, { liability: picked, improvement, skill: id, successful, reward, prop, gearId } = {}) {
+  // What's missing before Finish Job can be confirmed ("liability", "improvement", "skill", "success", "reward", "feature",
+  // "prop", "gear"), or null. A liability is only asked for when the character has none.
+  function finishMissing(character, { liability: picked, improvement, skill: id, successful, reward, feature, prop, gearId } = {}) {
     if (needsLiability(character) && !String(picked ?? "").trim()) return "liability";
     if (!IMPROVEMENTS.includes(improvement)) return "improvement";
     if (improvement === "skill" && !untrainedSkills(character).includes(id)) return "skill";
     if (typeof successful !== "boolean") return "success";
     if (!successful) return null;
     if (!REWARDS.includes(reward)) return "reward";
+    if (reward === "feature" && !String(feature ?? "").trim()) return "feature";
     if (reward === "prop" && !String(prop ?? "").trim()) return "prop";
     if (reward === "cybernetic" && !cyberneticTargets(character).some((g) => String(g.id) === String(gearId))) return "gear";
     return null;
@@ -274,13 +288,14 @@
   // Ends the session, applies the choices, and leaves the job with only the starting gear. `bumped` as endSession.
   function finishJob(character, choices) {
     if (finishMissing(character, choices)) return null;
-    const { liability: picked, improvement, skill: id, successful, xp: earned, reward, prop, gearId } = choices;
+    const { liability: picked, improvement, skill: id, successful, xp: earned, reward, feature, prop, gearId } = choices;
     let { character: next, bumped } = endSession(character);
     if (needsLiability(next)) next = withLiability(next, picked);
     if (improvement === "skill") next = withSkill(next, id, { value: MIN_VALUE });
     if (improvement === "luck") next.maxLuck = clampMaxLuck(next.maxLuck) + JOB_LUCK;
     const gained = (improvement === "xp" ? 1 : 0) + (successful ? clampXp(earned) : 1);
     next.xpAvailable = xp(next).available + gained;
+    if (successful && reward === "feature") next = withFeature(next, feature);
     let starters = starterGear(next);
     if (successful && reward === "prop") starters = [...starters, newProp(prop, true)];
     if (successful && reward === "cybernetic") starters = starters.map((g) => (String(g.id) === String(gearId)
@@ -452,7 +467,7 @@
 
   const isDistinctSet = (list, size, allowed) =>
     Array.isArray(list) && list.length === size && new Set(list).size === size && list.every((id) => allowed.includes(id));
-  // Takes the whole character because the details step needs its handle.
+  // Takes the whole character because the details step needs its handle and physical appearance.
   function stepComplete(character, step, rules, catalog) {
     const cr = fullCreation(character.creation), arch = ruleFor(rules.archetypes, cr.archetype);
     switch (step) {
@@ -476,7 +491,7 @@
         return isDistinctSet(cr.optionBumps, bumps?.count ?? 0, SKILLS.filter((s) => s.type === bumps?.category).map((s) => s.id))
           && root.NCD_GEAR.gearComplete(cr, rules, "origin");
       }
-      case "details": return String(character.handle ?? "").trim() !== "";
+      case "details": return String(character.handle ?? "").trim() !== "" && appearance(character).physical.trim() !== "";
       case "review": return STEPS.slice(0, -1).every((s) => stepComplete(character, s, rules, catalog));
       default: return false;
     }
@@ -525,7 +540,7 @@
     inJob, starterGear, resetToStarting, startJob, abandonJob, endSession,
     IMPROVEMENTS, REWARDS, JOB_LUCK, untrainedSkills, cyberneticTargets, finishMissing, finishJob,
     isInitiative, canBeUsed, isUsed, withUsed,
-    KNOWLEDGE, knows, xp, clampXp, appearance, liability, needsLiability, withLiability,
+    KNOWLEDGE, knows, xp, clampXp, appearance, withTrait, withFeature, liability, needsLiability, withLiability,
     gear, newGear, newProp, withGear, withoutGear,
     MAX_SEVERITY, CONDITION_SUGGESTIONS, conditions, severityLabel, withCondition, withSeverity, withoutCondition,
     abilityIds, abilities, withAbility, withoutAbility, abilityTag, findAbilities,

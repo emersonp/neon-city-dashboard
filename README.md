@@ -104,7 +104,7 @@ node --test tests/dice.test.cjs tests/discord.test.cjs tests/characters.test.cjs
 | `rules.js` | Rulebook data for Create and the Databank: archetype intros and "on the job" text, skills, initiative, knows, starting gear templates; origin intros, options, Advancement text and augmentation gear; the sentences every archetype or origin section repeats (`text`) (needs `characters.js`; testable in Node) |
 | `profiles.js` | The Databank's Archetypes and Origins pages, built from `rules.js`, `abilities.js` and `advancement.js`; Create's archetype panel uses its text too (testable in Node) |
 | `databank.js` | The Databank tab's text from the rulebook's Equipment chapter: gear, tool sets, weapons, armor, vehicles, gear and weapon keywords with their restrictions (testable in Node) |
-| `tables.js` | The Tables tab's tables: random gear keywords, security system tiers with each defense's description, and liabilities (testable in Node) |
+| `tables.js` | The Tables tab's tables: random gear keywords, security system tiers with each defense's description, liabilities, and distinctive visual traits (testable in Node) |
 | `gear.js` | Gear rules from `databank.js`: built-in keywords, which keywords an item can take, damage and impact, labels, rules text, and Create's starting gear (testable in Node) |
 | `gear-ui.js` | Gear on the page: item rows, keyword chips, rules text, and the keyword picker the gear dialog and Create share |
 | `format.js` | Turns ability descriptions into HTML: paragraphs, bold, italic, lists, icon tokens (testable in Node) |
@@ -186,6 +186,10 @@ book line and the items it gives, with a picker for each "of your choice" (a cat
 item can have, weapon or gear, positive or negative). Weapon Mount picks a starting weapon and its keyword on the
 Origin step. Next waits until every pick is made.
 
+Create's **Details** step needs a handle and a physical appearance. Under the appearance, the distinctive visual traits
+table (`tables.js`, also on the Tables tab) adds a trait to the end of the physical appearance, as a sentence: click a
+row, or roll d100 with the dice button. Picking again swaps that trait while it's still at the end of the text.
+
 To add equipment, a tool set, or a keyword restriction, edit `databank.js`; `tests/databank.test.cjs` checks the
 restrictions against the keyword text, and `tests/rules.test.cjs` checks the starting gear templates against the databank.
 
@@ -201,7 +205,8 @@ in Edit mid-job still counts. After that, the button says **Run**.
   dialog lists the skills that went up before going back to Detail.
 - **Finish Job** (Run, bottom only) opens a page that ends the session, lists the skills that went up, and asks for an
   improvement (an untrained skill to 55%, +10 maximum luck, or 1 XP) and whether the job succeeded. A success earns the
-  XP entered and a reward (a distinctive feature, which does nothing yet; a new starting prop; or the Cybernetic keyword on
+  XP entered and a reward (a distinctive feature: a trait picked or rolled from the distinctive visual traits table and added
+  to the end of the physical appearance, as a sentence; a new starting prop; or the Cybernetic keyword on
   a piece of starting gear that can take it). A failure earns 1 XP and the next job starts with 1 less Influence.
   **Confirm** saves it all, resets to starting values and gear, ends the job, and goes on to Spend XP.
 - **Liability**: a character without one (it isn't asked for in Create) must pick one at End Session or Finish Job, from

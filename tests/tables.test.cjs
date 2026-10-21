@@ -64,6 +64,23 @@ test("tables: the liability table covers 1-100, and a roll always lands on a row
   }
 });
 
+test("tables: the distinctive visual traits table covers 1-100, and a roll always lands on a row", () => {
+  const D = globalThis.NCD_DICE;
+  let next = 1;
+  for (const [range, text] of T.distinctiveTraits) {
+    const [lo, hi] = range.split("-").map(Number);
+    assert.equal(lo, next, range);
+    next = hi + 1;
+    assert.ok(text.trim(), range);
+  }
+  assert.equal(next, 101);
+  const table = { head: ["d100", "Distinctive visual trait"], rows: T.distinctiveTraits };
+  for (let n = 0; n < 100; n++) {
+    const rolls = [Math.floor(n / 10), n % 10];
+    assert.ok(D.rollTable(table, () => rolls.shift()).row >= 0, String(n));
+  }
+});
+
 test("tables: every described security defense but X-ray scanners is named in a tier, so the table links to it", () => {
   const named = T.securityTiers.flatMap((t) => t.defenses).map((n) => n.toLowerCase());
   for (const d of T.securityDefenses) {

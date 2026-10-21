@@ -477,9 +477,10 @@
       tableSection({ title: "Random gear keywords", intro: TABLES.randomKeywordsIntro, table: { head: ["d100", "Positive", "Negative"], rows: TABLES.randomKeywords } }),
       tableSection({ title: "Security system tiers", table: securityTable, after: securityTiersButton }),
       tableSection({ title: "Liabilities", table: { head: ["d100", "Liability"], rows: TABLES.liabilities } }),
+      tableSection({ title: "Distinctive visual traits", table: { head: ["d100", "Distinctive visual trait"], rows: TABLES.distinctiveTraits } }),
     ].join("");
 
-    // A table to pick a row from (roster.js: a character's liability), drawn into el. Clicking a row (or Enter or Space on
+    // A table to pick a row from (roster.js: a character's liability or distinctive feature; create.js: a visual trait), drawn into el. Clicking a row (or Enter or Space on
     // it) picks it; the dice button rolls the table's die and picks the row it lands on, as often as you like.
     // onPick(row) gets the picked row's cells. Drawing it again clears the pick.
     tablePicker = (el, t, onPick) => {

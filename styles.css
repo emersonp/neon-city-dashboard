@@ -553,7 +553,12 @@ wa-tab[hidden], wa-radio[hidden] { display: none; }
 .finish-part [hidden] { display: none; }
 .finish-note { margin: 0; color: var(--wa-color-text-quiet); }
 .session-bumped { margin: 0; padding-inline-start: var(--wa-space-l); }
-.finish-part.finish-liability { max-width: 48rem; }
+.finish-part.finish-liability, .finish-part:has(.finish-feature:not([hidden])) { max-width: 48rem; }
+.finish-feature { margin-top: var(--wa-space-s); }
+/* Create's details: a distinctive visual trait to add to the physical appearance */
+.create-traits { margin-top: var(--wa-space-l); max-width: 48rem; }
+.create-traits h3 { margin: 0; }
+.create-traits-note { margin: 0 0 var(--wa-space-xs); color: var(--wa-color-text-quiet); }
 .session-liability { margin-top: var(--wa-space-l); }
 .session-liability h3 { margin: 0 0 var(--wa-space-xs); }
 #session-dialog:has(.session-liability:not([hidden])) { --width: min(48rem, 100vw - 2rem); }
