@@ -340,6 +340,12 @@
               <div id="conditions-display"></div>
             </section>
             <dl id="appearance-display" class="appearance"></dl>
+            <section class="gear story" id="story-display-section">
+              <div class="gear-head">
+                <h3>Repercussions and Story Rewards</h3>
+              </div>
+              <p class="story-text" id="story-display"></p>
+            </section>
             <div id="skills-display" class="skills"></div>
             <section class="gear" id="gear-display-section">
               <div class="gear-head">
@@ -377,6 +383,15 @@
                 </wa-button>
               </div>
               <div id="conditions-run"></div>
+            </section>
+            <section class="gear story">
+              <div class="gear-head">
+                <h3>Repercussions and Story Rewards</h3>
+                <wa-button size="s" appearance="plain" data-edit-story title="Change">
+                  <wa-icon name="pen" label="Change"></wa-icon>
+                </wa-button>
+              </div>
+              <p class="story-text" id="story-run"></p>
             </section>
             <div id="skills-run" class="skills running"></div>
             <section class="gear">
@@ -418,6 +433,10 @@
           <!-- Finish Job: the session's skill bumps, an improvement, how the job went, then Confirm (roster.js) -->
           <div id="character-finish" class="character-finish" hidden>
             <h2>Finish Job</h2>
+            <section class="finish-part finish-story">
+              <h3>Repercussions and Story Rewards</h3>
+              <wa-textarea id="finish-story" rows="5" resize="auto" label="Add or remove what this job changed"></wa-textarea>
+            </section>
             <section class="finish-part">
               <h3>Session</h3>
               <p class="finish-note">Ending the session. Used skills each go up by 1:</p>
@@ -595,6 +614,7 @@
               <wa-textarea name="physical" label="Physical Appearance" rows="3" resize="auto"></wa-textarea>
               <wa-textarea name="network" label="Network Default" rows="3" resize="auto"></wa-textarea>
               <wa-textarea name="liability" label="Liability" rows="2" resize="auto"></wa-textarea>
+              <wa-textarea name="story" label="Repercussions and Story Rewards" rows="5" resize="auto"></wa-textarea>
             </div>
             <div id="skills-edit" class="skills editing"></div>
             <section class="gear">
@@ -800,6 +820,15 @@
       <div id="session-liability"></div>
     </section>
     <wa-button slot="footer" variant="brand" id="session-ok">OK</wa-button>
+  </wa-dialog>
+
+  <!-- Repercussions and story rewards, changed while running (Edit and Finish Job have their own box) -->
+  <wa-dialog id="story-dialog" label="Repercussions and Story Rewards">
+    <wa-textarea id="story-input" rows="5" resize="auto" autofocus></wa-textarea>
+    <wa-button slot="footer" id="story-save" variant="brand">
+      <wa-icon slot="start" name="floppy-disk"></wa-icon>
+      Save
+    </wa-button>
   </wa-dialog>
 
   <wa-dialog id="appearance-dialog" label="Appearance" light-dismiss>

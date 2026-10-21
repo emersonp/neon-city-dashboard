@@ -117,6 +117,10 @@
   const needsLiability = (character) => !liability(character);
   const withLiability = (character, text) => ({ ...character, liability: String(text ?? "").trim() });
 
+  // ---- repercussions and story rewards: free text, usually changed at Finish Job ----
+  const story = (character) => String(character?.story ?? "").trim();
+  const withStory = (character, text) => ({ ...character, story: String(text ?? "").trim() });
+
   // ---- things the character knows something about (checkboxes on the sheet) ----
   const KNOWLEDGE = ["Citizens", "Computers", "Corporations", "Criminals", "Cybernetics", "Executives", "Genetics", "Government",
     "Medicine", "Military", "Network", "Psionics", "Robotics", "Security", "Vehicles", "Weapons"];
@@ -286,11 +290,13 @@
     return null;
   }
   // Ends the session, applies the choices, and leaves the job with only the starting gear. `bumped` as endSession.
+  // `story`, when given, replaces the repercussions and story rewards.
   function finishJob(character, choices) {
     if (finishMissing(character, choices)) return null;
-    const { liability: picked, improvement, skill: id, successful, xp: earned, reward, feature, prop, gearId } = choices;
+    const { liability: picked, story: told, improvement, skill: id, successful, xp: earned, reward, feature, prop, gearId } = choices;
     let { character: next, bumped } = endSession(character);
     if (needsLiability(next)) next = withLiability(next, picked);
+    if (told != null) next = withStory(next, told);
     if (improvement === "skill") next = withSkill(next, id, { value: MIN_VALUE });
     if (improvement === "luck") next.maxLuck = clampMaxLuck(next.maxLuck) + JOB_LUCK;
     const gained = (improvement === "xp" ? 1 : 0) + (successful ? clampXp(earned) : 1);
@@ -374,6 +380,7 @@
       xpAvailable: 0,
       appearance: { pronouns: "", physical: "", network: "" },
       liability: "",
+      story: "",
       skills: {},
       createdAt: now,
       updatedAt: now,
@@ -540,7 +547,7 @@
     inJob, starterGear, resetToStarting, startJob, abandonJob, endSession,
     IMPROVEMENTS, REWARDS, JOB_LUCK, untrainedSkills, cyberneticTargets, finishMissing, finishJob,
     isInitiative, canBeUsed, isUsed, withUsed,
-    KNOWLEDGE, knows, xp, clampXp, appearance, withTrait, withFeature, liability, needsLiability, withLiability,
+    KNOWLEDGE, knows, xp, clampXp, appearance, withTrait, withFeature, liability, needsLiability, withLiability, story, withStory,
     gear, newGear, newProp, withGear, withoutGear,
     MAX_SEVERITY, CONDITION_SUGGESTIONS, conditions, severityLabel, withCondition, withSeverity, withoutCondition,
     abilityIds, abilities, withAbility, withoutAbility, abilityTag, findAbilities,

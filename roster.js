@@ -100,6 +100,7 @@
     { name: "portrait", load: (c) => C.portraitFile(c, portraits) ?? "", save: (e, v) => { e.portrait = v || null; } },
     ...["pronouns", "physical", "network"].map(appearanceField),
     textField("liability"),
+    textField("story"),
   ];
 
   // ---- roster ----
@@ -283,6 +284,8 @@
       if (state === "display") {
         display.querySelector("[data-run-label]").textContent = C.inJob(current) ? "Run" : "Start Job";
         renderAppearance($("appearance-display"));
+        $("story-display-section").hidden = !C.story(current);
+        renderStory($("story-display"));
         $("conditions-display-section").hidden = !C.conditions(current).length;
         renderConditions($("conditions-display"), current);
         renderSkillsDisplay($("skills-display"));
@@ -291,6 +294,7 @@
         renderAbilities($("abilities-display"), C.abilities(current, ABILITIES));
       } else {
         renderConditions($("conditions-run"), current, { clickable: true });
+        renderStory($("story-run"));
         renderSkillsDisplay($("skills-run"), { links: true });
         renderGear($("gear-run"), current, { running: true });
         renderAbilities($("abilities-run"), C.abilities(current, ABILITIES));
@@ -393,6 +397,22 @@
     renderAppearance(dialog.querySelector(".appearance"));
     dialog.open = true;
   }
+
+  // ---- repercussions and story rewards: shown on Display and Running; Running's pencil changes them in a dialog ----
+  // (Edit has a box for them, and Finish Job's page starts with one.)
+  const renderStory = (el) => { el.textContent = C.story(current) || "—"; };
+  const storyDialog = $("story-dialog");
+  const storyInput = $("story-input");
+  running.addEventListener("click", (e) => {
+    if (!e.target.closest("[data-edit-story]")) return;
+    storyInput.value = C.story(current);
+    storyDialog.open = true;
+  });
+  $("story-save").addEventListener("click", () => {
+    if (!commit(C.withStory(current, storyInput.value))) return;
+    storyDialog.open = false;
+    render();
+  });
 
   // ---- action bars ----
   // Each mode's bar sits at the bottom of its section (Display, Running, Edit's form) and is copied to the top of the
@@ -1103,11 +1123,13 @@
   const finishProp = $("finish-prop");
   const finishGear = $("finish-gear");
   const finishFeatureEl = $("finish-feature");
+  const finishStory = $("finish-story");
   const radio = (group, value) => group.querySelector(`wa-radio[value="${value}"]`);
   let finishLiability = () => "";
   let finishFeature = () => ""; // the distinctive feature reward's trait, added to the physical appearance
   function renderFinish() {
     $("finish-bumped").innerHTML = bumpedHTML(C.endSession(current).bumped);
+    finishStory.value = C.story(current);
     const needs = C.needsLiability(current);
     $("finish-liability-part").hidden = !needs;
     finishLiability = needs ? liabilityPicker($("finish-liability")) : () => "";
@@ -1151,7 +1173,7 @@
     if (state !== "finishing") return;
     const success = finishSuccess.value;
     const choices = {
-      liability: finishLiability(), improvement: finishImprovement.value, skill: finishSkill.value,
+      liability: finishLiability(), story: finishStory.value, improvement: finishImprovement.value, skill: finishSkill.value,
       successful: success === "yes" ? true : success === "no" ? false : null,
       xp: finishXp.value, reward: finishReward.value, feature: finishFeature(), prop: text(finishProp.value), gearId: finishGear.value,
     };

@@ -755,6 +755,21 @@ test("liability: free text, asked for by Finish Job only when there's none, and 
   assert.equal(C.liability(C.endSession(has).character), "Debts");
 });
 
+test("repercussions and story rewards: free text, replaced by Finish Job only when given", () => {
+  const C = globalThis.NCD_CHARACTERS;
+  assert.equal(C.newCharacter().story, "");
+  assert.equal(C.story({}), "");
+  const c = C.withStory({ id: "c", liability: "Debts" }, "  Owes Vex a favor.\nKnown at the Lotus. ");
+  assert.equal(C.story(c), "Owes Vex a favor.\nKnown at the Lotus.");
+
+  const run = C.startJob(c);
+  const rest = { improvement: "xp", successful: false };
+  assert.equal(C.story(C.finishJob(run, rest).character), "Owes Vex a favor.\nKnown at the Lotus.");
+  assert.equal(C.story(C.finishJob(run, { ...rest, story: "Banned from the Lotus." }).character), "Banned from the Lotus.");
+  assert.equal(C.story(C.finishJob(run, { ...rest, story: " " }).character), "");
+  assert.equal(C.story(C.endSession(run).character), "Owes Vex a favor.\nKnown at the Lotus.");
+});
+
 test("jobs: Finish Job applies the improvement and reward, and leaves the job", () => {
   const C = globalThis.NCD_CHARACTERS;
   const coat = C.newProp("Coat", true);

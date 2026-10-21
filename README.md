@@ -214,6 +214,9 @@ in Edit mid-job still counts. After that, the button says **Run**.
   the row it lands on, as many times as you like. End Session's dialog won't close until there's a pick, and Finish Job
   won't confirm. It shows under the appearance and can be changed in Edit. The picker is `NCD_APP.tablePicker`, for any
   table whose first column names a die.
+- **Repercussions and Story Rewards**: free text (line breaks kept), shown under the appearance on Detail (when there's
+  any) and under the conditions while running, where the pencil changes it in a dialog. Edit has a box for it, and Finish
+  Job's page starts with one, filled in with what's there, for adding or removing what the job changed; Confirm saves it.
 - **Spend XP** lists every benefit from the XP table with its cost (worked out as earlier purchases leave the
   character: a second perk costs more) and a **Buy** button, and what's been bought so far, each removable. Until
   it's confirmed, the character is saved as spending XP (a badge on the Roster) and only opens to this page, and the gear

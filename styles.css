@@ -531,7 +531,7 @@ wa-tab[hidden], wa-radio[hidden] { display: none; }
 .appearance dd { margin: 0; white-space: pre-line; overflow-wrap: anywhere; }
 .appearance.stacked { grid-template-columns: minmax(0, 1fr); margin: 0; }
 .appearance-edit { margin: 0; align-items: start; }
-.appearance :is(.liability, [name="liability"]) { grid-column: 1 / -1; }
+.appearance :is(.liability, [name="liability"], [name="story"]) { grid-column: 1 / -1; }
 @media (max-width: 800px) { .appearance { grid-template-columns: minmax(0, 1fr); } }
 .stat-icon { margin-left: auto; display: inline-flex; }
 .stat-icon .icon { width: 2rem; height: 2rem; --ink: var(--wa-color-brand); }
@@ -550,7 +550,7 @@ wa-tab[hidden], wa-radio[hidden] { display: none; }
 .character-finish h2 { margin: 0; }
 .finish-part { display: flex; flex-direction: column; gap: var(--wa-space-s); max-width: 36rem; }
 .finish-part h3 { margin: 0; }
-.finish-part [hidden] { display: none; }
+.finish-part[hidden], .finish-part [hidden] { display: none; }
 .finish-note { margin: 0; color: var(--wa-color-text-quiet); }
 .session-bumped { margin: 0; padding-inline-start: var(--wa-space-l); }
 .finish-part.finish-liability, .finish-part:has(.finish-feature:not([hidden])) { max-width: 48rem; }
@@ -705,6 +705,9 @@ wa-tab[hidden], wa-radio[hidden] { display: none; }
   text-transform: uppercase; color: var(--color-holo-text); white-space: nowrap; }
 .gear-starter-toggle { flex: none; font-size: var(--wa-font-size-xs); }
 .gear-empty { margin: 0; }
+/* Repercussions and story rewards (roster.js renderStory): free text, its line breaks kept. */
+.story-text { margin: 0; white-space: pre-line; overflow-wrap: anywhere; }
+#story-dialog { --width: min(40rem, 100vw - 2rem); }
 .gear-form { display: flex; flex-direction: column; gap: var(--wa-space-l); }
 #gear-dialog { --width: min(46rem, 100vw); }
 .gear-remove-item { display: flex; flex-direction: column; gap: var(--wa-space-3xs); padding: var(--wa-space-s) var(--wa-space-m);
