@@ -158,6 +158,11 @@ html.gm [data-player] { display: none !important; }
 .sheet-column ul { margin: 0; padding-left: 1.2em; font-size: var(--wa-font-size-s); line-height: 1.45; }
 .sheet-column li { margin-bottom: var(--wa-space-2xs); }
 .sheet-column li::marker { content: "▶  "; font-size: 0.7em; color: var(--wa-color-brand); }
+.sheet-column p { margin: 0 0 var(--wa-space-s); font-size: var(--wa-font-size-s); line-height: 1.45; }
+.sheet-column p.sheet-note { font-size: var(--wa-font-size-xs); font-style: italic; }
+.sheet-column .heat-events { margin-bottom: var(--wa-space-s); }
+.databank-table.heat-events :is(th, td):last-child { text-align: right; white-space: nowrap; }
+.databank-table.heat-events td:first-child { white-space: normal; }
 .inline-icon .icon { width: 1em; height: 1em; vertical-align: -0.12em; --ink: var(--color-bad); }
 
 /* ---- databank: the cheat sheet's columns; a section with many entries spans the page and flows them into columns ---- */
