@@ -74,7 +74,7 @@ A character's gear is a list of items. Each has a **name**, a **quantity** (show
 
 | Type | What's picked | Shown as |
 | --- | --- | --- |
-| Weapon | a category from the Armory | `Pistol · 1h · +20` (hands and damage work out from the category and Jagged, Mounted, Miniaturized) |
+| Weapon | a category from the Armory | `Pistol · 1h · +20 dmg` (hands and damage work out from the category and Jagged, Mounted, Miniaturized) |
 | Kit | a tool set, its quality, optionally a skill it's hyper-specialized for, and whether it's consumable | `Kit · Paramedic's Kit · Standard · +20 impact` |
 | Equipment | any other entry in Gear Basics (skill software, stimulants, computer gear, biotechnology, other tools), plus a skill or option when the entry needs one | `Equipment · Computer gear` |
 | Armor | Armored x1 to x4; each level's keywords come with it | `Armor · Armored x2` |

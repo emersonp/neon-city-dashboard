@@ -121,13 +121,13 @@
   const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
   const armored = (n) => `Armored${n > 1 ? ` x${n}` : ""}`;
   const choiceName = (e, choice) => (e?.choice?.skill ? skillName(choice) : e?.choice?.options.includes(choice) ? choice : null);
-  // The muted line after an item's name, e.g. "Pistol · 1h · +20". Anything unknown shows as "?".
+  // The muted line after an item's name, e.g. "Pistol · 1h · +20 dmg". Anything unknown shows as "?".
   function label(item) {
     const s = stats(item), join = (parts) => parts.filter(Boolean).join(" · ");
     switch (item?.kind ?? "prop") {
       case "weapon": {
         const w = weaponOf(item);
-        return w ? join([w.name, s.hands && `${s.hands}h`, `+${s.damage}`]) : "Weapon · ?";
+        return w ? join([w.name, s.hands && `${s.hands}h`, `+${s.damage} dmg`]) : "Weapon · ?";
       }
       case "kit": return join(["Kit", toolSetOf(item)?.name ?? "?", s.impact ? cap(item.quality) : "?", s.impact && `+${s.impact} impact`,
         skillName(item.special) && `for ${skillName(item.special)}`, item.consumable === true && "consumable"]);

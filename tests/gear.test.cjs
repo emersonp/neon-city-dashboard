@@ -25,8 +25,8 @@ test("newGear and the normaliser: quantity, keywords, fixed", () => {
 });
 
 test("weapon stats and label come from the databank", () => {
-  assert.equal(G.label(w("Pistol")), "Pistol · 1h · +20");
-  assert.equal(G.label(w("Thrown")), "Thrown · +10");
+  assert.equal(G.label(w("Pistol")), "Pistol · 1h · +20 dmg");
+  assert.equal(G.label(w("Thrown")), "Thrown · +10 dmg");
   assert.equal(G.stats(w("Rifle", ["Miniaturized", "Mounted"])).damage, 30);
   assert.equal(G.stats(w("Rifle", ["Miniaturized"])).hands, 1);
   assert.equal(G.stats(w("One-handed melee", ["Jagged"])).damage, 15);

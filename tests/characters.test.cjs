@@ -582,7 +582,7 @@ test("create gear: archetype lines become typed starter items", () => {
   assert.deepEqual(c.gear.map((g) => [g.kind, g.quantity]), [["weapon", 5], ["prop", 1]]);
   const swords = applied({ archetype: "Assassin", gear: { 0: 1 } }).gear[0];
   assert.deepEqual([swords.description, swords.category, swords.keywords, swords.quantity, swords.id], ["Plasma sword", "One-handed melee", ["Plasma"], 2, "create-gear-0-1-0"]);
-  assert.equal(G.label(swords), "One-handed melee · 1h · +10");
+  assert.equal(G.label(swords), "One-handed melee · 1h · +10 dmg");
   assert.deepEqual(applied({ archetype: "Assassin", gear: { 0: 1 } }).gear.map((g) => g.id), applied({ archetype: "Assassin", gear: { 0: 1 } }).gear.map((g) => g.id));
 });
 
