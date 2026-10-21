@@ -427,6 +427,14 @@ test("placeable: a placement is only offered where it fits and honours different
   assert.ok(cAdv.every((id) => physical.includes(id)));
   assert.ok(C.placeable(c, "a", R).includes("shoot-someone")); // challenge has room there
   assert.ok(!C.placeable({ ...c, placements: { a: "run-like-hell" } }, "b", R).includes("run-like-hell"));
+  // picked the other way round: the 2-dice skill can't be the one the 1 die is on
+  assert.ok(!C.placeable({ ...c, placements: { b: "run-like-hell" } }, "a", R).includes("run-like-hell"));
+  // nor can a different kind of die: every placement gets its own skill
+  assert.ok(!C.placeable({ ...c, placements: { a: "run-like-hell" } }, "c", R).includes("run-like-hell"));
+  assert.ok(!C.placeable({ ...c, placements: { d: "run-like-hell" } }, "a", R).includes("run-like-hell"));
+  // 1 die: not on a skill the archetype already gives 2 of that kind, fine on one with 1
+  const dAdv = C.placeable(c, "d", R);
+  assert.ok(!dAdv.includes("shoot-someone") && dAdv.includes("throw-something"));
   assert.deepEqual(C.placeable({ ...c, option: null }, "a", R), []);
 });
 

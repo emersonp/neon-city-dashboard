@@ -289,12 +289,14 @@
       : SKILLS.filter((s) => s.type !== "initiative" && shownValue(baseValue(cr, rules, s.id)) < MAX_VALUE).map((s) => s.id);
   }
   // Skills the option's placement `key` may go on. Checked against the archetype's own dice, so the order of picking doesn't matter.
+  // Each of the option's placements goes on its own skill, whatever kind of die (so differentFrom always holds).
   function placeable(creation, key, rules) {
     const cr = fullCreation(creation);
-    const arch = ruleFor(rules.archetypes, cr.archetype), p = optionOf(cr, rules)?.placements.find((x) => x.key === key);
+    const arch = ruleFor(rules.archetypes, cr.archetype), placements = optionOf(cr, rules)?.placements ?? [];
+    const p = placements.find((x) => x.key === key);
     if (!arch || !p) return [];
-    const other = p.differentFrom ? cr.placements?.[p.differentFrom] : null;
-    return SKILLS.filter((s) => s.type === p.category && s.id !== other
+    const taken = placements.filter((x) => x.key !== key).map((x) => cr.placements?.[x.key]);
+    return SKILLS.filter((s) => s.type === p.category && !taken.includes(s.id)
       && (arch.skills[s.id]?.[p.kind] ?? 0) + p.count <= MAX_INTRINSIC).map((s) => s.id);
   }
 

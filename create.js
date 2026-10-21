@@ -234,9 +234,6 @@
         const key = select.dataset.place, id = select.value || null;
         const placements = { ...cr.placements };
         if (id) placements[key] = id; else delete placements[key];
-        // a "different skill" pick that now matches this one has to be made again
-        const option = C.ruleFor(rules().origins, cr.origin)?.options.find((o) => o.id === cr.option);
-        for (const p of option?.placements ?? []) if (p.differentFrom === key && placements[p.key] === id) delete placements[p.key];
         ctx.choose({ placements }, `[data-place="${key}"]`);
         return;
       }
