@@ -254,10 +254,11 @@
     }
   }
 
-  function postRoll(r, skill) {
+  // initiative is { handle } for an Initiative roll (the character going Fast or Slow), or null.
+  function postRoll(r, skill, initiative = null) {
     const { character, username, avatarUrl } = sender();
     return post(buildMessage(r, playerName(), {
-      skill, emoji, username, avatarUrl,
+      skill, emoji, username, avatarUrl, initiative: Boolean(initiative), handle: initiative?.handle,
       luck: character ? C.luck(character).current : null,
       influence: character ? C.influence(character).current : null,
     }), "Rolled");
@@ -285,8 +286,10 @@
   // A roll button's whole job: roll, reset the pools, spin, show the result, then post it. One roll at a time.
   // The Administrator's rolls also play on the OBS overlay (admin.js), starting with the spin here.
   // `scroll` brings the result into view (the skill dialog, where on phones it's below the fold).
-  // `onRoll` runs once the result shows; `skill` names the skill for the message, if any; `readImpact` gives the impact, if any.
-  function makeRoller({ button, readTarget, pools, result, resetPools, scroll = false, onRoll = () => {}, skill = () => undefined, readImpact = () => null }) {
+  // `onRoll` runs once the result shows; `skill` names the skill for the message, if any; `readImpact` gives the impact, if any;
+  // `initiative` gives { handle } when it's an Initiative roll (so the message says Fast or Slow), else null.
+  function makeRoller({ button, readTarget, pools, result, resetPools, scroll = false, onRoll = () => {}, skill = () => undefined,
+    readImpact = () => null, initiative = () => null }) {
     let busy = false;
     const reveal = () => { if (scroll) result.scrollIntoView({ block: "nearest" }); };
     return async function rollAndPost() {
@@ -304,7 +307,7 @@
         showResult(r, true, result);
         reveal();
         onRoll(r);
-        await postRoll(r, skill());
+        await postRoll(r, skill(), initiative());
       } finally {
         busy = false;
         button.loading = false;

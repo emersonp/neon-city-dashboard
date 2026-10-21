@@ -36,6 +36,15 @@ overlay and the Dashboard. A cleared roll leaves the overlay without the ROLL la
 the Dashboard says "No rolls yet", the overlay is cleared to match, including when the Dashboard connects to OBS. Opened in a normal browser, the overlay starts a 5-second countdown on <kbd>P</kbd>
 (again to stop it) and pauses or plays it on <kbd>O</kbd>.
 
+Under the roll result, an **Initiative** card has a **Conflict scene** switch. Off, the overlay shows nothing of initiative.
+On, the overlay changes to its conflict layout (Heat, Group Influence and Day squeezed into one row, and the turn under them),
+starting on **Hazard**; the card's arrows step through the round, Hazard (yellow), Fast (red), Antagonists (magenta) and Slow
+(cyan), and round again. In a normal browser the overlay toggles a conflict scene on <kbd>C</kbd> and steps the turn on
+<kbd>[</kbd> and <kbd>]</kbd>.
+
+Rolling **Initiative in the World** or **in the Network** from the Character tab posts who rolled, whether the character
+goes **Fast** (a success, red) or **Slow** (a failure, cyan), and the total with any leftover Boons or Drawbacks.
+
 ## Administrator features
 
 Turning on **Administrator (GM)** in Settings puts the `gm` class on the page, and anything marked `data-admin` shows
@@ -104,10 +113,11 @@ node --test tests/dice.test.cjs tests/discord.test.cjs tests/characters.test.cjs
 | `emoji/` | Boon and Drawback PNGs to upload as Discord server emoji |
 | `icons.js`, `icons/` | Game icons (advantage die, challenge die, boon, drawback, heat, influence) |
 | `overlay.html` | The OBS overlay: Heat, Group Influence, Day and the latest roll, driven by the Dice tab |
-| `overlay-rules.js` | The messages the dashboard and the overlay send each other, each stat's limits, and the ticker's and Planning countdown's rules (testable in Node) |
+| `overlay-rules.js` | The messages the dashboard and the overlay send each other, each stat's limits, and the ticker's, Planning countdown's and initiative's rules (testable in Node) |
 | `admin.js` | The Administrator: the GM switch, `data-admin` parts of the page, and the one OBS link every Administrator feature shares |
 | `admin-overlay.js` | The Administrator's Overlay and Ticker cards on the Dashboard tab: Heat, Group Influence, Day and the ticker |
 | `admin-planning.js` | Planning, in the Administrator's Overlay card: the overlay's countdown |
+| `admin-initiative.js` | The Administrator's Initiative card: a conflict scene on the overlay, and whose turn it is |
 | `obs-link.js` | Minimal OBS WebSocket client the dashboard and the overlay share |
 | `obs-config.example.js` | Template for `obs-config.js` (gitignored): OBS host, port, password and which side the overlay sits on |
 

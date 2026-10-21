@@ -121,6 +121,35 @@ html.gm [data-player] { display: none !important; }
 .planning-clock { font-family: var(--font-display); font-weight: 700; font-size: var(--wa-font-size-2xl); color: var(--color-accent-text); font-variant-numeric: tabular-nums; }
 .planning-buttons { display: grid; grid-template-columns: repeat(auto-fit, minmax(6rem, 1fr)); gap: var(--wa-space-xs); }
 .planning-buttons[hidden] { display: none; }
+/* ---- the Administrator's Initiative card (admin-initiative.js): each turn in its own colour, as on the overlay ---- */
+.initiative-cycle { display: flex; flex-direction: column; gap: var(--wa-space-s); --tc: var(--color-turn-hazard); }
+.initiative-cycle[hidden] { display: none; }
+.initiative-cycle[data-phase="fast"]        { --tc: var(--color-turn-fast); }
+.initiative-cycle[data-phase="antagonists"] { --tc: var(--color-turn-antagonists); }
+.initiative-cycle[data-phase="slow"]        { --tc: var(--color-turn-slow); }
+.initiative-turn { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: var(--wa-space-s); }
+.initiative-phase {
+  text-align: center; font-family: var(--font-display); font-weight: 800; font-size: var(--wa-font-size-2xl);
+  letter-spacing: 0.12em; text-transform: uppercase; color: var(--tc);
+}
+.wa-dark .initiative-phase { text-shadow: 0 0 10px color-mix(in oklch, var(--tc) 55%, transparent); }
+.initiative-track { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--wa-space-2xs); }
+.initiative-track li {
+  --c: var(--color-turn-hazard);
+  display: flex; flex-direction: column; align-items: center; gap: var(--wa-space-3xs); min-width: 0;
+  font-size: var(--wa-font-size-2xs); letter-spacing: 0.06em; text-transform: uppercase; color: var(--wa-color-text-quiet);
+  overflow: hidden; text-overflow: ellipsis;
+}
+.initiative-track li[data-phase="fast"]        { --c: var(--color-turn-fast); }
+.initiative-track li[data-phase="antagonists"] { --c: var(--color-turn-antagonists); }
+.initiative-track li[data-phase="slow"]        { --c: var(--color-turn-slow); }
+.initiative-track li::after {
+  content: ""; width: 100%; height: 4px; border-radius: 2px; order: -1;
+  background: color-mix(in oklch, var(--c) 22%, transparent);
+}
+.initiative-track li.on { color: var(--c); font-weight: 700; }
+.initiative-track li.on::after { background: var(--c); }
+.wa-dark .initiative-track li.on::after { box-shadow: 0 0 8px var(--c); }
 .obs-status { margin: 0; font-size: var(--wa-font-size-s); color: var(--color-bad); }
 .obs-status.ok { color: var(--color-good); }
 .obs-status:empty { display: none; }

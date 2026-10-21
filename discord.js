@@ -5,6 +5,8 @@
 // Plain script (no modules) so the page also works when opened straight from disk.
 (function (root) {
   const COLORS = { success: 0x3dffb0, failure: 0xff3b5c, none: 0x00f0ff };
+  // An initiative roll's accent: red for a Fast turn, cyan for a Slow one (as on the overlay).
+  const TURN_COLORS = { fast: 0xff3b5c, slow: 0x00f0ff };
   const NO_PINGS = { parse: [] };
   const THIN = "\u2009"; // thin space between emoji, so they don't run together
   const WORDS = ["no", "one", "two", "three", "four", "five"];
@@ -32,10 +34,23 @@
     return `Rolled: ${symbols}`;
   }
 
+  // An initiative roll's three lines: who rolled for which initiative, Fast or Slow, and what came up.
+  // A success is a Fast turn and a failure a Slow one; with no target there's no telling, so the total stands in.
+  function initiativeLines(r, { player, emoji, skill, handle }) {
+    const turn = r.success == null ? null : r.success ? "Fast" : "Slow";
+    return {
+      intro: `${player} rolled for ${skill}`,
+      result: turn ? `${handle || player} will go ${turn}` : String(r.total),
+      detail: `Rolled ${r.total}${netSuffix(r, emoji)}`,
+    };
+  }
+
   // The three lines: small intro, big result (with the impact, on a success with one), and a subtle footer.
   // `luck` and `influence` are null for the GM (or with no character open), so the footer can end up empty.
-  // `skill` is the skill's name, if any.
-  function lines(r, { player, emoji, luck = null, influence = null, skill } = {}) {
+  // `skill` is the skill's name, if any. With `initiative` (an Initiative skill), they're initiativeLines, and
+  // `handle` names the character going Fast or Slow.
+  function lines(r, { player, emoji, luck = null, influence = null, skill, initiative = false, handle } = {}) {
+    if (initiative) return initiativeLines(r, { player, emoji, skill, handle });
     const verdict = { success: "Success!", failure: "Failure.", none: "" }[outcomeOf(r)];
     return {
       intro: `${player} rolled${skill ? ` *${skill}*` : ""}${r.target == null ? "" : ` against ${r.target}`} and got a`,
@@ -53,14 +68,15 @@
     allowed_mentions: NO_PINGS,
   });
 
-  function buildMessage(r, player, { emoji, username, avatarUrl, luck, influence, skill } = {}) {
-    const l = lines(r, { player, emoji, luck, influence, skill });
+  function buildMessage(r, player, { emoji, username, avatarUrl, luck, influence, skill, initiative, handle } = {}) {
+    const l = lines(r, { player, emoji, luck, influence, skill, initiative, handle });
+    const accent = initiative && r.success != null ? TURN_COLORS[r.success ? "fast" : "slow"] : COLORS[outcomeOf(r)];
     return {
       ...from({ username, avatarUrl }),
       flags: 1 << 15, // IS_COMPONENTS_V2
       components: [{
         type: 17, // container
-        accent_color: COLORS[outcomeOf(r)],
+        accent_color: accent,
         components: [
           { type: 10, content: `-# ${l.intro}\n## ${l.result}` }, // text display
           ...(l.detail ? [

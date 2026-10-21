@@ -515,7 +515,7 @@
     MAX_WOUNDS, wounds, clickWound,
     inJob, starterGear, resetToStarting, startJob, abandonJob, endSession,
     IMPROVEMENTS, REWARDS, JOB_LUCK, untrainedSkills, cyberneticTargets, finishMissing, finishJob,
-    canBeUsed, isUsed, withUsed,
+    isInitiative, canBeUsed, isUsed, withUsed,
     KNOWLEDGE, knows, xp, clampXp, appearance,
     gear, newGear, newProp, withGear, withoutGear,
     MAX_SEVERITY, CONDITION_SUGGESTIONS, conditions, severityLabel, withCondition, withSeverity, withoutCondition,

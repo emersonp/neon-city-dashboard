@@ -4,11 +4,11 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 require("../overlay-rules.js");
-const { STATS, clampStat, cleanTicker, tidyTicker, PLANNING_MAX, planningLeft, planningStep, cleanPlanning, fmtClock, make, read } =
-  globalThis.NCD_OVERLAY;
+const { STATS, clampStat, cleanTicker, tidyTicker, PLANNING_MAX, planningLeft, planningStep, cleanPlanning, fmtClock, make, read,
+  PHASES, cleanInitiative, stepPhase } = globalThis.NCD_OVERLAY;
 
 const source = (file) => fs.readFileSync(path.join(__dirname, "..", file), "utf8");
-const TYPES = ["stat", "roll", "clearRoll", "ticker", "planning", "ping", "overlayState"];
+const TYPES = ["stat", "roll", "clearRoll", "ticker", "planning", "initiative", "ping", "overlayState"];
 
 test("stats are kept to whole numbers within their limits", () => {
   assert.equal(clampStat("heat", 12), 12);
@@ -101,15 +101,15 @@ test("read drops what it doesn't know and cleans what it does", () => {
   assert.equal(read({ type: "roll", tens: "4", ones: 2 }), null);
   assert.deepEqual(read({ type: "stat", key: "day", value: -3, app: "nco" }), { type: "stat", key: "day", value: 0 });
   assert.deepEqual(read({ type: "overlayState", heat: 3, influence: 200, ticker: ["x", ""] }),
-    { type: "overlayState", heat: 3, influence: 99, day: null, ticker: ["x"], planning: null });
+    { type: "overlayState", heat: 3, influence: 99, day: null, ticker: ["x"], planning: null, initiative: null });
   assert.deepEqual(read({ type: "overlayState" }),
-    { type: "overlayState", heat: null, influence: null, day: null, ticker: null, planning: null });
+    { type: "overlayState", heat: null, influence: null, day: null, ticker: null, planning: null, initiative: null });
   assert.deepEqual(read({ type: "overlayState", planning: { running: 1, left: -4, at: 7 } }).planning, { running: true, left: 0 });
   for (const type of TYPES) assert.ok(read({ type, tens: 1, ones: 1, key: "heat", value: 1, action: "stop" }), type);
 });
 
 test("the pages send and handle only messages overlay-rules.js knows", () => {
-  const dashboard = ["app.js", "admin.js", "admin-overlay.js", "admin-planning.js"].map(source).join("\n");
+  const dashboard = ["app.js", "admin.js", "admin-overlay.js", "admin-planning.js", "admin-initiative.js"].map(source).join("\n");
   const sent = [...dashboard.matchAll(/\b(?:send|make)\("(\w+)"/g)].map((m) => m[1]);
   const overlay = source("overlay.html");
   const handled = [...overlay.matchAll(/msg\.type === "(\w+)"/g)].map((m) => m[1]);
@@ -118,4 +118,21 @@ test("the pages send and handle only messages overlay-rules.js knows", () => {
   for (const type of [...sent, ...handled, ...overlaySent]) assert.ok(TYPES.includes(type), type);
   // everything the dashboard sends, the overlay handles
   for (const type of sent) assert.ok(handled.includes(type), `overlay.html doesn't handle ${type}`);
+});
+
+test("initiative runs Hazard, Fast, Antagonists, Slow, and round again", () => {
+  assert.deepEqual(PHASES, ["hazard", "fast", "antagonists", "slow"]);
+  assert.equal(stepPhase("hazard", 1), "fast");
+  assert.equal(stepPhase("slow", 1), "hazard");
+  assert.equal(stepPhase("hazard", -1), "slow");
+  assert.equal(stepPhase("nonsense", 1), "fast");
+});
+
+test("initiative messages are cleaned", () => {
+  assert.deepEqual(cleanInitiative({ conflict: 1, phase: "fast" }), { conflict: true, phase: "fast" });
+  assert.deepEqual(cleanInitiative({ phase: "toString" }), { conflict: false, phase: "hazard" });
+  assert.deepEqual(cleanInitiative(null), { conflict: false, phase: "hazard" });
+  assert.deepEqual(make("initiative", { conflict: true, phase: "slow" }), { type: "initiative", conflict: true, phase: "slow" });
+  assert.deepEqual(read({ type: "overlayState", initiative: { conflict: true, phase: "antagonists" } }).initiative,
+    { conflict: true, phase: "antagonists" });
 });

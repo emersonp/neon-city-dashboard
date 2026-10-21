@@ -1297,6 +1297,7 @@
     scroll: true,
     onRoll: () => setUsed(rollSkill.id, true),
     skill: () => rollSkill.name,
+    initiative: () => (C.isInitiative(rollSkill.id) ? { handle: text(current.handle) } : null),
     readImpact: () => DICE.cleanImpact(rollImpact.value),
   });
   $("skill-roll").addEventListener("click", rollSkillAndPost);

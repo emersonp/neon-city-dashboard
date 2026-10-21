@@ -77,6 +77,24 @@
             <section class="result" id="result" aria-live="polite" data-steady data-clearable>
               <p class="result-empty">No rolls yet</p>
             </section>
+
+            <!-- Administrator only: a conflict scene on the OBS overlay, and whose turn it is (admin-initiative.js) -->
+            <wa-card class="admin-panel" id="initiative-card" data-admin>
+              <div slot="header" class="card-header"><h2>Initiative</h2></div>
+              <wa-switch id="conflict-scene">Conflict scene</wa-switch>
+              <div class="initiative-cycle" id="initiative-cycle" data-phase="hazard" hidden>
+                <div class="initiative-turn">
+                  <wa-button size="s" appearance="outlined" data-phase-step="-1">
+                    <wa-icon name="arrow-left" label="Previous turn"></wa-icon>
+                  </wa-button>
+                  <span class="initiative-phase" id="initiative-phase" aria-live="polite">Hazard</span>
+                  <wa-button size="s" appearance="outlined" data-phase-step="1">
+                    <wa-icon name="arrow-right" label="Next turn"></wa-icon>
+                  </wa-button>
+                </div>
+                <ol class="initiative-track" id="initiative-track"></ol>
+              </div>
+            </wa-card>
           </div>
 
           <div class="dice-column" data-admin>
@@ -818,6 +836,7 @@
   <script src="admin.js"></script>
   <script src="admin-overlay.js"></script>
   <script src="admin-planning.js"></script>
+  <script src="admin-initiative.js"></script>
   <script src="app.js"></script>
   <script src="gear-ui.js"></script>
   <script src="create.js"></script>

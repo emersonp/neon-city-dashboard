@@ -162,6 +162,7 @@
   .dice-wrap .label { animation: flicker 52s infinite 18s; }
   .influence .label { animation: flicker 57s infinite 9s; }
   .day .label       { animation: flicker 63s infinite 27s; }
+  .initiative .label { animation: flicker 49s infinite 33s; }
   @keyframes flicker {
     0%, 92.5%, 93.125%, 93.5%, 94%, 100%  { opacity: 1; }
     92.75%, 93.25%   { opacity: 0.25; }
@@ -406,10 +407,77 @@
     85%, 100% { clip-path: inset(100% 0 0 0); transform: none; }
   }
 
+  /* ---------- Conflict scene: a third layout, with whose turn it is under a squeezed Heat / Influence / Day row ----------
+     Off: the initiative section is gone and the panel is as above. On: Heat and the stats share the top row. */
+  .initiative { display: none; }
+  .panel.conflict {
+    grid-template-columns: 0.85fr 1.15fr; grid-template-rows: 1.7fr 2.3fr 2fr 4fr;
+    column-gap: 1.5vw;
+  }
+  .panel.conflict .heat { grid-area: 1 / 1; }
+  .panel.conflict .stats { grid-area: 1 / 2; }
+  .panel.conflict .initiative { grid-area: 2 / 1 / 3 / -1; }
+  .panel.conflict .dice-wrap { grid-area: 3 / 1 / 4 / -1; }
+  .panel.conflict .results { grid-area: 4 / 1 / 5 / -1; }
+  .panel.conflict .heat .label::before, .panel.conflict .heat .label::after { width: 1.6vw; }
+  .panel.conflict .heat .label { font-size: 1.1vw; letter-spacing: 0.4em; padding-left: 0.4em; gap: 0.6vw; }
+  .panel.conflict .heat-row { gap: 1.2vw; margin-top: 0.6vh; }
+  .panel.conflict .heat-icon { height: 4.4vw; }
+  .panel.conflict .heat-value { font-size: 5.4vw; }
+  .panel.conflict .stat .label { font-size: 0.8vw; letter-spacing: 0.16em; padding-left: 0.16em; }
+  .panel.conflict .stat .label::before, .panel.conflict .stat .label::after { display: none; }
+  .panel.conflict .stat-row { height: 4.4vw; gap: 0.8vw; margin-top: 0.6vh; }
+  .panel.conflict .stat-value { font-size: 4.2vw; }
+  .panel.conflict .stat-value.broker { font-size: 2.1vw; }
+  .panel.conflict .influence-icon { height: 3.4vw; width: 3.4vw; }
+
+  /* the turn: its name large in the turn's colour, over a track of all four with this one lit */
+  .panel.conflict .initiative {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.4vh; width: 100%;
+  }
+  .initiative { --tc: var(--color-turn-hazard); }
+  .initiative[data-phase="fast"]        { --tc: var(--color-turn-fast); }
+  .initiative[data-phase="antagonists"] { --tc: var(--color-turn-antagonists); }
+  .initiative[data-phase="slow"]        { --tc: var(--color-turn-slow); }
+  .initiative .label { color: var(--tc); text-shadow: 0 0 8px var(--tc); transition: color var(--dur-normal) var(--ease-out); }
+  .turn {
+    font-family: var(--font-display); font-weight: 800; font-size: 4.6vw; line-height: 1;
+    letter-spacing: 0.12em; padding-left: 0.12em; color: var(--color-ink);
+    text-shadow: 0 0 6px var(--tc), 0 0 18px var(--tc), 0 0 44px var(--tc);
+  }
+  .turn.glitch::before, .turn.glitch::after { animation-duration: 46.6s; animation-delay: 20s; }
+  .turn.change { animation: turnIn 0.6s var(--ease-out); }
+  @keyframes turnIn {
+    0%   { transform: translateX(-0.3em) skewX(-14deg); opacity: 0; filter: brightness(2.4); }
+    20%  { transform: translateX(0.2em) skewX(8deg); opacity: 1; }
+    35%  { transform: translateX(-0.08em) skewX(-3deg); opacity: 0.4; }
+    50%  { transform: none; opacity: 1; filter: brightness(1.6); }
+    100% { transform: none; filter: none; }
+  }
+  .turn-track { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.6vw; width: 100%; }
+  .turn-track li {
+    --c: var(--color-turn-hazard);
+    display: flex; flex-direction: column; align-items: center; gap: 0.6vh;
+    font-family: var(--font-display); font-weight: 700; font-size: 0.85vw; letter-spacing: 0.18em; padding-left: 0.18em;
+    color: color-mix(in oklch, var(--c) 45%, transparent);
+    transition: color var(--dur-normal) var(--ease-out);
+  }
+  .turn-track li[data-phase="fast"]        { --c: var(--color-turn-fast); }
+  .turn-track li[data-phase="antagonists"] { --c: var(--color-turn-antagonists); }
+  .turn-track li[data-phase="slow"]        { --c: var(--color-turn-slow); }
+  /* a bar under each name, like a segment of a lit sign */
+  .turn-track li::after {
+    content: ""; width: 100%; height: 0.45vw; border-radius: 0.1vw;
+    background: color-mix(in oklch, var(--c) 18%, transparent); border: 1px solid color-mix(in oklch, var(--c) 40%, transparent);
+    transition: background var(--dur-normal) var(--ease-out), box-shadow var(--dur-normal) var(--ease-out);
+  }
+  .turn-track li.on { color: var(--color-ink); text-shadow: 0 0 6px var(--c); }
+  .turn-track li.on::after { background: var(--c); border-color: var(--c); box-shadow: 0 0 8px var(--c), 0 0 20px var(--c); }
+
   /* ---------- Planning: a countdown that takes over the whole panel ---------- */
   .panel.planning-on > :not(.planning, .status) { display: none; }
   .planning {
-    grid-row: 1 / -1; align-self: stretch;
+    grid-row: 1 / -1; grid-column: 1 / -1; align-self: stretch;
     display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3vh;
     --glow: var(--color-holo);
   }
@@ -483,6 +551,13 @@
     </div>
   </section>
 
+  <!-- only in a conflict scene: whose turn it is -->
+  <section class="initiative" id="initiative" data-phase="hazard">
+    <div class="label">INITIATIVE</div>
+    <div class="turn glitch" id="turn" data-text="HAZARD">HAZARD</div>
+    <ol class="turn-track" id="turnTrack"></ol>
+  </section>
+
   <section class="dice-wrap">
     <div class="label">ROLL</div>
     <div class="dice">
@@ -533,7 +608,8 @@
 
 <script>
   const { config, connect } = window.NCD_OBS_LINK;
-  const { STATS, clampStat, cleanTicker, planningLeft, planningStep, cleanPlanning, fmtClock, make, read } = window.NCD_OVERLAY;
+  const { STATS, clampStat, cleanTicker, planningLeft, planningStep, cleanPlanning, fmtClock, PHASES, PHASE_NAMES, cleanInitiative, stepPhase,
+    make, read } = window.NCD_OVERLAY;
   if (config?.side === "right") document.body.classList.add("right");
 
   const totalEl = document.getElementById("total");
@@ -811,6 +887,37 @@
     setPlanning(next);
   }
 
+  // ---- Initiative ----
+  // In a conflict scene the panel takes its third layout and shows whose turn it is; outside one, nothing of it shows.
+  // The phases are in overlay-rules.js.
+  const initEl = document.getElementById("initiative");
+  const turnEl = document.getElementById("turn");
+  const turnTrack = document.getElementById("turnTrack");
+  let initiative = cleanInitiative(store.get("nco.initiative", null));
+  turnTrack.innerHTML = PHASES.map((p) => `<li data-phase="${p}">${PHASE_NAMES[p].toUpperCase()}</li>`).join("");
+
+  function renderInitiative(animate) {
+    const { conflict, phase } = initiative;
+    const changed = initEl.dataset.phase !== phase || !panelEl.classList.contains("conflict");
+    panelEl.classList.toggle("conflict", conflict);
+    initEl.dataset.phase = phase;
+    turnEl.textContent = turnEl.dataset.text = PHASE_NAMES[phase].toUpperCase();
+    turnTrack.querySelectorAll("li").forEach((li) => li.classList.toggle("on", li.dataset.phase === phase));
+    if (animate && conflict && changed) {
+      turnEl.classList.remove("change");
+      void turnEl.offsetWidth;
+      turnEl.classList.add("change");
+    }
+  }
+  // msg is an initiative message: { conflict, phase }
+  function setInitiative(msg) {
+    initiative = cleanInitiative(msg);
+    store.set("nco.initiative", initiative);
+    renderInitiative(true);
+    reportState();
+  }
+  renderInitiative(false);
+
   // ---- Sign ----
   // CONSUME for 50s with one small slip somewhere in the middle, then a hard glitch into OBEY for 10s, and a hard
   // glitch back. The word swaps halfway through each hard glitch.
@@ -841,7 +948,7 @@
   // The overlay owns the displayed state; the dashboard asks for it ("ping") and adopts it.
   // The messages are in overlay-rules.js; read() drops any it doesn't know or can't use.
   const reportState = () => link.send(make("overlayState", {
-    ...stats, ticker,
+    ...stats, ticker, initiative,
     planning: planning && { running: planning.running, left: planningLeft(planning, Date.now()) },
   }));
   // Without obs-config.js there's no OBS to listen to; say so instead of failing quietly.
@@ -859,6 +966,7 @@
       else if (msg.type === "clearRoll") clearRoll();
       else if (msg.type === "ticker") setTicker(msg.items);
       else if (msg.type === "planning") planningAction(msg);
+      else if (msg.type === "initiative") setInitiative(msg);
       else if (msg.type === "ping") reportState();
     },
   });
@@ -873,6 +981,8 @@
     else if (e.key === "d") setStat("day", (stats.day + 1) % 11);
     else if (e.key === "p") planningAction({ action: planning ? "stop" : "start", seconds: 5 });
     else if (e.key === "o") planningAction({ action: planning?.running ? "pause" : "play" });
+    else if (e.key === "c") setInitiative({ conflict: !initiative.conflict, phase: PHASES[0] });
+    else if (e.key === "[" || e.key === "]") setInitiative({ ...initiative, phase: stepPhase(initiative.phase, e.key === "]" ? 1 : -1) });
     else if (e.key === " " || e.key === "r") {
       const n = () => Math.floor(Math.random() * 5);
       roll(rand10(), rand10(), 50, Array.from({ length: n() }, () => Math.random() < 0.5), Array.from({ length: n() }, () => Math.random() < 0.6));

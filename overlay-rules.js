@@ -7,9 +7,10 @@
 // clearRoll     {}                                dashboard → overlay: wipe the roll off
 // ticker        { items }                         dashboard → overlay: the ticker's items, in order
 // planning      { action, seconds }               dashboard → overlay: start, pause, play, stop or add to the countdown
+// initiative    { conflict, phase }               dashboard → overlay: a conflict scene on or off, and whose turn it is
 // ping          {}                                dashboard → overlay: ask what it's showing
 // overlayState  { heat, influence, day, ticker,   overlay → dashboard: what it's showing (on connect, on ping, and
-//                 planning }                        whenever the countdown changes)
+//                 planning, initiative }            whenever the countdown or initiative changes)
 //
 // make() builds a message to send and read() checks one that arrived; both clean the fields, so a value out of
 // range or of the wrong kind never gets through. read() returns null for anything it doesn't know.
@@ -75,6 +76,24 @@
     return `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
   }
 
+  // ---- Initiative: in a conflict scene, each round goes Hazard, Fast (the crew who succeeded), Antagonists, then
+  // Slow (the crew who failed). Outside one, no phase shows. ----
+  const PHASES = ["hazard", "fast", "antagonists", "slow"];
+  const PHASE_NAMES = { hazard: "Hazard", fast: "Fast", antagonists: "Antagonists", slow: "Slow" };
+  const NO_CONFLICT = { conflict: false, phase: PHASES[0] };
+
+  // { conflict, phase }: conflict as true or false, and a phase that's one of PHASES (the first if not).
+  const cleanInitiative = (m) => ({
+    conflict: Boolean(m?.conflict),
+    phase: PHASES.includes(m?.phase) ? m.phase : PHASES[0],
+  });
+
+  // The phase step places on from this one (1 is next, -1 is back), round and round.
+  const stepPhase = (phase, step) => {
+    const i = Math.max(0, PHASES.indexOf(phase));
+    return PHASES[(((i + step) % PHASES.length) + PHASES.length) % PHASES.length];
+  };
+
   const digit = (n) => Number.isInteger(n) && n >= 0 && n <= 9;
   const bools = (a) => (Array.isArray(a) ? a.map(Boolean) : []);
 
@@ -89,14 +108,17 @@
     planning: ({ action, seconds }) => (PLANNING_ACTIONS.includes(action)
       ? { action, seconds: clampMs(seconds * 1000) / 1000 }
       : null),
+    initiative: cleanInitiative,
     ping: () => ({}),
-    // stats it doesn't report stay null; so does the ticker. planning is null when no countdown is on.
+    // stats it doesn't report stay null; so does the ticker. planning is null when no countdown is on; initiative
+    // is null when it doesn't say.
     overlayState: (m) => ({
       ...Object.fromEntries(Object.keys(STATS).map((k) => [k, m[k] == null ? null : clampStat(k, m[k])])),
       ticker: Array.isArray(m.ticker) ? cleanTicker(m.ticker) : null,
       planning: m.planning && typeof m.planning === "object"
         ? { running: Boolean(m.planning.running), left: clampMs(m.planning.left) }
         : null,
+      initiative: m.initiative && typeof m.initiative === "object" ? cleanInitiative(m.initiative) : null,
     }),
   };
 
@@ -116,6 +138,7 @@
   root.NCD_OVERLAY = {
     STATS, clampStat, cleanTicker, tidyTicker,
     PLANNING_MAX, planningLeft, planningStep, cleanPlanning, fmtClock,
+    PHASES, PHASE_NAMES, NO_CONFLICT, cleanInitiative, stepPhase,
     make, read,
   };
 })(globalThis);

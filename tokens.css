@@ -69,6 +69,11 @@
   --color-good: oklch(84% 0.17 158);
   --color-bad: oklch(68% 0.21 22);
   --color-heat: oklch(70% 0.19 36);
+  /* a conflict scene's turns (the Initiative card and the overlay): Hazard yellow, Fast red, Antagonists magenta, Slow cyan */
+  --color-turn-hazard: oklch(88% 0.17 98);
+  --color-turn-fast: var(--color-bad);
+  --color-turn-antagonists: oklch(70% 0.24 330);
+  --color-turn-slow: var(--color-holo);
   --color-shade: oklch(5% 0.02 255 / 0.55);     /* inner shadows, the slot windows' shading */
   --color-scanline: oklch(82% 0.1 205 / 0.035); /* the roll result's screen */
   --color-bracket: oklch(78% 0.16 62 / 0.6);    /* the lit top and left edges of a stat box */
@@ -109,6 +114,10 @@
   --color-good: oklch(50% 0.13 158);
   --color-bad: oklch(52% 0.2 22);
   --color-heat: oklch(56% 0.19 36);
+  --color-turn-hazard: oklch(60% 0.13 90);
+  --color-turn-fast: var(--color-bad);
+  --color-turn-antagonists: oklch(52% 0.22 330);
+  --color-turn-slow: var(--color-holo);
   --color-shade: oklch(20% 0.03 252 / 0.25);
   --color-scanline: oklch(30% 0.03 250 / 0.03);
   --color-bracket: oklch(67% 0.155 56 / 0.7);
