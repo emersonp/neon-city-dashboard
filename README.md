@@ -81,8 +81,9 @@ A character's gear is a list of items. Each has a **name**, a **quantity** (show
 | Vehicle | a vehicle from the Garage | `Vehicle · Muscle Car · Medium ground vehicle` |
 | Prop | nothing more (characters saved before gear types have only props, and still do) | `prop` |
 
-Under each item are its keywords as chips: built-in ones (a weapon category's intrinsic keywords, armor's, and ones an
-ability grants) in *italics*, negative ones with a dashed red outline. Clicking an item's name opens a pop-up with
+Under each item is a line of its keywords in small capitals (set apart from the outlined condition chips): built-in ones
+(a weapon category's intrinsic keywords, armor's, and ones an ability grants) in *italics* with a "Built in" hover note,
+negative ones in red. Clicking an item's name opens a pop-up with
 its type line and what each of its keywords does.
 
 **Adding and changing gear:** **Run** adds gear (saved right away, never Starter). **Edit** adds, changes, and removes

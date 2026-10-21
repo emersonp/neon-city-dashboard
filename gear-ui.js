@@ -8,14 +8,14 @@
   const ICON_COLOR = { "advantage-die": "adv", boon: "adv", "challenge-die": "chal", drawback: "chal" };
   const rich = (s) => formatDescription(s, (name) => icon(name, ICON_COLOR[name] ?? ""));
 
-  // Built-in (and fixed) keywords in italics; negative ones outlined in red.
+  // Keywords as a quiet line of text, unlike condition chips: built-in (and fixed) ones in italics, negative ones in red.
   function keywordChipsHTML(item) {
     const always = G.builtIn(item), list = G.keywordsOf(item);
     if (!list.length) return "";
-    return `<div class="condition-list gear-keywords">${list.map((name) => {
-      const negative = G.keyword(name, item)?.group === "negative";
-      const label = always.includes(name) ? `<i>${escapeHTML(name)}</i>` : escapeHTML(name);
-      return `<span class="condition gear-keyword${negative ? " negative" : ""}">${label}</span>`;
+    return `<div class="gear-keywords">${list.map((name) => {
+      const negative = G.keyword(name, item)?.group === "negative", built = always.includes(name);
+      const label = built ? `<i>${escapeHTML(name)}</i>` : escapeHTML(name);
+      return `<span class="gear-keyword${negative ? " negative" : ""}"${built ? ' title="Built in: always on this item"' : ""}>${label}</span>`;
     }).join("")}</div>`;
   }
   const nameHTML = (item) => `<button type="button" class="ability-name" data-gear-info="${escapeHTML(item.id)}">${escapeHTML(item.description)}${
