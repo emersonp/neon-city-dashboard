@@ -90,7 +90,6 @@ test("kit, armor, equipment, vehicle labels and rules text", () => {
   const kit = C.newGear({ kind: "kit", description: "Med bag", set: "Paramedic's Kit", quality: "standard" });
   assert.equal(G.label(kit), "Kit · Paramedic's Kit · Standard · +20 impact");
   assert.equal(G.stats(kit).impact, 20);
-  assert.match(G.rulesText({ ...kit, special: "heal-someone" }), /Right Tool for the Job x2/);
   const armor = C.newGear({ kind: "armor", description: "Vest", level: 3 });
   assert.equal(G.label(armor), "Armor · Armored x3");
   assert.equal(G.label({ ...armor, level: 1 }), "Armor · Armored");
@@ -99,8 +98,11 @@ test("kit, armor, equipment, vehicle labels and rules text", () => {
   // the entry shows when the name doesn't say it, and so does the choice
   assert.equal(G.label(C.newGear({ kind: "equipment", description: "Chip", entry: "Expert", choice: "heal-someone" })), "Equipment · Guided skill software · Expert · Heal Someone");
   assert.equal(G.label(C.newGear({ kind: "vehicle", description: "V", vehicle: "Muscle Car" })), "Vehicle · Muscle Car · Medium ground vehicle");
-  assert.match(G.rulesText(w("Pistol", ["Rail"])), /\*\*Rail:\*\*/);
-  assert.match(G.rulesText(C.newGear({ description: "Hat" })), /Props are a special category/);
+  // the pop-up's text is the item's keywords only, not the databank text for what it is
+  assert.equal(G.rulesText(w("Pistol", ["Rail"])), `**Rail:** ${G.keyword("Rail").text}`);
+  assert.doesNotMatch(G.rulesText(w("Pistol", ["Rail"])), /Revolvers/);
+  assert.equal(G.rulesText(C.newGear({ description: "Hat" })), "");
+  assert.equal(G.rulesText({ ...kit, special: "heal-someone" }), "");
   assert.ok(G.EQUIPMENT.some((e) => e.name === "Ripcord") && !G.EQUIPMENT.some((e) => e.reference || e.name === "Rules"));
   assert.ok(!G.EQUIPMENT.some((e) => e.name === "Standard Tools" || e.name === "Props"));
   assert.equal(G.EQUIPMENT.find((e) => e.name === "Basic").section, "Guided skill software");

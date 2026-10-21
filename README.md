@@ -82,8 +82,8 @@ A character's gear is a list of items. Each has a **name**, a **quantity** (show
 | Prop | nothing more (characters saved before gear types have only props, and still do) | `prop` |
 
 Under each item are its keywords as chips: built-in ones (a weapon category's intrinsic keywords, armor's, and ones an
-ability grants) in *italics*, negative ones with a dashed red outline. Clicking an item's name opens its rules: the
-databank text for what it is, then each of its keywords.
+ability grants) in *italics*, negative ones with a dashed red outline. Clicking an item's name opens a pop-up with
+its type line and what each of its keywords does.
 
 **Adding and changing gear:** **Run** adds gear (saved right away, never Starter). **Edit** adds, changes, and removes
 it, and sets Starter. The gear dialog picks the type, then that type's fields, then keywords: weapon keywords (weapons

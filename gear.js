@@ -143,41 +143,8 @@
     }
   }
 
-  // Its rules, in the format.js description format: what the book says about it, then each of its keywords.
-  function rulesText(item) {
-    const parts = [];
-    switch (item?.kind ?? "prop") {
-      case "weapon": {
-        const w = weaponOf(item);
-        const s = stats(item);
-        if (w) parts.push(`**${w.name}** (${[s.hands && `${s.hands}-handed`, `+${s.damage} damage`].filter(Boolean).join(", ")})`, `*${w.examples}*`);
-        break;
-      }
-      case "kit": {
-        const set = toolSetOf(item), quality = KIT_QUALITIES.find((e) => e.quality === item.quality);
-        if (set) parts.push(`**${set.name}:** ${set.skills.map(skillName).join(", ")}`);
-        if (quality) parts.push(`**${quality.name}:** ${quality.text}`);
-        if (skillName(item.special)) parts.push(`**Hyper-specialized for ${skillName(item.special)}:** ${byName(entries("Specialized tool kits"), "Hyper-Specialized Tools").text}`);
-        if (item.consumable === true) parts.push(`**Consumable:** ${byName(entries("Specialized tool kits"), "Consumable Tools").text}`);
-        break;
-      }
-      case "equipment": {
-        const e = equipmentOf(item);
-        if (e) parts.push(`**${e.section} · ${e.name}**${e.tag ? ` (${e.tag})` : ""}`, e.text);
-        if (choiceName(e, item.choice)) parts.push(`**${e.choice.label}:** ${choiceName(e, item.choice)}`);
-        break;
-      }
-      case "armor": parts.push(`**${armorLevel(item) ? armored(armorLevel(item)) : D.armor.name}**`, D.armor.text); break;
-      case "vehicle": {
-        const v = vehicleOf(item);
-        if (v) parts.push(`**${v.name}** (${v.size})`, `*${v.blurb}*`, v.text);
-        break;
-      }
-      case "prop": parts.push(byName(entries("Gear basics"), "Props").text); break;
-    }
-    for (const name of keywordsOf(item)) parts.push(`**${name}:** ${keyword(name, item).text}`);
-    return parts.join("\n\n");
-  }
+  // The pop-up text for an item, in the format.js description format: each of its keywords and what it does.
+  const rulesText = (item) => keywordsOf(item).map((name) => `**${name}:** ${keyword(name, item).text}`).join("\n\n");
 
   // ---- Create: starting gear from the rules.js templates and the player's picks ----
   // creation.gear holds the "choose one" answers by line; creation.gearPicks holds, by item id, { category?, vehicle?,
