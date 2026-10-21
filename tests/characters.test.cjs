@@ -1,10 +1,14 @@
 // Run with: node --test tests/characters.test.cjs
 const test = require("node:test");
 const assert = require("node:assert/strict");
+require("../shared.js");
 require("../dice.js");
 require("../characters.js");
 require("../abilities.js");
 require("../rules.js");
+require("../databank.js");
+require("../format.js");
+require("../gear.js");
 
 test("gear: props with a description, Starter off unless set", () => {
   const C = globalThis.NCD_CHARACTERS;
@@ -351,8 +355,8 @@ const clone = (x) => JSON.parse(JSON.stringify(x));
 
 test("STEPS and newCreation", () => {
   assert.deepEqual(C.STEPS, ["archetype", "skills", "perk", "origin", "details", "review"]);
-  assert.deepEqual(C.newCreation(), { step: "archetype", archetype: null, knows: [], bumps: [], perk: null, gear: {}, origin: null,
-    augmentations: [], option: null, placements: {}, optionBumps: [] });
+  assert.deepEqual(C.newCreation(), { step: "archetype", archetype: null, knows: [], bumps: [], perk: null, gear: {}, gearPicks: {},
+    origin: null, augmentations: [], option: null, placements: {}, optionBumps: [] });
 });
 
 test("applyCreation: archetype sets skills, initiative, gear, luck, influence", () => {
@@ -362,12 +366,6 @@ test("applyCreation: archetype sets skills, initiative, gear, luck, influence", 
   assert.equal(sk(c, "initiative-in-the-network").value, null);
   assert.equal(c.archetype, "Assassin");
   assert.deepEqual([c.maxLuck, c.currentLuck, c.startingInfluence, c.currentInfluence], [100, 100, 1, 1]);
-  assert.equal(c.gear.length, 2);
-  assert.ok(c.gear.every((g) => g.starter && g.kind === "prop"));
-  const chosen = applied({ archetype: "Assassin", gear: { 0: 1 } });
-  assert.equal(chosen.gear.length, 3);
-  assert.match(chosen.gear[0].description, /^Two plasma swords/);
-  assert.deepEqual(applied({ archetype: "Assassin", gear: { 0: 1 } }).gear.map((g) => g.id), chosen.gear.map((g) => g.id));
   // handle and name are left alone
   const d = C.applyCreation({ ...make({ archetype: "Doc" }), handle: "Keep", name: "Me" }, R, CAT);
   assert.deepEqual([d.handle, d.name], ["Keep", "Me"]);
@@ -405,17 +403,6 @@ test("applyCreation: origin dice add to the archetype's, Moment of Clarity adds 
   const l = applied({ archetype: "Assassin", origin: "Gene-Spliced", option: "artificial-lycanthropy", optionBumps: ["run-like-hell", "sneak-around"] });
   assert.equal(sk(l, "run-like-hell").value, 55);
   assert.equal(sk(l, "sneak-around").value, 70);
-});
-
-test("applyCreation: augmentation gear is added and goes away with the augmentation", () => {
-  const aug = CAT.find((a) => a.type === "augmentation" && R.augmentationGear[a.id] && a.origin && a.archetype);
-  const base = { archetype: aug.archetype, origin: aug.origin };
-  const without = applied(base);
-  const withAug = applied({ ...base, augmentations: [aug.id] });
-  assert.equal(withAug.gear.length, without.gear.length + R.augmentationGear[aug.id].length);
-  assert.equal(withAug.gear.at(-1).description, R.augmentationGear[aug.id][0]);
-  assert.ok(withAug.gear.at(-1).id.startsWith(`create-aug-${aug.id}-`));
-  assert.equal(applied({ ...base, augmentations: [] }).gear.length, without.gear.length);
 });
 
 test("placeable: a placement is only offered where it fits and honours differentFrom", () => {
@@ -584,4 +571,84 @@ test("the Dice tab never rolls as a character in creation", () => {
   assert.equal(C.playingAs(finished), finished);
   assert.equal(C.playingAs(null), null);
   assert.equal(C.playingAs(undefined), null);
+});
+
+const G = globalThis.NCD_GEAR;
+
+test("create gear: archetype lines become typed starter items", () => {
+  const c = applied({ archetype: "Assassin" });
+  assert.equal(c.gear.length, 2); // radio line unanswered
+  assert.ok(c.gear.every((g) => g.starter));
+  assert.deepEqual(c.gear.map((g) => [g.kind, g.quantity]), [["weapon", 5], ["prop", 1]]);
+  const swords = applied({ archetype: "Assassin", gear: { 0: 1 } }).gear[0];
+  assert.deepEqual([swords.description, swords.category, swords.keywords, swords.quantity, swords.id], ["Plasma sword", "One-handed melee", ["Plasma"], 2, "create-gear-0-1-0"]);
+  assert.equal(G.label(swords), "One-handed melee · 1h · +10");
+  assert.deepEqual(applied({ archetype: "Assassin", gear: { 0: 1 } }).gear.map((g) => g.id), applied({ archetype: "Assassin", gear: { 0: 1 } }).gear.map((g) => g.id));
+});
+
+test("create gear: picks fill keywords, categories, and vehicles; illegal picks are dropped", () => {
+  const picks = { "create-gear-0-0-0": { keywords: ["Rail", "Durable"] }, "create-gear-0-0-1": { keywords: ["Compact"] } };
+  const merc = applied({ archetype: "Merc", gearPicks: picks }).gear;
+  assert.deepEqual(merc[0].keywords, ["Rail", "Durable"]);
+  assert.deepEqual(merc[1].keywords, []); // a rifle can't be Compact
+  const op = (p) => applied({ archetype: "Operator", gearPicks: p }).gear;
+  const opPicks = { "create-gear-2-0-0": { vehicle: "Drift Car" }, "create-gear-3-0-0": { category: "Shotgun", keywords: ["Flechette", "Loud"] } };
+  const gear = op(opPicks);
+  assert.equal(gear[2].vehicle, "Drift Car");
+  assert.deepEqual([gear[3].category, gear[3].keywords], ["Shotgun", ["Mounted", "Flechette", "Loud"]]);
+  assert.deepEqual(op({ ...opPicks, "create-gear-3-0-0": { category: "Launcher", keywords: ["Flechette", "Loud"] } })[3].keywords, ["Mounted", "Loud"]);
+  assert.equal(op({ "create-gear-2-0-0": { vehicle: "Police Mecha" } })[2].vehicle, undefined); // not one of the choices
+});
+
+test("create gear: slotOpen says what's left", () => {
+  const slots = G.starterSlots(make({ archetype: "Operator" }).creation, R);
+  assert.deepEqual(G.slotOpen(slots[2], {}), { vehicle: true, keywords: 0 });
+  assert.deepEqual(G.slotOpen(slots[3], {}), { category: true, keywords: 2 });
+  const pick = { category: "Rifle", keywords: ["Laser"] }; // the slot is built from the same picks
+  const picked = G.starterSlots(make({ archetype: "Operator", gearPicks: { "create-gear-3-0-0": pick } }).creation, R);
+  assert.deepEqual(G.slotOpen(picked[3], pick), { category: false, keywords: 1 });
+  assert.deepEqual(G.slotOpen(slots[1], undefined), { keywords: 0 });
+});
+
+test("create gear: Perk & Gear isn't complete until every pick is made", () => {
+  const base = { archetype: "Doc", perk: CAT.find((a) => a.type === "perk" && a.archetype === "Doc").id };
+  assert.equal(ok(base, "perk"), false);
+  assert.equal(ok({ ...base, gearPicks: { "create-gear-0-0-0": { keywords: ["Laser"] } } }, "perk"), true);
+  assert.equal(ok({ ...base, gearPicks: { "create-gear-0-0-0": { keywords: ["Laser", "Rail"] } } }, "perk"), false);
+  assert.equal(ok({ ...base, gearPicks: { "create-gear-0-0-0": { keywords: ["Cybernetic"] } } }, "perk"), false); // not allowed
+});
+
+test("create gear: augmentation gear, Butcher's Gauntlet exception, Weapon Mount", () => {
+  const bg = applied({ archetype: "Bruiser", origin: "Synthetic", augmentations: ["butcher-s-gauntlet"] }).gear.at(-1);
+  assert.deepEqual([bg.id, bg.category, bg.fixed, G.stats(bg).damage], ["create-aug-butcher-s-gauntlet-0", "Two-handed melee", ["Mounted"], 30]);
+  assert.ok(applied({ archetype: "Bruiser", origin: "Synthetic", augmentations: [] }).gear.every((g) => !g.id.startsWith("create-aug-")));
+  const doc = { archetype: "Doc", origin: "Cybernetic", augmentations: ["weapon-mount"] };
+  assert.deepEqual(G.weaponMountTargets(make(doc).creation, R), ["create-gear-0-0-0"]);
+  const mounted = applied({ ...doc, gearPicks: { "weapon-mount": { target: "create-gear-0-0-0", keywords: ["Shock"] } } }).gear[0];
+  assert.ok(["Mounted", "Shock"].every((k) => mounted.keywords.includes(k)));
+  const gone = { ...doc, gearPicks: { "weapon-mount": { target: "gone", keywords: ["Shock"] } } };
+  assert.equal(ok(gone, "origin"), false);
+  assert.doesNotThrow(() => applied(gone));
+  assert.equal(ok({ ...doc, gearPicks: { "weapon-mount": { target: "create-gear-0-0-0", keywords: [] } } }, "origin"), false);
+  assert.equal(ok({ ...doc, gearPicks: { "weapon-mount": { target: "create-gear-0-0-0", keywords: ["Shock"] } } }, "origin"), true);
+  // a weapon that already has Mounted isn't a target
+  const merc = { archetype: "Merc", origin: "Synthetic", augmentations: ["transfigurable-weapon"] };
+  assert.ok(!G.weaponMountTargets({ ...make(merc).creation, augmentations: ["transfigurable-weapon", "weapon-mount"] }, R).includes("create-aug-transfigurable-weapon-0"));
+});
+
+test("create gear: origin step needs the augmentation gear picks", () => {
+  const bruiser = { archetype: "Bruiser", origin: "Synthetic", augmentations: ["butcher-s-gauntlet"] };
+  assert.equal(ok(bruiser, "origin"), false);
+  assert.equal(ok({ ...bruiser, gearPicks: { "create-aug-butcher-s-gauntlet-0": { keywords: ["Jagged"] } } }, "origin"), true);
+});
+
+test("create gear: old creation shape still loads", () => {
+  const c = C.applyCreation({ id: "x", creation: { archetype: "Assassin", gear: { 0: 0 } } }, R, CAT);
+  assert.equal(c.gear[0].category, "Pistol");
+  assert.deepEqual(c.gear[0].keywords, ["Compact", "Rail"]);
+});
+
+test("create gear: changing archetype clears picks", () => {
+  const c = C.withCreation(make({ archetype: "Merc", gearPicks: { "create-gear-0-0-0": { keywords: ["Rail"] } } }), { archetype: "Doc" }, R, CAT);
+  assert.deepEqual(c.creation.gearPicks, {});
 });

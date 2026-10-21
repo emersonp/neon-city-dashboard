@@ -3,17 +3,27 @@
 // Needs characters.js loaded first (for the Mastermind's full Things You Know About list).
 //
 // archetypes[name]  pitch; initiative {world, network} (50 is stored as null); skills {skillId: {value, adv, chal}}
-//                   (value null is the book's "-"); knows {count, from}; gear (fixed lines, and {choose: [...]} groups).
+//                   (value null is the book's "-"); knows {count, from}; gear: the starting gear lines, each
+//                   {text, items} or {choose: [{text, items}]}, where items are templates (below).
 // origins[name]     pitch; augmentations (granted automatically); options (the two optional choices), each with:
 //   placements      intrinsic dice the player puts on skills: {key, kind: "adv" | "chal", count, category: "mental" | "physical",
 //                   differentFrom?: key of an earlier placement that must go on a different skill}
 //   extraAugmentation  true: pick a second starting augmentation      bumps {count, category}: +5% on that many different skills
 //   luck            extra starting luck                               perk: id of the perk it grants
-// augmentationGear  ability id -> starter gear lines that augmentation adds. Weapon Mount only modifies an existing weapon, so it has none.
+// augmentationGear  ability id -> the templates of the starting gear that augmentation adds. Weapon Mount only modifies an
+//                   existing weapon, so it has none (gear.js handles it).
+// A template is { kind, name, quantity?, category? | categories?, keywords?, fixed?, pick?, set?, quality?, vehicle? | vehicles? }:
+//   name is the item's starting name; keywords are the ones the book gives (removable later); fixed are granted against the
+//   usual rules; pick is how many more keywords the player chooses; categories / vehicles are what the player chooses from.
 //
 // Gear wording follows the book; blanks like "of your choice" are kept as written.
 (function (root) {
   const KNOWLEDGE = root.NCD_CHARACTERS.KNOWLEDGE;
+  // starting gear: a line of book text and the items it gives; a prop line is its own item
+  const line = (text, ...items) => ({ text, items });
+  const prop = (text) => line(text, { kind: "prop", name: text.replace(/ \(prop\)$/, "") });
+  const weapon = (name, category, more = {}) => ({ kind: "weapon", name, ...(category ? { category } : {}), ...more });
+  const kit = (name, set, quality = "standard") => ({ kind: "kit", name, set, quality });
   const d = (key, kind, count, category, differentFrom) => ({ key, kind, count, category, ...(differentFrom ? { differentFrom } : {}) });
   // 2 dice on one skill and 1 on a different skill of the same category (keys a/b for challenge, c/d for advantage)
   const chal2 = (category) => [d("a", "chal", 2, category), d("b", "chal", 1, category, "a")];
@@ -40,11 +50,13 @@
       knows: { count: 3, from: ["Criminals", "Executives", "Medicine", "Psionics", "Weapons"] },
       gear: [
         { choose: [
-          "A compact rail pistol (+20 damage, add 1 advantage die to attacks against far away targets, add 1 advantage die to rolls made to conceal the weapon)",
-          "Two plasma swords (+20 damage, one-handed melee weapon, deals 1 additional wound any time it wounds an enemy)",
+          line("A compact rail pistol (+20 damage, add 1 advantage die to attacks against far away targets, add 1 advantage die to rolls made to conceal the weapon)",
+            weapon("Rail pistol", "Pistol", { keywords: ["Compact", "Rail"] })),
+          line("Two plasma swords (+20 damage, one-handed melee weapon, deals 1 additional wound any time it wounds an enemy)",
+            weapon("Plasma sword", "One-handed melee", { keywords: ["Plasma"], quantity: 2 })),
         ] },
-        "Five copies of a thrown weapon (+10 damage) of your choice",
-        "A hooded cloak or long jacket that can completely conceal your body and keep your face shadowed (prop)",
+        line("Five copies of a thrown weapon (+10 damage) of your choice", weapon("Thrown weapon", "Thrown", { quantity: 5 })),
+        prop("A hooded cloak or long jacket that can completely conceal your body and keep your face shadowed (prop)"),
       ],
     },
     Bruiser: {
@@ -66,9 +78,10 @@
       },
       knows: { count: 3, from: ["Citizens", "Criminals", "Medicine", "Military", "Weapons"] },
       gear: [
-        "Two different one-handed melee weapons, each with 1 additional keyword of your choice",
-        "Leather jacket (prop)",
-        "Intimidating scars or visible damage to your default shell (prop)",
+        line("Two different one-handed melee weapons, each with 1 additional keyword of your choice",
+          weapon("Melee weapon", "One-handed melee", { pick: 1 }), weapon("Melee weapon", "One-handed melee", { pick: 1 })),
+        prop("Leather jacket (prop)"),
+        prop("Intimidating scars or visible damage to your default shell (prop)"),
       ],
     },
     Doc: {
@@ -90,9 +103,9 @@
       },
       knows: { count: 3, from: ["Cybernetics", "Genetics", "Medicine", "Psionics", "Robotics"] },
       gear: [
-        "A pistol with 1 keyword of your choice",
-        "An outfit incorporating stained and stitched medical scrubs (prop)",
-        "A standard paramedic's kit (+20 impact)",
+        line("A pistol with 1 keyword of your choice", weapon("Pistol", "Pistol", { pick: 1 })),
+        prop("An outfit incorporating stained and stitched medical scrubs (prop)"),
+        line("A standard paramedic's kit (+20 impact)", kit("Paramedic's kit", "Paramedic's Kit")),
       ],
     },
     Gearhead: {
@@ -114,10 +127,10 @@
       },
       knows: { count: 3, from: ["Cybernetics", "Military", "Robotics", "Vehicles", "Weapons"] },
       gear: [
-        "A pistol with 2 keywords of your choice",
-        "Coveralls or similar clothing, covered with grease stains and soldering iron burns (prop)",
-        "A set of standard mechanic's tools (+20 impact)",
-        "A pad filled with hundreds of half-finished schematics of your own design (prop)",
+        line("A pistol with 2 keywords of your choice", weapon("Pistol", "Pistol", { pick: 2 })),
+        prop("Coveralls or similar clothing, covered with grease stains and soldering iron burns (prop)"),
+        line("A set of standard mechanic's tools (+20 impact)", kit("Mechanic's tools", "Mechanic's Tools")),
+        prop("A pad filled with hundreds of half-finished schematics of your own design (prop)"),
       ],
     },
     Grifter: {
@@ -139,9 +152,9 @@
       },
       knows: { count: 3, from: ["Citizens", "Corporations", "Criminals", "Executives", "Government"] },
       gear: [
-        "Two thrown weapons (+10 damage)",
-        "Four sets of clothing, each tailored to a different social class and situation (prop)",
-        "A programmable makeup and tailoring kit (prop)",
+        line("Two thrown weapons (+10 damage)", weapon("Thrown weapon", "Thrown", { quantity: 2 })),
+        prop("Four sets of clothing, each tailored to a different social class and situation (prop)"),
+        prop("A programmable makeup and tailoring kit (prop)"),
       ],
     },
     Hacker: {
@@ -164,11 +177,11 @@
       knows: { count: 3, from: ["Computers", "Cybernetics", "Network", "Security", "Vehicles"] },
       gear: [
         { choose: [
-          "A standard hacker's deck",
-          "A standard commercial laptop (+20 impact)",
+          line("A standard hacker's deck", kit("Hacker's deck", "Hacker's Deck")),
+          line("A standard commercial laptop (+20 impact)", kit("Commercial laptop", "Commercial Laptop")),
         ] },
-        "A satchel or backpack (prop)",
-        "A compact pistol (+20 damage, add 1 advantage die to rolls made to conceal the weapon)",
+        prop("A satchel or backpack (prop)"),
+        line("A compact pistol (+20 damage, add 1 advantage die to rolls made to conceal the weapon)", weapon("Compact pistol", "Pistol", { keywords: ["Compact"] })),
       ],
     },
     Mastermind: {
@@ -190,10 +203,10 @@
       },
       knows: { count: 4, from: KNOWLEDGE },
       gear: [
-        "Encoded database of schemes with an encryption key only you know (prop)",
-        "Signet ring or other identifying jewelry (prop)",
-        "Walking cane (one-handed melee weapon, damage +10)",
-        "A bottle of real whiskey (prop)",
+        prop("Encoded database of schemes with an encryption key only you know (prop)"),
+        prop("Signet ring or other identifying jewelry (prop)"),
+        line("Walking cane (one-handed melee weapon, damage +10)", weapon("Walking cane", "One-handed melee")),
+        prop("A bottle of real whiskey (prop)"),
       ],
     },
     Merc: {
@@ -215,10 +228,11 @@
       },
       knows: { count: 3, from: ["Criminals", "Executives", "Medicine", "Psionics", "Weapons"] },
       gear: [
-        "A pistol with 2 additional keywords of your choice and a rifle with 1 additional keyword of your choice",
-        "A one-handed melee weapon with 1 additional keyword of your choice",
-        "Three copies of a thrown weapon with 2 additional keywords of your choice",
-        "Street clothes and a duster or leather jacket (prop)",
+        line("A pistol with 2 additional keywords of your choice and a rifle with 1 additional keyword of your choice",
+          weapon("Pistol", "Pistol", { pick: 2 }), weapon("Rifle", "Rifle", { pick: 1 })),
+        line("A one-handed melee weapon with 1 additional keyword of your choice", weapon("Melee weapon", "One-handed melee", { pick: 1 })),
+        line("Three copies of a thrown weapon with 2 additional keywords of your choice", weapon("Thrown weapon", "Thrown", { quantity: 3, pick: 2 })),
+        prop("Street clothes and a duster or leather jacket (prop)"),
       ],
     },
     Operator: {
@@ -240,10 +254,13 @@
       },
       knows: { count: 3, from: ["Computers", "Military", "Robotics", "Vehicles", "Weapons"] },
       gear: [
-        "A pistol with 1 keyword of your choice",
-        "Driving gloves, a helmet, and padded jumpsuit (prop)",
-        "A motorcycle, muscle car, or drift car",
-        "A mounted ranged weapon for your vehicle with 2 keywords of your choice",
+        line("A pistol with 1 keyword of your choice", weapon("Pistol", "Pistol", { pick: 1 })),
+        prop("Driving gloves, a helmet, and padded jumpsuit (prop)"),
+        // "motorcycle" covers both bikes in the Garage
+        line("A motorcycle, muscle car, or drift car", { kind: "vehicle", name: "Ride", vehicles: ["Chopper", "Street Bike", "Muscle Car", "Drift Car"] }),
+        // the ranged categories that allow Mounted
+        line("A mounted ranged weapon for your vehicle with 2 keywords of your choice",
+          weapon("Vehicle weapon", null, { categories: ["Pistol", "Rifle", "Shotgun", "Launcher"], keywords: ["Mounted"], pick: 2 })),
       ],
     },
     Thief: {
@@ -265,10 +282,11 @@
       },
       knows: { count: 3, from: ["Computers", "Corporations", "Criminals", "Security", "Vehicles"] },
       gear: [
-        "A pistol with the silent keyword",
-        "Dark, close-fitting clothing (prop)",
-        "A standard infiltrator's kit (+20 impact)",
-        "An over-the-shoulder bag (prop)",
+        line("A pistol with the silent keyword", weapon("Silenced pistol", "Pistol", { keywords: ["Silent"] })),
+        prop("Dark, close-fitting clothing (prop)"),
+        // the book says "infiltrator's kit"
+        line("A standard infiltrator's kit (+20 impact)", kit("Infiltration kit", "Infiltration Kit")),
+        prop("An over-the-shoulder bag (prop)"),
       ],
     },
   };
@@ -326,10 +344,11 @@
 
   // Augmentations whose text adds something to your starting gear (found by searching abilities.js for "starting gear").
   const augmentationGear = {
-    "echolocation": ["2 smoke grenades (thrown weapons with the explosive and obfuscating keywords)"],
-    "filtered-lungs": ["2 noxious gas grenades (thrown weapons with the explosive and debilitating keywords)"],
-    "butcher-s-gauntlet": ["A two-handed melee weapon with the Mounted keyword (+30 damage when mounted, only +20 if you remove it) and 1 additional keyword of your choice"],
-    "transfigurable-weapon": ["A pistol with the Mounted keyword, plus 2 keywords of your choice"],
+    "echolocation": [weapon("Smoke grenade", "Thrown", { keywords: ["Explosive", "Obfuscating"], quantity: 2 })],
+    "filtered-lungs": [weapon("Noxious gas grenade", "Thrown", { keywords: ["Explosive", "Debilitating"], quantity: 2 })],
+    // two-handed melee can't normally be Mounted; this one is (fixed), +30 damage mounted
+    "butcher-s-gauntlet": [weapon("Butcher's gauntlet", "Two-handed melee", { fixed: ["Mounted"], pick: 1 })],
+    "transfigurable-weapon": [weapon("Transfigurable pistol", "Pistol", { keywords: ["Mounted"], pick: 2 })],
   };
 
   root.NCD_RULES = { archetypes, origins, augmentationGear };

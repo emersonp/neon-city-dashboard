@@ -276,7 +276,7 @@
   const STEPS = ["archetype", "skills", "perk", "origin", "details", "review"];
   const BUMP_COUNT = 4;
   const isCreating = (character) => character?.creation != null && typeof character.creation === "object";
-  const newCreation = () => ({ step: "archetype", archetype: null, knows: [], bumps: [], perk: null, gear: {}, origin: null,
+  const newCreation = () => ({ step: "archetype", archetype: null, knows: [], bumps: [], perk: null, gear: {}, gearPicks: {}, origin: null,
     augmentations: [], option: null, placements: {}, optionBumps: [] });
   // Fills in anything a stored creation is missing, so a partial one (e.g. `creation: {}`) doesn't throw.
   const fullCreation = (creation) => ({ ...newCreation(), ...creation });
@@ -325,11 +325,8 @@
       if (id) skills[id] = { ...get(id), [p.kind]: Math.min(MAX_INTRINSIC, get(id)[p.kind] + p.count) };
     }
     const augs = [...(origin?.augmentations ?? []), ...cr.augmentations];
-    const lines = (arch?.gear ?? []).map((line, i) => [i, typeof line === "string" ? line : line.choose[cr.gear?.[i]]]).filter(([, text]) => text);
-    const gear = [
-      ...lines.map(([i, text]) => ({ ...newProp(text, true), id: `create-gear-${i}` })),
-      ...augs.flatMap((id) => (ruleFor(rules.augmentationGear, id) ?? []).map((text, n) => ({ ...newProp(text, true), id: `create-aug-${id}-${n}` }))),
-    ];
+    // starting gear comes from gear.js (loaded after this file, so looked up when it's needed)
+    const gear = root.NCD_GEAR.starterSlots(cr, rules).map((s) => s.item);
     const luck = DEFAULT_LUCK + (option?.luck ?? 0);
     return {
       ...character,
@@ -347,7 +344,7 @@
   function withCreation(character, changes, rules, catalog) {
     const cur = fullCreation(character.creation), resets = {};
     const changed = (k) => k in changes && !same(changes[k], cur[k]);
-    if (changed("archetype")) Object.assign(resets, { knows: [], perk: null, gear: {}, augmentations: [], placements: {} });
+    if (changed("archetype")) Object.assign(resets, { knows: [], perk: null, gear: {}, gearPicks: {}, augmentations: [], placements: {} });
     if (changed("origin")) Object.assign(resets, { augmentations: [], option: null, placements: {}, optionBumps: [] });
     if (changed("option")) Object.assign(resets, { placements: {}, optionBumps: [] });
     const next = { ...cur, ...resets, ...changes };
@@ -368,7 +365,8 @@
       case "perk": {
         const perk = catalog.find((a) => a.id === cr.perk);
         return Boolean(arch) && perk?.type === "perk" && perk.archetype === cr.archetype
-          && arch.gear.every((line, i) => typeof line === "string" || (Number.isInteger(cr.gear?.[i]) && cr.gear[i] >= 0 && cr.gear[i] < line.choose.length));
+          && arch.gear.every((line, i) => !line.choose || (Number.isInteger(cr.gear?.[i]) && cr.gear[i] >= 0 && cr.gear[i] < line.choose.length))
+          && root.NCD_GEAR.gearComplete(cr, rules, "perk");
       }
       case "origin": {
         if (!arch || !ruleFor(rules.origins, cr.origin)) return false;
@@ -378,7 +376,8 @@
         if (!isDistinctSet(cr.augmentations, option?.extraAugmentation ? 2 : 1, fits)) return false;
         if (!(option?.placements ?? []).every((p) => placeable(cr, p.key, rules).includes(cr.placements?.[p.key]))) return false;
         const bumps = option?.bumps;
-        return isDistinctSet(cr.optionBumps, bumps?.count ?? 0, SKILLS.filter((s) => s.type === bumps?.category).map((s) => s.id));
+        return isDistinctSet(cr.optionBumps, bumps?.count ?? 0, SKILLS.filter((s) => s.type === bumps?.category).map((s) => s.id))
+          && root.NCD_GEAR.gearComplete(cr, rules, "origin");
       }
       case "details": return String(character.handle ?? "").trim() !== "";
       case "review": return STEPS.slice(0, -1).every((s) => stepComplete(character, s, rules, catalog));

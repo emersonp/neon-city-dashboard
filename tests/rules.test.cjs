@@ -1,10 +1,14 @@
 // Run with: node --test tests/rules.test.cjs
 const test = require("node:test");
 const assert = require("node:assert/strict");
+require("../shared.js");
 require("../dice.js");
 require("../characters.js");
 require("../abilities.js");
 require("../rules.js");
+require("../databank.js");
+require("../format.js");
+require("../gear.js");
 
 const C = globalThis.NCD_CHARACTERS, CATALOG = globalThis.NCD_ABILITIES, R = globalThis.NCD_RULES;
 const step5 = (n) => Number.isInteger(n) && n % 5 === 0;
@@ -49,15 +53,44 @@ test("knows lists come from C.KNOWLEDGE", () => {
   }
 });
 
-test("gear lines are non-empty, choice groups have at least 2 options", () => {
-  for (const [name, a] of Object.entries(R.archetypes)) {
-    assert.ok(a.gear.length > 0, name);
-    for (const g of a.gear) {
-      const lines = typeof g === "string" ? [g] : g.choose;
-      if (typeof g !== "string") assert.ok(lines.length >= 2, name);
-      for (const l of lines) assert.ok(typeof l === "string" && l.trim().length > 0, name);
-    }
+const G = globalThis.NCD_GEAR, D = globalThis.NCD_DATABANK;
+const templates = () => [
+  ...Object.entries(R.archetypes).flatMap(([n, a]) => a.gear.flatMap((l) => (l.choose ?? [l]).flatMap((o) => o.items.map((t) => [n, t])))),
+  ...Object.entries(R.augmentationGear).flatMap(([id, ts]) => ts.map((t) => [id, t])),
+];
+
+test("gear templates: lines have text and items, choice groups have at least 2 options", () => {
+  for (const [name, a] of Object.entries(R.archetypes)) for (const l of a.gear) {
+    for (const o of l.choose ?? [l]) { assert.ok(o.text.trim(), name); assert.ok(o.items.length > 0, name); }
+    if (l.choose) assert.ok(l.choose.length >= 2, name);
   }
+  for (const id of Object.keys(R.augmentationGear)) assert.ok(CATALOG.some((a) => a.id === id && a.type === "augmentation"), id);
+});
+
+test("gear templates name real categories, sets, vehicles, and keywords", () => {
+  const cats = D.weapons.map((w) => w.name), vehicles = D.vehicles.map((v) => v.name), sets = D.toolSets.map((t) => t.name);
+  for (const [where, t] of templates()) {
+    assert.ok(G.KINDS.includes(t.kind) && t.name, where);
+    for (const c of [t.category, ...(t.categories ?? [])].filter(Boolean)) assert.ok(cats.includes(c), `${where}: ${c}`);
+    for (const v of [t.vehicle, ...(t.vehicles ?? [])].filter(Boolean)) assert.ok(vehicles.includes(v), `${where}: ${v}`);
+    if (t.kind === "kit") assert.ok(sets.includes(t.set) && t.quality in G.QUALITIES, where);
+    for (const k of [...(t.keywords ?? []), ...(t.fixed ?? [])]) assert.ok(G.keyword(k), `${where}: ${k}`);
+  }
+});
+
+test("given keywords are legal for every category a template allows", () => {
+  for (const [where, t] of templates()) for (const category of t.categories ?? [t.category]) {
+    const item = { kind: t.kind, category, keywords: [], fixed: t.fixed ?? [] };
+    for (const k of t.keywords ?? []) { assert.ok(G.canAdd(item, k), `${where}: ${category} + ${k}`); item.keywords.push(k); }
+  }
+});
+
+test("Merc and Operator starting gear match the book", () => {
+  const merc = R.archetypes.Merc.gear[0].items;
+  assert.deepEqual(merc.map((t) => [t.category, t.pick]), [["Pistol", 2], ["Rifle", 1]]);
+  const op = R.archetypes.Operator.gear.flatMap((l) => l.items ?? []);
+  assert.deepEqual(op.find((t) => t.kind === "vehicle").vehicles, ["Chopper", "Street Bike", "Muscle Car", "Drift Car"]);
+  assert.deepEqual(op.find((t) => t.categories).categories, ["Pistol", "Rifle", "Shotgun", "Launcher"]);
 });
 
 test("Assassin matches the book", () => {
@@ -79,10 +112,11 @@ test("Assassin matches the book", () => {
   });
   assert.equal(a.gear.length, 3);
   assert.equal(a.gear[0].choose.length, 2);
-  assert.equal(typeof a.gear[1], "string");
-  assert.equal(typeof a.gear[2], "string");
-  assert.match(a.gear[0].choose[0], /compact rail pistol/i);
-  assert.match(a.gear[0].choose[1], /two plasma swords/i);
+  assert.deepEqual([a.gear[1].items[0].category, a.gear[1].items[0].quantity], ["Thrown", 5]);
+  assert.equal(a.gear[2].items[0].kind, "prop");
+  assert.match(a.gear[0].choose[0].text, /compact rail pistol/i);
+  assert.deepEqual(a.gear[0].choose[0].items[0].keywords, ["Compact", "Rail"]);
+  assert.match(a.gear[0].choose[1].text, /two plasma swords/i);
 });
 
 test("origin options match the spec table", () => {
@@ -122,5 +156,5 @@ test("ability ids in the rules exist in the catalog", () => {
   }
   assert.ok(used.length > 4);
   for (const id of used) assert.ok(ids.has(id), id);
-  for (const lines of Object.values(R.augmentationGear)) for (const l of lines) assert.ok(l.trim());
+  for (const items of Object.values(R.augmentationGear)) assert.ok(items.length > 0);
 });

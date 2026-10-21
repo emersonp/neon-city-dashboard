@@ -177,5 +177,72 @@
     return parts.join("\n\n");
   }
 
-  root.NCD_GEAR = { KINDS, QUALITIES, EQUIPMENT, keyword, builtIn, keywordsOf, canAdd, keywordChoices, legalize, retype, stats, label, rulesText };
+  // ---- Create: starting gear from the rules.js templates and the player's picks ----
+  // creation.gear holds the "choose one" answers by line; creation.gearPicks holds, by item id, { category?, vehicle?,
+  // keywords } and, under "weapon-mount", Weapon Mount's { target: item id, keywords: [one] }. Picks that don't fit are
+  // ignored, so stale ones (from another option or a dropped augmentation) do no harm.
+  const MOUNT = "weapon-mount";
+  const picksOf = (cr) => (cr?.gearPicks && typeof cr.gearPicks === "object" ? cr.gearPicks : {});
+  const augmentationsOf = (cr, rules) => [...(C.ruleFor(rules.origins, cr?.origin)?.augmentations ?? []),
+    ...(Array.isArray(cr?.augmentations) ? cr.augmentations : [])];
+
+  function fromTemplate(t, id, pick) {
+    const category = t.categories ? (t.categories.includes(pick?.category) ? pick.category : undefined) : t.category;
+    const vehicle = t.vehicles ? (t.vehicles.includes(pick?.vehicle) ? pick.vehicle : undefined) : t.vehicle;
+    const item = C.newGear({ id, kind: t.kind, description: t.name, starter: true, quantity: t.quantity ?? 1, fixed: t.fixed ?? [],
+      ...(category && { category }), ...(vehicle && { vehicle }), ...(t.set && { set: t.set, quality: t.quality }) });
+    // the book's keywords first, so a pick that clashes with one is the one dropped
+    return legalize({ ...item, keywords: [...(t.keywords ?? []), ...strings(pick?.keywords).slice(0, t.pick ?? 0)] });
+  }
+
+  // Every starting item, before Weapon Mount: archetype lines (step "perk"), then augmentation gear (step "origin").
+  function baseSlots(cr, rules) {
+    const picks = picksOf(cr), slots = [];
+    const add = (id, step, template) => slots.push({ id, step, template, item: fromTemplate(template, id, picks[id]) });
+    (C.ruleFor(rules.archetypes, cr?.archetype)?.gear ?? []).forEach((line, i) => {
+      const n = line.choose ? cr.gear?.[i] : 0;
+      const option = line.choose ? (Number.isInteger(n) ? line.choose[n] : null) : line;
+      option?.items.forEach((t, j) => add(`create-gear-${i}-${n}-${j}`, "perk", t));
+    });
+    for (const aug of augmentationsOf(cr, rules)) (C.ruleFor(rules.augmentationGear, aug) ?? []).forEach((t, j) => add(`create-aug-${aug}-${j}`, "origin", t));
+    return slots;
+  }
+
+  // Weapon Mount: a starting weapon that can be Mounted, one-handed (or Miniaturized), and isn't Mounted already.
+  const mountable = (slots) => slots.filter(({ item }) => weaponOf(item)?.allowed.includes("Mounted")
+    && stats(item).hands === 1 && !keywordsOf(item).includes("Mounted")).map((s) => s.id);
+  const weaponMountTargets = (creation, rules) => mountable(baseSlots(creation, rules));
+
+  // [{ id, step, template, item }] for every starting item, with Weapon Mount applied to its target.
+  function starterSlots(creation, rules) {
+    const slots = baseSlots(creation, rules), mount = picksOf(creation)[MOUNT];
+    if (augmentationsOf(creation, rules).includes(MOUNT) && mountable(slots).includes(mount?.target)) {
+      const slot = slots.find((s) => s.id === mount.target);
+      slot.item = legalize({ ...slot.item, keywords: [...slot.item.keywords, "Mounted", ...strings(mount.keywords).slice(0, 1)] });
+    }
+    return slots;
+  }
+
+  // What a slot still needs: a category or vehicle (true while missing), and how many keywords are left to pick.
+  function slotOpen({ template: t, item }, pick) {
+    const picked = strings(pick?.keywords).slice(0, t.pick ?? 0).filter((k) => item.keywords.includes(k));
+    return { keywords: (t.pick ?? 0) - picked.length, ...(t.categories && { category: !item.category }), ...(t.vehicles && { vehicle: !item.vehicle }) };
+  }
+
+  // Whether every starting item from that step ("perk" or "origin") has all its picks, and none extra.
+  function gearComplete(creation, rules, step) {
+    const picks = picksOf(creation), slots = starterSlots(creation, rules);
+    const done = slots.filter((s) => s.step === step).every((s) => {
+      const open = slotOpen(s, picks[s.id]);
+      return !open.category && !open.vehicle && open.keywords === 0 && strings(picks[s.id]?.keywords).length === (s.template.pick ?? 0);
+    });
+    if (!done || step !== "origin" || !augmentationsOf(creation, rules).includes(MOUNT)) return done;
+    const mount = picks[MOUNT], k = strings(mount?.keywords);
+    if (!weaponMountTargets(creation, rules).includes(mount?.target) || k.length !== 1) return false;
+    const before = baseSlots(creation, rules).find((s) => s.id === mount.target).item;
+    return !keywordsOf(before).includes(k[0]) && slots.find((s) => s.id === mount.target).item.keywords.includes(k[0]);
+  }
+
+  root.NCD_GEAR = { KINDS, QUALITIES, EQUIPMENT, keyword, builtIn, keywordsOf, canAdd, keywordChoices, legalize, retype, stats, label, rulesText,
+    starterSlots, weaponMountTargets, slotOpen, gearComplete };
 })(globalThis);
