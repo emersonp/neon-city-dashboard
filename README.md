@@ -87,7 +87,7 @@ ones in red. Clicking an item's name opens a pop-up with
 its type line and what each of its keywords does.
 
 **Adding and changing gear:** **Run** and **Edit** both add, change, and remove gear. Run saves right away and doesn't
-set Starter (new gear isn't Starter; changed gear keeps its own); Edit also sets Starter, and saves on Save. The gear dialog picks the type, then that type's fields, then keywords: weapon keywords (weapons
+set Starter (new gear isn't Starter; changed gear keeps its own); Edit also sets Starter, and saves on Save. Removing an item asks first. The gear dialog picks the type, then that type's fields, then keywords: weapon keywords (weapons
 only, from the category's allowed list) and gear keywords, each with its rules text on hover. Changing an item's type or
 category drops keywords it can no longer have; that's also how to turn an old prop into a real item.
 

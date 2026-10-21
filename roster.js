@@ -469,14 +469,30 @@
       const item = C.gear(base).find((g) => String(g.id) === id);
       if (!item) return;
       if (button.dataset.gearAction === "edit") openGearDialog(item);
-      else if (state === "editing") {
-        draft = C.withoutGear(draft, item.id);
-        renderGear($("gear-edit"), draft, { editable: true });
-      } else if (state === "running" && commit(C.withoutGear(current, item.id))) {
-        renderGear($("gear-run"), current, { running: true });
-      }
+      else openRemoveGear(item);
     });
   }
+  // Removing asks first: Run removes it for good, Edit once you save.
+  const removeDialog = $("gear-remove-dialog");
+  let removing = null;
+  function openRemoveGear(item) {
+    removing = item;
+    $("gear-remove-text").textContent = state === "running"
+      ? `Remove ${item.description}? This can't be undone.`
+      : `Remove ${item.description}? It's gone when you save.`;
+    removeDialog.open = true;
+  }
+  $("gear-remove-confirm").addEventListener("click", () => {
+    removeDialog.open = false;
+    if (!removing) return;
+    if (state === "editing") {
+      draft = C.withoutGear(draft, removing.id);
+      renderGear($("gear-edit"), draft, { editable: true });
+    } else if (state === "running" && commit(C.withoutGear(current, removing.id))) {
+      renderGear($("gear-run"), current, { running: true });
+    }
+    removing = null;
+  });
 
   // ---- conditions: chips on the character and under gear; in Run and Edit a chip opens its dialog ----
   // Run saves each change right away; Edit keeps them in the draft until Save. Nothing posts to Discord.
