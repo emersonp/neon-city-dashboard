@@ -505,10 +505,9 @@ button.condition:hover, button.condition:focus-visible { background: color-mix(i
 /* gear keywords: quieter chips than conditions; negative ones dashed red */
 /* gear keywords: a quiet line of small caps (conditions are the outlined pills); negative ones red, built-in ones italic */
 .gear-keywords { flex-basis: 100%; display: flex; flex-wrap: wrap; align-items: baseline; font-size: var(--wa-font-size-xs);
-  letter-spacing: 0.12em; text-transform: uppercase; color: var(--wa-color-text-quiet); }
+  letter-spacing: 0.12em; text-transform: uppercase; color: var(--wa-color-text-quiet); cursor: default; user-select: none; }
 .gear-keyword + .gear-keyword::before { content: "·"; margin-inline: 0.6em; color: var(--wa-color-text-quiet); font-style: normal; }
 .gear-keyword.negative { color: var(--ncd-bad); }
-.gear-keyword[title] { cursor: help; }
 .gear-list li:has(.gear-keywords) { flex-wrap: wrap; }
 .gear-quantity { margin-inline-start: 0.25em; color: var(--wa-color-text-quiet); }
 .keyword-picker { display: flex; flex-direction: column; gap: var(--wa-space-s); }

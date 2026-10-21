@@ -15,7 +15,7 @@
     return `<div class="gear-keywords">${list.map((name) => {
       const negative = G.keyword(name, item)?.group === "negative", built = always.includes(name);
       const label = built ? `<i>${escapeHTML(name)}</i>` : escapeHTML(name);
-      return `<span class="gear-keyword${negative ? " negative" : ""}"${built ? ' title="Built in: always on this item"' : ""}>${label}</span>`;
+      return `<span class="gear-keyword${negative ? " negative" : ""}">${label}</span>`;
     }).join("")}</div>`;
   }
   const nameHTML = (item) => `<button type="button" class="ability-name" data-gear-info="${escapeHTML(item.id)}">${escapeHTML(item.description)}${
