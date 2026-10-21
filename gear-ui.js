@@ -21,11 +21,11 @@
   const nameHTML = (item) => `<button type="button" class="ability-name" data-gear-info="${escapeHTML(item.id)}">${escapeHTML(item.description)}${
     item.quantity > 1 ? ` <span class="gear-quantity">×${item.quantity}</span>` : ""}</button>`;
   const rowHTML = (item) => `<span class="gear-text">${nameHTML(item)} <span class="gear-kind">[${escapeHTML(G.label(item))}]</span></span>`;
-  // The pop-up: what the item is, then its keywords folded away under "Keywords (n)".
+  // The pop-up: what the item is, then each keyword folded away under its own name.
   function rulesHTML(item) {
-    const description = G.descriptionText(item), keywords = G.keywordsOf(item);
-    return `${description ? `<div class="ability-text">${rich(description)}</div>` : ""}${keywords.length
-      ? `<wa-details class="gear-info-keywords" summary="Keywords (${keywords.length})"><div class="ability-text">${rich(G.keywordsText(item))}</div></wa-details>` : ""}`;
+    const description = G.descriptionText(item);
+    return `${description ? `<div class="ability-text">${rich(description)}</div>` : ""}${G.keywordsOf(item).map((name) =>
+      `<wa-details class="gear-info-keyword" summary="${escapeHTML(name)}"><div class="ability-text">${rich(G.keyword(name, item).text)}</div></wa-details>`).join("")}`;
   }
 
   // Checkboxes for every keyword the item could take, in a weapon group and a gear group, each with its rules text in a

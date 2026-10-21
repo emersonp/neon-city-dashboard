@@ -99,8 +99,6 @@ test("kit, armor, equipment, vehicle labels and rules text", () => {
   assert.equal(G.label(C.newGear({ kind: "equipment", description: "Chip", entry: "Expert", choice: "heal-someone" })), "Equipment · Guided skill software · Expert · Heal Someone");
   assert.equal(G.label(C.newGear({ kind: "vehicle", description: "V", vehicle: "Muscle Car" })), "Vehicle · Muscle Car · Medium ground vehicle");
   // the pop-up's text is the item's keywords only, not the databank text for what it is
-  assert.equal(G.keywordsText(w("Pistol", ["Rail"])), `**Rail:** ${G.keyword("Rail").text}`);
-  assert.equal(G.keywordsText(C.newGear({ description: "Hat" })), "");
   assert.ok(G.EQUIPMENT.some((e) => e.name === "Ripcord") && !G.EQUIPMENT.some((e) => e.reference || e.name === "Rules"));
   assert.ok(!G.EQUIPMENT.some((e) => e.name === "Standard Tools" || e.name === "Props"));
   assert.equal(G.EQUIPMENT.find((e) => e.name === "Basic").section, "Guided skill software");
@@ -110,7 +108,7 @@ test("gear: junk fields don't throw", () => {
   for (const junk of [{ kind: "weapon", category: "Laser cannon", keywords: [5, "Nope", null] }, { kind: "kit", set: "x", quality: "y" },
     { kind: "armor", level: 9 }, { kind: "equipment", entry: "?" }, { kind: "vehicle", vehicle: "Boat" }, { kind: "blimp" }]) {
     const item = C.gear({ gear: [{ id: 1, description: "J", ...junk }] })[0];
-    for (const f of [G.label, G.stats, G.keywordsText, G.descriptionText, G.keywordChoices, G.keywordsOf, G.builtIn, G.legalize]) assert.doesNotThrow(() => f(item), JSON.stringify(junk));
+    for (const f of [G.label, G.stats, G.descriptionText, G.keywordChoices, G.keywordsOf, G.builtIn, G.legalize]) assert.doesNotThrow(() => f(item), JSON.stringify(junk));
   }
   assert.match(G.label({ id: 1, kind: "weapon", category: "Laser cannon" }), /\?/);
   assert.deepEqual(G.keywordsOf({ id: 1, kind: "prop", keywords: ["Nope", "Durable"] }), ["Durable"]);
@@ -119,8 +117,8 @@ test("gear: junk fields don't throw", () => {
 test("gear: an unknown fixed keyword is ignored, not thrown on", () => {
   const item = w("Pistol", [], { fixed: ["Nope"] });
   assert.deepEqual(G.builtIn(item), []);
-  for (const f of [G.label, G.stats, G.keywordsText, G.descriptionText, G.keywordChoices]) assert.doesNotThrow(() => f(item));
-  assert.doesNotThrow(() => G.keywordsText(C.newGear({ description: "Hat", fixed: ["Nope"] })));
+  for (const f of [G.label, G.stats, G.descriptionText, G.keywordChoices]) assert.doesNotThrow(() => f(item));
+  assert.doesNotThrow(() => G.descriptionText(C.newGear({ description: "Hat", fixed: ["Nope"] })));
 });
 
 test("retype to another kind drops fixed keywords; the same kind keeps them", () => {

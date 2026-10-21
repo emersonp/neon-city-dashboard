@@ -794,4 +794,5 @@ html:not(.bevel).wa-dark .portrait-frame { filter: drop-shadow(0 0 6px color-mix
 
 /* the gear pop-up: description, then the keywords folded away */
 #gear-info-body .ability-text > :is(p, ul) { margin-block: 0 var(--wa-space-s); }
-.gear-info-keywords { margin-top: var(--wa-space-m); }
+.gear-info-keyword { margin-top: var(--wa-space-xs); }
+.ability-text + .gear-info-keyword { margin-top: var(--wa-space-m); }

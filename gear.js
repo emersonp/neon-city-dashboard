@@ -172,9 +172,6 @@
     }
   }
 
-  // An item's keywords and what each does, in the format.js description format (the pop-up's collapsible part).
-  const keywordsText = (item) => keywordsOf(item).map((name) => `**${name}:** ${keyword(name, item).text}`).join("\n\n");
-
   // What the item is, in the book's own words but only the parts worth a glance (the label already gives the numbers):
   // a weapon's examples; a kit's quality, skills, and hyper-specialized / consumable rules; an equipment entry (without
   // its list of options once one is chosen); armor; a vehicle's rules (not its blurb); and the props rule.
@@ -274,6 +271,6 @@
     return !keywordsOf(before).includes(k[0]) && slots.find((s) => s.id === mount.target).item.keywords.includes(k[0]);
   }
 
-  root.NCD_GEAR = { KINDS, QUALITIES, EQUIPMENT, keyword, builtIn, keywordsOf, canAdd, keywordChoices, legalize, retype, stats, label, defaultName, descriptionText, keywordsText,
+  root.NCD_GEAR = { KINDS, QUALITIES, EQUIPMENT, keyword, builtIn, keywordsOf, canAdd, keywordChoices, legalize, retype, stats, label, defaultName, descriptionText,
     starterSlots, weaponMountTargets, slotOpen, gearComplete };
 })(globalThis);

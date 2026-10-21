@@ -85,7 +85,7 @@ Under each item is a line of its keywords in small capitals (set apart from the 
 (a weapon category's intrinsic keywords, armor's, and ones an ability grants) in *italics*, negative
 ones in red. Clicking an item's name opens a pop-up with
 its type line, a short description in the book's words (`descriptionText` in `gear.js` picks which parts), and its
-keywords folded away under **Keywords**.
+keywords, each folded away under its own name.
 
 **Adding and changing gear:** **Run** and **Edit** both add, change, and remove gear. Run saves right away and doesn't
 set Starter (new gear isn't Starter; changed gear keeps its own); Edit also sets Starter, and saves on Save. Removing an item in Run asks first. A name is optional: new gear's name box fills in from
