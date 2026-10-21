@@ -5,9 +5,10 @@
 <title>Neon City Overlay</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@700&family=Orbitron:wght@500;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-<!-- OBS browser source: the Dice tab drives this page through OBS (see README). obs-config.js is gitignored. -->
+<!-- OBS browser source: the Administrator's Dashboard tab drives this page through OBS (see README). obs-config.js is gitignored. -->
 <script src="obs-config.js"></script>
 <script src="obs-link.js"></script>
+<script src="overlay-rules.js"></script>
 <script src="icons.js"></script>
 <style>
   :root {
@@ -34,8 +35,6 @@
     padding: 3vh 2.5vw;
     background:
       repeating-linear-gradient(0deg, rgba(255,255,255,0.025) 0 1px, transparent 1px 4px),
-      linear-gradient(rgba(0,240,255,0.06) 1px, transparent 1px) 0 0 / 3vw 3vw,
-      linear-gradient(90deg, rgba(0,240,255,0.06) 1px, transparent 1px) 0 0 / 3vw 3vw,
       radial-gradient(ellipse at 50% 0%, #2a0a3d 0%, transparent 60%),
       radial-gradient(ellipse at 50% 100%, #00313a 0%, transparent 55%),
       var(--bg);
@@ -214,9 +213,11 @@
     99%    { transform: none; filter: none; }
   }
 
-  /* slow bright scanline sweeping down the panel */
-  .panel::after {
-    content: ""; position: absolute; left: 0; right: 0; top: 0; height: 12vh; pointer-events: none;
+  /* slow bright scanline sweeping down the camera side of the screen (everything beside the panel) */
+  .cam-sweep { position: absolute; top: 0; bottom: 0; left: var(--panel-w); right: 0; overflow: hidden; pointer-events: none; }
+  body.right .cam-sweep { left: 0; right: var(--panel-w); }
+  .cam-sweep::after {
+    content: ""; position: absolute; left: 0; right: 0; top: 0; height: 12vh;
     background: linear-gradient(transparent, rgba(0,240,255,0.07) 45%, rgba(255,255,255,0.12) 50%, rgba(0,240,255,0.07) 55%, transparent);
     animation: sweep 64s linear infinite;
     opacity: 0;
@@ -234,6 +235,8 @@
   .adv  { --c: #3dffb0; --ink: #3dffb0; --paper: #0b0c10; }
   .chal { --c: #ff3b5c; --ink: #ff3b5c; --paper: #0b0c10; }
   .pool { margin-top: 2.2vh; }
+  /* no roll showing: the ROLL label, the dice and the results go (hidden, not removed, so nothing else moves) */
+  body.no-roll .dice-wrap, body.no-roll .results { visibility: hidden; }
   .reels { display: flex; justify-content: center; flex-wrap: wrap; gap: 0.7vw; --s: 3.4vw; }
   .reels .gap { width: 1.4vw; }
   .slot { display: flex; flex-direction: column; align-items: center; gap: 0.5vh; }
@@ -267,6 +270,166 @@
   .net-label.even { color: #b9b7d8; text-shadow: 0 0 8px rgba(185,183,216,0.6); }
   .net-label.glitch::before, .net-label.glitch::after { animation-duration: 43.4s; animation-delay: 30s; }
 
+  /* ---------- Ticker: a news-crawl along the bottom of the camera side ---------- */
+  .ticker {
+    position: absolute; left: var(--panel-w); right: 0; bottom: 0; height: 3.4vw;
+    display: flex; align-items: stretch;
+    background:
+      repeating-linear-gradient(0deg, rgba(255,255,255,0.035) 0 1px, transparent 1px 3px),
+      linear-gradient(rgba(7,6,15,0.86), rgba(7,6,15,0.96));
+    border-top: 2px solid var(--yellow);
+    box-shadow: 0 0 16px rgba(245,255,59,0.7), inset 0 10px 14px -12px var(--yellow);
+    transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.6s;
+  }
+  body.right .ticker { left: 0; right: var(--panel-w); }
+  .ticker.off { transform: translateY(115%); opacity: 0; }
+  .ticker-tag {
+    flex: none; display: flex; align-items: center; gap: 0.6vw;
+    padding: 0 2.2vw 0 1.2vw; background: var(--yellow); color: #07060f;
+    font-family: "Orbitron", sans-serif; font-weight: 900; font-size: 1.1vw; letter-spacing: 0.3em;
+    clip-path: polygon(0 0, 100% 0, calc(100% - 1.4vw) 100%, 0 100%);
+    animation: flicker 47s infinite 11s;
+  }
+  /* blinking "live" block */
+  .ticker-tag::before { content: ""; width: 0.6vw; height: 0.6vw; background: #07060f; animation: blink 1.2s steps(1) infinite; }
+  /* hazard stripes before the slanted edge */
+  .ticker-tag::after { content: ""; width: 1.6vw; height: 55%; margin-left: 0.4vw;
+    background: repeating-linear-gradient(-45deg, #07060f 0 0.22vw, transparent 0.22vw 0.48vw); }
+  @keyframes blink { 50% { opacity: 0; } }
+  .ticker-window {
+    flex: 1; min-width: 0; overflow: hidden; display: flex; align-items: center;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 3%, #000 97%, transparent);
+            mask-image: linear-gradient(90deg, transparent, #000 3%, #000 97%, transparent);
+    animation: jitter 39.4s infinite 17s;
+  }
+  .ticker-track { display: flex; align-items: center; white-space: nowrap; will-change: transform; animation: tick var(--dur, 30s) linear infinite; }
+  @keyframes tick { to { transform: translateX(-50%); } }
+  .ticker-item {
+    font-size: 1.6vw; line-height: 1; letter-spacing: 0.08em; text-transform: uppercase; color: var(--cyan);
+    text-shadow: 0 0 6px var(--cyan), 0 0 18px rgba(0,240,255,0.55);
+  }
+  /* a drawn diamond (a ◆ glyph sits on the baseline, off the capitals' middle) */
+  .ticker-sep { flex: none; width: 0.5vw; height: 0.5vw; margin: 0 2.4vw; transform: rotate(45deg);
+    background: var(--yellow); box-shadow: 0 0 8px var(--yellow); }
+
+  /* ---------- Sign: CONSUME / OBEY in the camera's top corner ---------- */
+  .sign {
+    --sc: var(--cyan);
+    position: absolute; top: 2.6vh; right: 1.6vw; width: 25vw; height: 6.4vw;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.3vw;
+    color: var(--sc);
+    background:
+      repeating-linear-gradient(0deg, rgba(255,255,255,0.035) 0 1px, transparent 1px 3px),
+      linear-gradient(90deg, color-mix(in srgb, var(--sc) 24%, transparent), transparent 70%),
+      rgba(7,6,15,0.78);
+    clip-path: polygon(1.2vw 0, 100% 0, 100% calc(100% - 1.2vw), calc(100% - 1.2vw) 100%, 0 100%, 0 1.2vw);
+  }
+  /* border in the sign's colour: a thick bar on the left, hairlines top and bottom (cut with the corners) */
+  .sign::before {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    border: 2px solid var(--sc); border-left-width: 0.45vw; border-right-width: 0;
+  }
+  /* hazard stripes in the top corner, like the ticker's */
+  .sign::after {
+    content: ""; position: absolute; top: 0.7vw; right: 0.9vw; width: 3.2vw; height: 0.45vw; pointer-events: none;
+    background: repeating-linear-gradient(-45deg, var(--sc) 0 0.22vw, transparent 0.22vw 0.48vw);
+  }
+  body.right .sign { right: calc(var(--panel-w) + 1.6vw); }
+  .sign.obey { --sc: #ff3b5c; }
+  .sign-caption { font-size: 0.85vw; letter-spacing: 0.4em; padding-left: 0.4em; text-shadow: 0 0 6px var(--sc); }
+  .sign-word {
+    position: relative;
+    font-family: "Orbitron", sans-serif; font-weight: 900; font-size: 2.3vw; line-height: 1;
+    letter-spacing: 0.32em; padding-left: 0.32em; color: #fff;
+    text-shadow: 0 0 6px var(--sc), 0 0 18px var(--sc), 0 0 40px var(--sc);
+    animation: flicker 41s infinite 6s;
+  }
+  /* RGB-split copies of the word, only seen while glitching */
+  .sign-word::before, .sign-word::after {
+    content: attr(data-text); position: absolute; inset: 0; padding-left: inherit;
+    text-shadow: none; pointer-events: none; clip-path: inset(100% 0 0 0);
+  }
+  .sign-word::before { color: var(--magenta); }
+  .sign-word::after  { color: var(--cyan); }
+  .sign.obey .sign-word::before { color: var(--yellow); }
+
+  /* a small slip partway through CONSUME */
+  .sign.blip .sign-word::before { animation: blipA 0.3s steps(1); }
+  .sign.blip .sign-word::after  { animation: blipB 0.3s steps(1); }
+  @keyframes blipA { 0% { clip-path: inset(20% 0 55% 0); transform: translate(-0.18em, 0); } 50% { clip-path: inset(62% 0 12% 0); transform: translate(0.12em, 0); } 100% { clip-path: inset(100% 0 0 0); } }
+  @keyframes blipB { 0% { clip-path: inset(58% 0 20% 0); transform: translate(0.16em, 0); } 50% { clip-path: inset(8% 0 70% 0); transform: translate(-0.1em, 0); } 100% { clip-path: inset(100% 0 0 0); } }
+
+  /* the hard glitch between words: the whole sign tears, jumps and flashes */
+  .sign.hard { animation: signTear 0.7s steps(1); }
+  .sign.hard .sign-word { animation: wordTear 0.7s steps(1); }
+  .sign.hard .sign-word::before { animation: hardA 0.7s steps(1); }
+  .sign.hard .sign-word::after  { animation: hardB 0.7s steps(1); }
+  @keyframes signTear {
+    0%   { transform: translate(-6px, 2px) skewX(-10deg); filter: hue-rotate(90deg) brightness(1.6); }
+    12%  { transform: translate(8px, -3px) skewX(8deg); opacity: 0.4; }
+    24%  { transform: translate(-3px, 0) skewX(-3deg); filter: invert(1); opacity: 1; }
+    36%  { transform: translate(5px, 4px) scaleY(0.82); filter: hue-rotate(-60deg) brightness(2); }
+    48%  { transform: none; opacity: 0.15; filter: none; }
+    60%  { transform: translate(-9px, -2px) skewX(12deg); opacity: 1; filter: brightness(1.8); }
+    72%  { transform: translate(3px, 1px) scaleX(1.06); filter: hue-rotate(140deg); }
+    84%  { transform: translate(-2px, 0) skewX(-4deg); opacity: 0.6; filter: none; }
+    100% { transform: none; opacity: 1; filter: none; }
+  }
+  @keyframes wordTear {
+    0%, 24%, 60% { clip-path: inset(0 0 48% 0); transform: translateX(0.3em); }
+    12%, 48%, 84% { clip-path: inset(46% 0 0 0); transform: translateX(-0.25em); }
+    36%, 72% { clip-path: inset(0 0 0 0); transform: translateX(0.12em) scaleX(1.08); }
+    100% { clip-path: inset(0 0 0 0); transform: none; }
+  }
+  @keyframes hardA {
+    0%   { clip-path: inset(5% 0 62% 0);  transform: translate(-0.35em, 0); }
+    14%  { clip-path: inset(48% 0 18% 0); transform: translate(0.3em, 0); }
+    28%  { clip-path: inset(0 0 80% 0);   transform: translate(-0.2em, 0); }
+    42%  { clip-path: inset(70% 0 0 0);   transform: translate(0.4em, 0); }
+    56%  { clip-path: inset(25% 0 40% 0); transform: translate(-0.45em, 0); }
+    70%  { clip-path: inset(60% 0 8% 0);  transform: translate(0.2em, 0); }
+    85%, 100% { clip-path: inset(100% 0 0 0); transform: none; }
+  }
+  @keyframes hardB {
+    0%   { clip-path: inset(55% 0 10% 0); transform: translate(0.32em, 0); }
+    14%  { clip-path: inset(10% 0 70% 0); transform: translate(-0.36em, 0); }
+    28%  { clip-path: inset(40% 0 30% 0); transform: translate(0.24em, 0); }
+    42%  { clip-path: inset(0 0 65% 0);   transform: translate(-0.3em, 0); }
+    56%  { clip-path: inset(75% 0 0 0);   transform: translate(0.38em, 0); }
+    70%  { clip-path: inset(15% 0 55% 0); transform: translate(-0.16em, 0); }
+    85%, 100% { clip-path: inset(100% 0 0 0); transform: none; }
+  }
+
+  /* ---------- Planning: a countdown that takes over the whole panel ---------- */
+  .panel.planning-on > :not(.planning, .status) { display: none; }
+  .planning {
+    grid-row: 1 / -1; align-self: stretch;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3vh;
+    --glow: var(--cyan);
+  }
+  .planning[hidden] { display: none; }
+  .planning .label { font-size: 1.6vw; }
+  /* minutes over seconds, so the digits can fill the tall panel; each digit gets a fixed width so nothing shifts */
+  .clock {
+    display: flex; flex-direction: column; align-items: center;
+    font-family: "Orbitron", sans-serif; font-weight: 900; font-size: min(19vw, 36vh); line-height: 1;
+    color: #eaffff;
+    text-shadow: 0 0 6px #fff, 0 0 20px var(--glow), 0 0 48px var(--glow), 0 0 96px var(--glow);
+  }
+  .clock-row { display: flex; }
+  .clock-row span { width: 0.86em; text-align: center; }
+  .clock-sep {
+    width: 1.5em; height: 0.035em; margin: 0.07em 0;
+    background: var(--magenta); box-shadow: 0 0 10px var(--magenta), 0 0 24px var(--magenta);
+  }
+  .planning.paused .clock, .planning.paused .clock-sep { opacity: 0.4; }
+  .planning.paused .label { animation: blink 1.2s steps(1) infinite; }
+  /* time's up: the clock flashes for FLASH_MS */
+  .planning.done { --glow: var(--yellow); }
+  .planning.done .label { color: var(--yellow); text-shadow: 0 0 8px var(--yellow); }
+  .planning.done .clock, .planning.done .clock-sep { animation: timeUp 0.5s steps(1) infinite; }
+  @keyframes timeUp { 50% { opacity: 0.08; } }
+
   /* connection warning, only visible while OBS link is down */
   .status {
     position: absolute; bottom: 1.2vh; left: 0; right: 0; text-align: center;
@@ -275,6 +438,15 @@
 </style>
 </head>
 <body>
+<div class="cam-sweep"></div>
+<div class="sign" id="sign">
+  <div class="sign-caption">NBN · CIVIC NOTICE</div>
+  <div class="sign-word" id="signWord" data-text="CONSUME">CONSUME</div>
+</div>
+<div class="ticker off" id="ticker">
+  <div class="ticker-tag">NBN</div>
+  <div class="ticker-window"><div class="ticker-track" id="tickerTrack"></div></div>
+</div>
 <div class="panel">
   <section class="heat">
     <div class="label">HEAT</div>
@@ -334,11 +506,21 @@
     </div>
   </section>
 
+  <section class="planning" id="planning" hidden>
+    <div class="label" id="planLabel">PLANNING</div>
+    <div class="clock" id="clock">
+      <div class="clock-row" id="clockMin"></div>
+      <div class="clock-sep"></div>
+      <div class="clock-row" id="clockSec"></div>
+    </div>
+  </section>
+
   <div class="status" id="status"></div>
 </div>
 
 <script>
   const { config, connect } = window.NCD_OBS_LINK;
+  const { STATS, clampStat, cleanTicker, planningLeft, planningStep, cleanPlanning, fmtClock, make, read } = window.NCD_OVERLAY;
   if (config?.side === "right") document.body.classList.add("right");
 
   const totalEl = document.getElementById("total");
@@ -358,13 +540,9 @@
   const { svg: icon } = window.NCD_ICONS;
   document.querySelectorAll("[data-icon]").forEach((el) => (el.outerHTML = icon(el.dataset.icon, el.dataset.cls || "")));
 
-  const STATS = {
-    heat:      { min: 0, max: 99 },
-    influence: { min: 0, max: 99 },
-    day:       { min: 0, max: 10 },
-  };
+  // each stat's limits are in overlay-rules.js
   const stats = {};
-  for (const key in STATS) stats[key] = store.get("nco." + key, 0);
+  for (const key in STATS) stats[key] = clampStat(key, store.get("nco." + key, 0));
   const statEl = (key) => document.getElementById(key);
 
   function renderStat(key, animate) {
@@ -388,12 +566,46 @@
   }
   function setStat(key, v, animate = true) {
     if (!(key in STATS)) return;
-    const { min, max } = STATS[key];
-    stats[key] = Math.min(max, Math.max(min, Math.round(Number(v) || 0)));
+    stats[key] = clampStat(key, v);
     store.set("nco." + key, stats[key]);
     renderStat(key, animate);
   }
   for (const key in STATS) renderStat(key, false);
+
+  // ---- Ticker ----
+  // The items run one after another with a ◆ between each; that run repeats enough times to fill the bar twice,
+  // and the track slides left by half for a seamless loop.
+  const tickerEl = document.getElementById("ticker");
+  const tickerTrack = document.getElementById("tickerTrack");
+  let ticker = cleanTicker(store.get("nco.ticker", []));
+  const TICKER_SPEED = 0.06;   // share of the screen width scrolled per second
+
+  const tickerUnit = () => ticker.flatMap((t) => [
+    Object.assign(document.createElement("span"), { className: "ticker-item", textContent: t }),
+    Object.assign(document.createElement("span"), { className: "ticker-sep" }),
+  ]);
+  function renderTicker() {
+    // an empty ticker slides away with its old text still on it
+    tickerEl.classList.toggle("off", !ticker.length);
+    if (!ticker.length) return;
+    tickerTrack.replaceChildren(...tickerUnit());
+    const unitW = tickerTrack.scrollWidth || 1;
+    const copies = Math.ceil(tickerTrack.parentElement.clientWidth / unitW) + 1;
+    tickerTrack.replaceChildren(...Array.from({ length: copies * 2 }, tickerUnit).flat());
+    tickerTrack.style.setProperty("--dur", `${(copies * unitW) / (innerWidth * TICKER_SPEED)}s`);
+    // restart from the beginning so new text starts at the right edge of the loop
+    tickerTrack.style.animation = "none";
+    void tickerTrack.offsetWidth;
+    tickerTrack.style.animation = "";
+  }
+  function setTicker(items) {
+    ticker = cleanTicker(items);
+    store.set("nco.ticker", ticker);
+    renderTicker();
+  }
+  renderTicker();
+  // widths change once the web font arrives
+  document.fonts?.ready.then(renderTicker);
 
   // ---- Dice ----
   const fmtTens = (n) => (n === 0 ? "00" : String(n * 10));
@@ -488,6 +700,7 @@
   }
 
   function roll(tens, ones, target, adv = [], chal = []) {
+    document.body.classList.remove("no-roll");
     rollPool(adv, chal, true);
     clearInterval(rollTimer);
     totalEl.classList.add("hidden");
@@ -508,8 +721,9 @@
     }, 70);
   }
 
-  // back to the empty state: dashes on the dice, no total, verdict or pool
+  // back to the empty state: no dice, total, verdict or pool
   function clearRoll() {
+    document.body.classList.add("no-roll");
     clearInterval(rollTimer);
     poolTimers.forEach(clearTimeout); poolTimers = [];
     tensDie.classList.remove("rolling", "landed"); onesDie.classList.remove("rolling", "landed");
@@ -522,10 +736,102 @@
 
   const last = store.get("nco.lastRoll", null);
   if (last) { showResult(last[0], last[1], last[2] ?? null, false); rollPool(last[3] || [], last[4] || [], false); }
+  else clearRoll();
+
+  // ---- Planning ----
+  // A countdown that replaces everything on the panel. At zero it flashes for FLASH_MS, then the panel comes back,
+  // without the roll from before (so does Stop).
+  // The countdown's rules are in overlay-rules.js; planning is null when none is on.
+  const panelEl = document.querySelector(".panel");
+  const planEl = document.getElementById("planning");
+  const planLabel = document.getElementById("planLabel");
+  const clockMin = document.getElementById("clockMin");
+  const clockSec = document.getElementById("clockSec");
+  const FLASH_MS = 3000;
+  let planning = cleanPlanning(store.get("nco.planning", null), Date.now());
+  let planTimer = null, flashTimer = null;
+
+  const digits = (el, text) => el.replaceChildren(...[...text].map((ch) => Object.assign(document.createElement("span"), { textContent: ch })));
+  function showClock(ms) {
+    const [mm, ss] = fmtClock(ms).split(":");
+    digits(clockMin, mm);
+    digits(clockSec, ss);
+  }
+  function renderPlanning() {
+    clearInterval(planTimer);
+    const done = planEl.classList.contains("done");
+    planEl.hidden = !planning && !done;
+    panelEl.classList.toggle("planning-on", !planEl.hidden);
+    planEl.classList.toggle("paused", planning?.running === false);
+    planLabel.textContent = done ? "TIME" : planning?.running === false ? "PAUSED" : "PLANNING";
+    if (!planning) return;
+    const tick = () => {
+      const left = planningLeft(planning, Date.now());
+      showClock(left);
+      if (!left) timeUp();
+    };
+    tick();
+    if (planning?.running) planTimer = setInterval(tick, 200);
+  }
+  function setPlanning(next) {
+    planning = next;
+    store.set("nco.planning", planning);
+    renderPlanning();
+    reportState();
+  }
+  function endFlash() {
+    clearTimeout(flashTimer);
+    planEl.classList.remove("done");
+  }
+  function timeUp() {
+    endFlash();
+    showClock(0);
+    planEl.classList.add("done");
+    flashTimer = setTimeout(() => { endFlash(); renderPlanning(); }, FLASH_MS);
+    clearRoll();
+    setPlanning(null);
+  }
+  // msg is a planning message: { action, seconds }
+  function planningAction(msg) {
+    endFlash();
+    const next = planningStep(planning, msg, Date.now());
+    if (planning && !next) clearRoll();
+    setPlanning(next);
+  }
+
+  // ---- Sign ----
+  // CONSUME for 50s with one small slip somewhere in the middle, then a hard glitch into OBEY for 10s, and a hard
+  // glitch back. The word swaps halfway through each hard glitch.
+  const signEl = document.getElementById("sign");
+  const signWord = document.getElementById("signWord");
+  const SIGN = [{ word: "CONSUME", ms: 50000 }, { word: "OBEY", ms: 10000 }];
+  const HARD_MS = 700;
+
+  function glitchSign(kind, ms) {
+    signEl.classList.remove(kind);
+    void signEl.offsetWidth;
+    signEl.classList.add(kind);
+    setTimeout(() => signEl.classList.remove(kind), ms);
+  }
+  function showSign(i) {
+    const { word, ms } = SIGN[i];
+    signWord.textContent = signWord.dataset.text = word;
+    signEl.classList.toggle("obey", word === "OBEY");
+    if (word === "CONSUME") setTimeout(() => glitchSign("blip", 300), 15000 + Math.random() * 25000);
+    setTimeout(() => {
+      glitchSign("hard", HARD_MS);
+      setTimeout(() => showSign((i + 1) % SIGN.length), HARD_MS / 2);
+    }, ms - HARD_MS / 2);
+  }
+  showSign(0);
 
   // ---- OBS link ----
   // The overlay owns the displayed state; the dashboard asks for it ("ping") and adopts it.
-  const reportState = () => link.send({ type: "overlayState", ...stats });
+  // The messages are in overlay-rules.js; read() drops any it doesn't know or can't use.
+  const reportState = () => link.send(make("overlayState", {
+    ...stats, ticker,
+    planning: planning && { running: planning.running, left: planningLeft(planning, Date.now()) },
+  }));
   // Without obs-config.js there's no OBS to listen to; say so instead of failing quietly.
   if (!config) statusEl.textContent = "No obs-config.js: copy obs-config.example.js to obs-config.js and fill it in";
   const link = !config ? { send() {} } : connect({
@@ -533,13 +839,18 @@
       statusEl.textContent = s === "connected" || s === "connecting" ? "" : detail || "";
       if (s === "connected") reportState();
     },
-    onMessage(msg) {
+    onMessage(raw) {
+      const msg = read(raw);
+      if (!msg) return;
       if (msg.type === "stat") setStat(msg.key, msg.value);
-      else if (msg.type === "roll") roll(msg.tens, msg.ones, msg.target ?? null, msg.adv || [], msg.chal || []);
+      else if (msg.type === "roll") roll(msg.tens, msg.ones, msg.target, msg.adv, msg.chal);
       else if (msg.type === "clearRoll") clearRoll();
+      else if (msg.type === "ticker") setTicker(msg.items);
+      else if (msg.type === "planning") planningAction(msg);
       else if (msg.type === "ping") reportState();
     },
   });
+  renderPlanning();
 
   // Keyboard testing when the page is open in a normal browser
   const rand10 = () => Math.floor(Math.random() * 10);
@@ -548,6 +859,8 @@
     else if (e.key === "ArrowDown" || e.key === "-") setStat("heat", stats.heat - 1);
     else if (e.key === "i") setStat("influence", (stats.influence + 1) % 4);
     else if (e.key === "d") setStat("day", (stats.day + 1) % 11);
+    else if (e.key === "p") planningAction({ action: planning ? "stop" : "start", seconds: 5 });
+    else if (e.key === "o") planningAction({ action: planning?.running ? "pause" : "play" });
     else if (e.key === " " || e.key === "r") {
       const n = () => Math.floor(Math.random() * 5);
       roll(rand10(), rand10(), 50, Array.from({ length: n() }, () => Math.random() < 0.5), Array.from({ length: n() }, () => Math.random() < 0.6));

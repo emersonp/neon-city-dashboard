@@ -178,3 +178,22 @@ test("descriptionText: the book's own words for what the item is, trimmed to wha
   assert.equal(G.descriptionText(C.newGear({ description: "Hat" })), entry("Props").text.split(PARAGRAPH)[1]);
   assert.equal(G.descriptionText({ kind: "weapon", category: "Nope" }), "");
 });
+
+test("rollOf: the skills, extra dice and impact an item rolls with", () => {
+  assert.deepEqual(G.rollOf(w("One-handed melee")), { skills: ["slash-stab-or-strike-someone"], adv: 1, impact: 10 });
+  assert.deepEqual(G.rollOf(w("Two-handed melee")), { skills: ["slash-stab-or-strike-someone"], adv: 1, impact: 20 });
+  assert.deepEqual(G.rollOf(w("Pistol")), { skills: ["shoot-someone"], adv: 0, impact: 20 });
+  assert.deepEqual(G.rollOf(w("Launcher")), { skills: ["shoot-someone"], adv: 0, impact: 20 });
+  assert.deepEqual(G.rollOf(w("Thrown")), { skills: ["throw-something"], adv: 0, impact: 10 });
+  assert.equal(G.rollOf(w("Mine")), null);
+  assert.equal(G.rollOf(w(undefined)), null);
+  const kit = (extra) => C.newGear({ kind: "kit", description: "K", set: "Hacker's Deck", quality: "standard", ...extra });
+  const deck = ["crash-a-system", "infiltrate-a-system", "override-a-system"];
+  assert.deepEqual(G.rollOf(kit()), { skills: deck, adv: 0, impact: 20 });
+  assert.deepEqual(G.rollOf(kit({ special: "crash-a-system" })), { skills: ["crash-a-system"], adv: 2, impact: 20 });
+  assert.deepEqual(G.rollOf(kit({ special: "shoot-someone" })), { skills: deck, adv: 0, impact: 20 });
+  assert.deepEqual(G.rollOf(kit({ quality: undefined })), { skills: deck, adv: 0, impact: null });
+  assert.equal(G.rollOf(kit({ set: undefined })), null);
+  assert.deepEqual(G.rollOf(C.newGear({ kind: "vehicle", description: "V", vehicle: "Chopper" })), { skills: ["drive-or-pilot-something"], adv: 0, impact: null });
+  for (const kind of ["equipment", "armor", "prop"]) assert.equal(G.rollOf(C.newGear({ kind, description: "X" })), null);
+});

@@ -482,7 +482,8 @@
     el.dataset.step = step;
     if (!el.dataset.wired) {
       el.dataset.wired = "true";
-      el.innerHTML = `<nav class="create-head" aria-label="Steps"></nav><div class="create-body"></div><div class="create-nav"></div>`;
+      // Back / Next / Finish / Discard sit both above and below the step
+      el.innerHTML = `<nav class="create-head" aria-label="Steps"></nav><div class="create-nav top"></div><div class="create-body"></div><div class="create-nav"></div>`;
       el.addEventListener("click", (e) => {
         const c = shown.character, at = stepOf(c);
         const to = e.target.closest(".create-head [data-step]")?.dataset.step;
@@ -498,7 +499,7 @@
       });
     }
     el.querySelector(".create-head").innerHTML = renderHead(character, step);
-    el.querySelector(".create-nav").innerHTML = renderNav(character, step);
+    for (const nav of el.querySelectorAll(".create-nav")) nav.innerHTML = renderNav(character, step);
     if (keep) return;
     // a new element each time, so a step's listeners go with it
     const body = root.document.createElement("div");

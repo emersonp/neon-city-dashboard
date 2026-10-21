@@ -7,12 +7,14 @@
 <link rel="icon" href="icons/advantage-die.svg" type="image/svg+xml">
 
 <script src="shared.js"></script>
-<!-- Pick the theme before anything paints so there's no light/dark flash. -->
+<!-- Pick the theme, and whether this is the Administrator, before anything paints so nothing flashes. -->
 <script>
   (function () {
     const saved = NCD_STORE.get("theme");
     const dark = saved ? saved === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
     document.documentElement.classList.add(dark ? "wa-dark" : "wa-light");
+    // Administrator-only parts (data-admin) show from the start; admin.js keeps the class in step with Settings.
+    document.documentElement.classList.toggle("gm", NCD_STORE.get("gm") === "1");
   })();
 </script>
 
@@ -39,37 +41,45 @@
 
   <main>
     <wa-tab-group id="tabs">
-      <wa-tab panel="dice">Dice</wa-tab>
+      <wa-tab panel="dice"><span data-player>Dice</span><span data-admin>Dashboard</span></wa-tab>
       <wa-tab panel="roster">Roster</wa-tab>
       <wa-tab panel="character" id="character-tab" hidden>Character</wa-tab>
       <wa-tab panel="cheat-sheet">Cheat Sheet</wa-tab>
       <wa-tab panel="databank">Databank</wa-tab>
+      <wa-tab panel="tables">Tables</wa-tab>
       <wa-tab panel="settings">Settings</wa-tab>
 
       <wa-tab-panel name="dice">
+        <!-- three columns, each a stack of cards with room to add more under them -->
         <div class="dice-layout">
-          <wa-card class="roller">
-            <wa-input id="target" label="Target ≤" placeholder="none" inputmode="numeric" maxlength="3"
-              autocomplete="off" with-clear></wa-input>
+          <div class="dice-column">
+            <wa-card class="roller">
+              <wa-input id="target" label="Target ≤" placeholder="none" inputmode="numeric" maxlength="3"
+                autocomplete="off" with-clear></wa-input>
 
-            <wa-radio-group id="adv" class="pool adv" orientation="horizontal" value="0" data-pool="adv"></wa-radio-group>
+              <wa-radio-group id="adv" class="pool adv" orientation="horizontal" value="0" data-pool="adv"></wa-radio-group>
 
-            <wa-radio-group id="chal" class="pool chal" orientation="horizontal" value="0" data-pool="chal"></wa-radio-group>
+              <wa-radio-group id="chal" class="pool chal" orientation="horizontal" value="0" data-pool="chal"></wa-radio-group>
 
-            <wa-button id="roll" variant="brand" size="l" class="roll-button">
-              <wa-icon slot="start" name="dice-d20"></wa-icon>
-              Roll d100
-            </wa-button>
-            <p class="keys">or press <kbd>R</kbd></p>
-          </wa-card>
+              <wa-button id="roll" variant="brand" size="l" class="roll-button">
+                <wa-icon slot="start" name="dice-d20"></wa-icon>
+                Roll d100
+              </wa-button>
+              <p class="keys">or press <kbd>R</kbd></p>
+            </wa-card>
 
-          <section class="result" id="result" aria-live="polite">
-            <p class="result-empty">No rolls yet</p>
-          </section>
+          </div>
 
-          <div class="dice-extra">
-            <!-- Administrator only: Heat, Group Influence and Day on the OBS overlay (admin.js) -->
-            <wa-card class="admin-panel" id="admin-panel" hidden>
+          <div class="dice-column">
+            <section class="result" id="result" aria-live="polite" data-steady data-clearable>
+              <p class="result-empty">No rolls yet</p>
+            </section>
+          </div>
+
+          <div class="dice-column" data-admin>
+            <!-- Administrator only: Heat, Group Influence and Day on the OBS overlay (admin-overlay.js), and the Planning
+                 countdown that fills the overlay's panel (admin-planning.js) -->
+            <wa-card class="admin-panel" id="admin-panel" data-admin>
               <div slot="header" class="card-header"><h2>Overlay</h2></div>
               <p class="obs-status" id="obs-status"></p>
               <div class="stat" data-overlay-stat="heat">
@@ -98,7 +108,29 @@
                   <wa-button size="s" appearance="outlined" data-step="1">+1</wa-button>
                 </div>
               </div>
+              <div class="planning-edit" id="planning-edit">
+                <div class="planning-head"><span class="sheet-label">Planning</span><span class="planning-clock" id="planning-clock"></span></div>
+                <div class="planning-buttons" id="planning-start">
+                  <wa-button size="s" appearance="outlined" data-planning-start="900">15:00</wa-button>
+                  <wa-button size="s" appearance="outlined" data-planning-start="180">3:00</wa-button>
+                  <wa-button size="s" appearance="outlined" data-planning-start="30">0:30</wa-button>
+                </div>
+                <div class="planning-buttons" id="planning-controls" hidden>
+                  <wa-button size="s" appearance="outlined" data-planning="play"><wa-icon slot="start" name="play"></wa-icon>Play</wa-button>
+                  <wa-button size="s" appearance="outlined" data-planning="pause"><wa-icon slot="start" name="pause"></wa-icon>Pause</wa-button>
+                  <wa-button size="s" appearance="outlined" data-planning="stop"><wa-icon slot="start" name="stop"></wa-icon>Stop</wa-button>
+                  <wa-button size="s" appearance="outlined" data-planning="add">+30</wa-button>
+                </div>
+              </div>
               <wa-button id="clear-overlay" appearance="outlined" size="s">Clear the roll from the overlay</wa-button>
+            </wa-card>
+
+            <!-- Administrator only: the ticker along the bottom of the OBS overlay (admin-overlay.js) -->
+            <wa-card class="admin-panel" id="ticker-card" data-admin>
+              <div slot="header" class="card-header"><h2 id="ticker-label">Ticker</h2></div>
+              <!-- one box per item (admin-overlay.js keeps a blank one at the end) -->
+              <div class="ticker-items" id="ticker-items" role="group" aria-labelledby="ticker-label"></div>
+              <wa-button id="ticker-send" appearance="outlined" size="s">Update ticker</wa-button>
             </wa-card>
           </div>
         </div>
@@ -176,6 +208,11 @@
         </wa-tab-group>
       </wa-tab-panel>
 
+      <wa-tab-panel name="tables">
+        <!-- Tables to roll on, filled from databank.js by app.js -->
+        <div class="cheat-sheet databank" id="tables"></div>
+      </wa-tab-panel>
+
       <wa-tab-panel name="roster">
         <div class="roster-bar">
           <wa-button id="new-character" variant="brand">
@@ -190,7 +227,9 @@
       </wa-tab-panel>
 
       <wa-tab-panel name="character">
-        <wa-card class="character-card">
+        <wa-card class="character-card" id="character-card">
+          <!-- The mode's action bar again, copied from its bottom bar by roster.js -->
+          <div class="character-actions top" id="character-actions-top" hidden></div>
           <!-- Shown in Display and Running: who they are on the left, stats on the right -->
           <div id="character-fields" class="sheet-head">
             <div class="sheet-who">
@@ -252,11 +291,11 @@
             </section>
             <div id="abilities-display" class="abilities"></div>
             <div class="character-actions">
-              <wa-button id="character-edit" appearance="outlined">
+              <wa-button data-sheet-action="edit" appearance="outlined">
                 <wa-icon slot="start" name="pen"></wa-icon>
                 Edit
               </wa-button>
-              <wa-button id="character-run" variant="brand">
+              <wa-button data-sheet-action="run" variant="brand">
                 <wa-icon slot="start" name="play"></wa-icon>
                 Run
               </wa-button>
@@ -288,11 +327,11 @@
             </section>
             <div id="abilities-run" class="abilities"></div>
             <div class="character-actions">
-              <wa-button id="character-appearance" appearance="outlined">
+              <wa-button data-sheet-action="appearance" appearance="outlined">
                 <wa-icon slot="start" name="user"></wa-icon>
                 Appearance
               </wa-button>
-              <wa-button id="character-stop" appearance="outlined">
+              <wa-button data-sheet-action="stop" appearance="outlined">
                 <wa-icon slot="start" name="stop"></wa-icon>
                 Stop
               </wa-button>
@@ -423,10 +462,13 @@
               </div>
               <div id="abilities-edit"></div>
             </section>
-            <wa-button type="submit" variant="brand">
-              <wa-icon slot="start" name="floppy-disk"></wa-icon>
-              Save
-            </wa-button>
+            <div class="character-actions">
+              <!-- form= lets the copy at the top of the card submit too -->
+              <wa-button type="submit" form="character-form" variant="brand">
+                <wa-icon slot="start" name="floppy-disk"></wa-icon>
+                Save
+              </wa-button>
+            </div>
           </form>
 
           <!-- Creating: a new character, step by step (create.js) -->
@@ -438,6 +480,7 @@
           <div slot="header" class="card-header"><h2>Player</h2></div>
           <wa-input id="player-name" label="Player name:" placeholder="Player" autocomplete="off"></wa-input>
           <wa-switch id="gm">Administrator (GM)</wa-switch>
+          <wa-switch id="send-to-discord">Send to Discord</wa-switch>
           <wa-input id="webhook" label="Discord webhook URL:" type="url" autocomplete="off"></wa-input>
         </wa-card>
       </wa-tab-panel>
@@ -454,14 +497,8 @@
        roster.js fills in the type's fields and the keyword picker. Starter is shown only in Edit. -->
   <wa-dialog id="gear-dialog" label="New gear" light-dismiss>
     <div class="gear-form">
-      <wa-radio-group id="gear-kind" label="Type" orientation="horizontal">
-        <wa-radio appearance="button" value="weapon">Weapon</wa-radio>
-        <wa-radio appearance="button" value="kit">Kit</wa-radio>
-        <wa-radio appearance="button" value="equipment">Equipment</wa-radio>
-        <wa-radio appearance="button" value="armor">Armor</wa-radio>
-        <wa-radio appearance="button" value="vehicle">Vehicle</wa-radio>
-        <wa-radio appearance="button" value="prop">Prop</wa-radio>
-      </wa-radio-group>
+      <!-- roster.js adds the types: radios written here would have their values wiped by Firefox restoring form state on reload -->
+      <wa-radio-group id="gear-kind" label="Type" orientation="horizontal"></wa-radio-group>
       <div class="gear-form-row">
         <wa-input id="gear-description" label="Name" autocomplete="off" autofocus></wa-input>
         <wa-input id="gear-quantity" label="Quantity" type="number" min="1" value="1"></wa-input>
@@ -564,12 +601,18 @@
   </wa-dialog>
 
   <wa-dialog id="skill-dialog" label="Roll" light-dismiss>
+    <!-- side by side on a wide screen, the result kept the size of the biggest roll so the dialog never resizes -->
     <div class="skill-roll">
+      <div class="skill-roll-controls">
       <wa-input id="skill-target" label="Target ≤" placeholder="none" inputmode="numeric" maxlength="3"
+        autocomplete="off" with-clear></wa-input>
+      <!-- added to the total on a success; whole numbers above zero only (roster.js keeps it that way) -->
+      <wa-input id="skill-impact" label="Impact" placeholder="none" inputmode="numeric" maxlength="3"
         autocomplete="off" with-clear></wa-input>
       <wa-radio-group id="skill-adv" class="pool adv" orientation="horizontal" value="0" data-pool="adv"></wa-radio-group>
       <wa-radio-group id="skill-chal" class="pool chal" orientation="horizontal" value="0" data-pool="chal"></wa-radio-group>
-      <section class="result" id="skill-result" aria-live="polite" hidden></section>
+      </div>
+      <section class="result" id="skill-result" aria-live="polite" data-steady="impact"></section>
     </div>
     <wa-button slot="footer" id="skill-roll" variant="brand">
       <wa-icon slot="start" name="dice-d20"></wa-icon>
@@ -594,7 +637,10 @@
   <script src="rules.js"></script>
   <script src="databank.js"></script>
   <script src="gear.js"></script>
+  <script src="overlay-rules.js"></script>
   <script src="admin.js"></script>
+  <script src="admin-overlay.js"></script>
+  <script src="admin-planning.js"></script>
   <script src="app.js"></script>
   <script src="gear-ui.js"></script>
   <script src="create.js"></script>

@@ -66,3 +66,10 @@ test("default rng only produces 0-9", () => {
     assert.ok(r.total >= 1 && r.total <= 100);
   }
 });
+
+test("impact: added to the total on a success, otherwise none", () => {
+  assert.equal(roll({ target: 45, impact: 20 }, seq(3, 2)).impact, 52);
+  assert.equal(roll({ target: 20, impact: 20 }, seq(3, 2)).impact, null);
+  assert.equal(roll({ impact: 20 }, seq(3, 2)).impact, null);
+  for (const bad of [0, -5, 1.5, "", null, "x"]) assert.equal(roll({ target: 45, impact: bad }, seq(3, 2)).impact, null, String(bad));
+});

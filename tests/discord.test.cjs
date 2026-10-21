@@ -130,3 +130,9 @@ test("an avatar link is sent only when given", () => {
   const { influenceMessage } = globalThis.NCD_DISCORD;
   assert.equal(influenceMessage("Parker", 1, 2, { avatarUrl: "https://x.test/a.png" }).avatar_url, "https://x.test/a.png");
 });
+
+test("a success with an impact shows it on the main line", () => {
+  const r = roll({ target: 45, impact: 20 }, seq(3, 2));
+  assert.equal(lines(r, { player: "Parker" }).result, "Success! 32 · Impact 52");
+  assert.equal(lines(roll({ target: 20, impact: 20 }, seq(3, 2)), { player: "Parker" }).result, "Failure. 32");
+});

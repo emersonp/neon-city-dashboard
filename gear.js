@@ -205,6 +205,37 @@
     return parts.join("\n\n");
   }
 
+  // ---- rolling with it ----
+  // The rolls an item makes, or null where there's no obvious one: { skills (ids; the player picks when there's more
+  // than one), adv (extra Advantage dice), impact }. Melee weapons Slash, Stab, or Strike with an extra Advantage die;
+  // guns and launchers Shoot; thrown weapons Throw (the book's ranged attacks with them). Mines aren't rolled. A kit
+  // rolls any of its set's skills with its impact bonus, a hyper-specialized one only its one skill, with 2 extra
+  // Advantage dice (its Right Tool for the Job x2); a vehicle is driven.
+  // Equipment, armor and props have none.
+  const WEAPON_ROLLS = {
+    "One-handed melee": { skill: "slash-stab-or-strike-someone", adv: 1 }, "Two-handed melee": { skill: "slash-stab-or-strike-someone", adv: 1 },
+    Thrown: { skill: "throw-something" },
+    Pistol: { skill: "shoot-someone" }, Rifle: { skill: "shoot-someone" }, Shotgun: { skill: "shoot-someone" },
+    "Sniper rifle": { skill: "shoot-someone" }, Launcher: { skill: "shoot-someone" },
+  };
+  function rollOf(item) {
+    const s = stats(item);
+    switch (item?.kind) {
+      case "weapon": {
+        const r = weaponOf(item) && WEAPON_ROLLS[weaponOf(item).name];
+        return r ? { skills: [r.skill], adv: r.adv ?? 0, impact: s.damage || null } : null;
+      }
+      case "kit": {
+        const set = toolSetOf(item);
+        if (!set) return null;
+        const hyper = set.skills.includes(item.special);
+        return { skills: hyper ? [item.special] : set.skills, adv: hyper ? 2 : 0, impact: s.impact ?? null };
+      }
+      case "vehicle": return vehicleOf(item) ? { skills: ["drive-or-pilot-something"], adv: 0, impact: null } : null;
+      default: return null;
+    }
+  }
+
   // ---- Create: starting gear from the rules.js templates and the player's picks ----
   // creation.gear holds the "choose one" answers by line; creation.gearPicks holds, by item id, { category?, vehicle?,
   // keywords } and, under "weapon-mount", Weapon Mount's { target: item id, keywords: [one] }. Picks that don't fit are
@@ -271,6 +302,6 @@
     return !keywordsOf(before).includes(k[0]) && slots.find((s) => s.id === mount.target).item.keywords.includes(k[0]);
   }
 
-  root.NCD_GEAR = { KINDS, QUALITIES, EQUIPMENT, keyword, builtIn, keywordsOf, canAdd, keywordChoices, legalize, retype, stats, label, defaultName, descriptionText,
+  root.NCD_GEAR = { KINDS, QUALITIES, EQUIPMENT, keyword, builtIn, keywordsOf, canAdd, keywordChoices, legalize, retype, stats, label, defaultName, descriptionText, rollOf,
     starterSlots, weaponMountTargets, slotOpen, gearComplete };
 })(globalThis);

@@ -32,14 +32,14 @@
     return `Rolled: ${symbols}`;
   }
 
-  // The three lines: small intro, big result, and a subtle footer.
+  // The three lines: small intro, big result (with the impact, on a success with one), and a subtle footer.
   // `luck` and `influence` are null for the GM (or with no character open), so the footer can end up empty.
   // `skill` is the skill's name, if any.
   function lines(r, { player, emoji, luck = null, influence = null, skill } = {}) {
     const verdict = { success: "Success!", failure: "Failure.", none: "" }[outcomeOf(r)];
     return {
       intro: `${player} rolled${skill ? ` *${skill}*` : ""}${r.target == null ? "" : ` against ${r.target}`} and got a`,
-      result: [verdict, String(r.total)].filter(Boolean).join(" ") + netSuffix(r, emoji),
+      result: [verdict, String(r.total)].filter(Boolean).join(" ") + (r.impact ? ` · Impact ${r.impact}` : "") + netSuffix(r, emoji),
       detail: [luck != null && `Luck: ${luck}`, influence != null && `Influence: ${influence}`, rolledText(r, emoji)]
         .filter(Boolean).join(" · "),
     };

@@ -1,4 +1,4 @@
-// The Databank tab's reference text, from the rulebook's Equipment chapter: gear (tools, specialized equipment, weapons,
+// The Databank and Tables tabs' reference text, from the rulebook's Equipment chapter: gear (tools, specialized equipment, weapons,
 // vehicles) and keywords (gear and weapon). No page code here, so it can be tested in Node.
 // Text uses the format.js description format: paragraphs, "- " lists, **bold**, *italic*, and [advantage]-style icons.
 // Wording follows the book, with its own typos fixed where they'd mislead.

@@ -1,85 +1,61 @@
-// The Administrator's overlay panel on the Dice tab: Heat, Group Influence and Day on overlay.html, sent through OBS.
-// Only the Administrator connects, and only on a computer with obs-config.js. app.js calls setGm when the Settings
-// switch changes, and sendRoll for every roll so it plays on the overlay too.
+// The Administrator (GM): the Settings switch, what only they see, and their one connection to the overlay.
+// - Anything marked data-admin in the page shows only while the switch is on (the gm class on <html>, styles.css).
+// - The OBS link is opened when the switch goes on and closed when it goes off, and only on a computer with
+//   obs-config.js. Every Administrator feature that talks to overlay.html shares it: send() to it, onOverlay() for
+//   what the overlay says, onLink() for the connection's state. The messages are in overlay-rules.js.
+// app.js calls setGm when the switch changes. Each feature is its own file (admin-overlay.js is the Overlay panel).
 (function () {
   const { config, connect } = window.NCD_OBS_LINK;
-  const { $ } = window.NCD_UTIL;
-  const panel = $("admin-panel");
-  const statusEl = $("obs-status");
+  const { make, read } = window.NCD_OVERLAY;
 
-  // The overlay owns the values (it keeps them across OBS restarts); the panel mirrors what it reports.
-  const STATS = { heat: { min: 0, max: 99 }, influence: { min: 0, max: 99 }, day: { min: 0, max: 10 } };
-  const stats = { heat: 0, influence: 0, day: 0 };
-  const rows = Object.fromEntries([...panel.querySelectorAll("[data-overlay-stat]")].map((row) => [row.dataset.overlayStat, row]));
-
+  let gm = false;
   let link = null;
-  // false when there's no connection to send through
-  const send = (msg) => link?.send(msg) ?? false;
+  // "off" (not the Administrator), "unconfigured" (no obs-config.js), or the link's own "connecting", "connected",
+  // "disconnected" or "error"; detail says why for the last two.
+  let state = { status: "off", detail: "" };
+  const gmListeners = [], linkListeners = [], overlayListeners = [];
 
-  function showStatus(message, ok = false) {
-    statusEl.textContent = message;
-    statusEl.classList.toggle("ok", ok);
+  function setState(status, detail = "") {
+    state = { status, detail };
+    linkListeners.forEach((fn) => fn(state));
   }
-  // The buttons only work while the overlay can hear them.
-  const setConnected = (on) => panel.querySelectorAll("wa-button").forEach((b) => { b.disabled = !on; });
-
-  // Day 0 is the Broker phase.
-  function render() {
-    for (const k in STATS) rows[k].querySelector("[data-step-value]").textContent = k === "day" && stats[k] === 0 ? "Broker" : stats[k];
-  }
-
-  for (const k in STATS) {
-    rows[k].addEventListener("click", (e) => {
-      const step = Number(e.target.closest("[data-step]")?.dataset.step);
-      if (!step) return;
-      const value = Math.min(STATS[k].max, Math.max(STATS[k].min, stats[k] + step));
-      if (value === stats[k] || !send({ type: "stat", key: k, value })) return;
-      stats[k] = value;
-      render();
-    });
-  }
-  // Wipes the dice, total, verdict and Boons/Drawbacks off the overlay (also stops a roll mid-spin).
-  $("clear-overlay").addEventListener("click", () => send({ type: "clearRoll" }));
 
   function start() {
     if (link) return;
+    if (!config) { setState("unconfigured"); return; }
     link = connect({
       onStatus(s, detail) {
-        setConnected(s === "connected");
-        showStatus(
-          s === "connected" ? "Connected to OBS" :
-          s === "connecting" ? statusEl.textContent || "Connecting to OBS…" :
-          detail || "Disconnected, retrying…",
-          s === "connected");
+        setState(s, detail);
         // ask the overlay what it's showing
-        if (s === "connected") link.send({ type: "ping" });
+        if (s === "connected") link.send(make("ping"));
       },
-      onMessage(msg) {
-        if (msg.type !== "overlayState") return;
-        for (const k in STATS) if (msg[k] != null) stats[k] = msg[k];
-        render();
+      onMessage(raw) {
+        const msg = read(raw);
+        if (msg) overlayListeners.forEach((fn) => fn(msg));
       },
     });
   }
   function stop() {
     link?.close();
     link = null;
-    showStatus("");
+    setState("off");
   }
 
-  setConnected(false);
-  render();
-
   window.NCD_ADMIN = {
+    get gm() { return gm; },
     setGm(on) {
-      panel.hidden = !on;
-      if (!config) showStatus("Not set up for OBS: copy obs-config.example.js to obs-config.js and fill it in.");
-      else if (on) start();
-      else stop();
+      gm = Boolean(on);
+      document.documentElement.classList.toggle("gm", gm);
+      gm ? start() : stop();
+      gmListeners.forEach((fn) => fn(gm));
     },
-    // A roll from dice.js; plays on the overlay when connected, otherwise does nothing.
-    sendRoll(r) {
-      send({ type: "roll", tens: r.tens, ones: r.ones, target: r.target, adv: r.adv, chal: r.chal });
-    },
+    // fn(on) now and whenever the switch changes
+    onGm(fn) { gmListeners.push(fn); fn(gm); },
+    // fn({ status, detail }) now and whenever the connection changes
+    onLink(fn) { linkListeners.push(fn); fn(state); },
+    // fn(msg) for each message from the overlay, already checked by overlay-rules.js
+    onOverlay(fn) { overlayListeners.push(fn); },
+    // Sends a message (overlay-rules.js) to the overlay. false when there's no connection to send through.
+    send(type, fields) { return link?.send(make(type, fields)) ?? false; },
   };
 })();

@@ -1,12 +1,13 @@
 # Neon City Dashboard
 
-A static page for Neon City games: dice rolls posted to Discord, a rules cheat sheet, a gear and keyword reference, a character roster, and player settings.
+A static page for Neon City games: dice rolls posted to Discord, a rules cheat sheet, a gear and keyword reference, tables to roll on, a character roster, and player settings.
 Built with [Web Awesome](https://webawesome.com) (free, from its CDN). No build step.
 
 ## Run it
 
 1. Open `index.html` in a browser, or serve the folder (for example `npx serve` or `python -m http.server`).
 2. In **Settings**, enter a player name and paste the Discord webhook URL. Until both are set, the page opens on Settings.
+   Turn off **Send to Discord** to roll without posting; then no webhook is needed.
    The webhook is saved only in that browser (OBS keeps its own storage: use the browser source's **Interact** window).
 
 Anyone who has the webhook URL can post to that channel, so share it with your players privately. It's never in the repo,
@@ -22,9 +23,37 @@ The Administrator's copy of the dashboard drives it through OBS's WebSocket serv
 3. Add `overlay.html` to OBS as a **Browser** source (Local file, 1920×1080).
 4. Open the dashboard from this folder and turn on **Administrator (GM)** in Settings.
 
-The Dice tab then shows an **Overlay** panel on the right with Heat, Group Influence and Day controls, and every roll
-plays on the overlay as well as in the dashboard and on Discord. The overlay keeps the values; the panel shows what it reports.
+The Dice tab (now **Dashboard**) then shows an **Overlay** card on the right with Heat, Group Influence and Day controls and
+Planning, and under it a **Ticker** card (its items scroll along the bottom of the camera side, one after another; clear a box
+to take its item down). Every roll plays on the overlay as well as in the dashboard and on Discord. The overlay keeps the
+values; the cards show what it reports.
 Without `obs-config.js` (on GitHub Pages, for example) the panel says it isn't set up, and everything else works as usual.
+
+In the Overlay card, **Planning** starts a **15:00**, **3:00** or **0:30** countdown that takes over the whole overlay panel
+(minutes over seconds). While it runs, it has **Play**, **Pause**, **Stop** and **+30** (30 more seconds). At zero the clock flashes
+for 3 seconds and the panel comes back. When a countdown ends, by running out or by Stop, the last roll is cleared from the
+overlay and the Dashboard. A cleared roll leaves the overlay without the ROLL label, dice or results, and whenever
+the Dashboard says "No rolls yet", the overlay is cleared to match, including when the Dashboard connects to OBS. Opened in a normal browser, the overlay starts a 5-second countdown on <kbd>P</kbd>
+(again to stop it) and pauses or plays it on <kbd>O</kbd>.
+
+## Administrator features
+
+Turning on **Administrator (GM)** in Settings puts the `gm` class on the page, and anything marked `data-admin` shows
+only then (one rule in `styles.css`); anything marked `data-player` shows only while it's off. The Dice tab is
+**Dashboard** for the Administrator, with a third column (the Overlay and Ticker cards).
+It's a switch anyone can turn on, so it hides things, it doesn't secure them:
+every file reaches every browser. What keeps the overlay safe is that `obs-config.js` and the OBS password exist only on
+the streaming computer.
+
+A new Administrator feature gets its own file, loaded after `admin.js`, and uses `NCD_ADMIN`:
+
+- `onGm(fn)`: called now and whenever the switch changes.
+- `send(type, fields)`: sends a message to the overlay (`false` when it isn't connected). The messages are listed in
+  `overlay-rules.js`; a new one goes there, gets handled in `overlay.html`, and `tests/overlay-rules.test.cjs` checks
+  that every message the dashboard sends is one the overlay handles.
+- `onOverlay(fn)`: each message from the overlay, already checked. `onLink(fn)`: the connection's state.
+
+Keep the rules in a file Node can test (like `overlay-rules.js`) and the page code in the feature's file.
 
 ## Dice rules
 
@@ -37,12 +66,14 @@ Same as neon-city-overlay:
 - Boons and Drawbacks **cancel one for one**; whatever is left over is the result.
 - The target sticks between rolls; the dice pools reset to 0 after every roll.
 
-Press <kbd>R</kbd> on the Dice tab to roll.
+Press <kbd>R</kbd> on the Dice tab to roll. The **×** in the corner of the result clears it (the Administrator's clears the
+overlay's too). The result panel is always the height of the biggest roll (a target and all 8 pool dice), so it doesn't
+jump about and whatever goes under it stays put.
 
 ## Tests
 
 ```
-node --test tests/dice.test.cjs tests/discord.test.cjs tests/characters.test.cjs tests/format.test.cjs tests/abilities.test.cjs tests/rules.test.cjs tests/databank.test.cjs tests/gear.test.cjs
+node --test tests/dice.test.cjs tests/discord.test.cjs tests/characters.test.cjs tests/format.test.cjs tests/abilities.test.cjs tests/rules.test.cjs tests/databank.test.cjs tests/gear.test.cjs tests/overlay-rules.test.cjs
 ```
 
 ## What's here
@@ -52,7 +83,7 @@ node --test tests/dice.test.cjs tests/discord.test.cjs tests/characters.test.cjs
 | `index.html` | Page shell: header, theme toggle, tabs, and the dialogs |
 | `styles.css` | Light cyberpunk accents on top of the Web Awesome default theme |
 | `shared.js` | Loaded first: localStorage access, the session (player, GM, open character), small helpers |
-| `app.js` | Theme, tabs, settings, the dice pools, the roller and result panel, and posting to Discord |
+| `app.js` | Theme, tabs, settings, the dice pools, the roller and result panel, posting to Discord, and the Databank and Tables tabs |
 | `config.js` | Shared settings for everyone: Discord emoji codes and the published address (no webhook) |
 | `dice.js` | Dice rules (no page code, so it's testable in Node) |
 | `characters.js` | Archetypes, origins, random handles and names, gear items and conditions, Create's choices, saving characters (needs `dice.js`; testable in Node) |
@@ -60,7 +91,7 @@ node --test tests/dice.test.cjs tests/discord.test.cjs tests/characters.test.cjs
 | `create.js` | Create mode: a new character built step by step from `rules.js` (step header, Back/Next/Finish, Discard, each step's controls) |
 | `abilities.js` | The perk and augmentation catalog; edit it to add abilities |
 | `rules.js` | Rulebook data for Create: archetype skills, initiative, knows, starting gear templates; origin options and augmentation gear (needs `characters.js`; testable in Node) |
-| `databank.js` | The Databank tab's text from the rulebook's Equipment chapter: gear, tool sets, weapons, armor, vehicles, and gear and weapon keywords with their restrictions (testable in Node) |
+| `databank.js` | The Databank and Tables tabs' text from the rulebook's Equipment chapter: gear, tool sets, weapons, armor, vehicles, gear and weapon keywords with their restrictions, and the random gear keywords table (testable in Node) |
 | `gear.js` | Gear rules from `databank.js`: built-in keywords, which keywords an item can take, damage and impact, labels, rules text, and Create's starting gear (testable in Node) |
 | `gear-ui.js` | Gear on the page: item rows, keyword chips, rules text, and the keyword picker the gear dialog and Create share |
 | `format.js` | Turns ability descriptions into HTML: paragraphs, bold, italic, lists, icon tokens (testable in Node) |
@@ -69,21 +100,27 @@ node --test tests/dice.test.cjs tests/discord.test.cjs tests/characters.test.cjs
 | `emoji/` | Boon and Drawback PNGs to upload as Discord server emoji |
 | `icons.js`, `icons/` | Game icons (advantage die, challenge die, boon, drawback, heat, influence) |
 | `overlay.html` | The OBS overlay: Heat, Group Influence, Day and the latest roll, driven by the Dice tab |
-| `admin.js` | The Administrator's Overlay panel on the Dice tab; sends rolls and stat changes to the overlay |
+| `overlay-rules.js` | The messages the dashboard and the overlay send each other, each stat's limits, and the ticker's and Planning countdown's rules (testable in Node) |
+| `admin.js` | The Administrator: the GM switch, `data-admin` parts of the page, and the one OBS link every Administrator feature shares |
+| `admin-overlay.js` | The Administrator's Overlay and Ticker cards on the Dashboard tab: Heat, Group Influence, Day and the ticker |
+| `admin-planning.js` | Planning, in the Administrator's Overlay card: the overlay's countdown |
 | `obs-link.js` | Minimal OBS WebSocket client the dashboard and the overlay share |
 | `obs-config.example.js` | Template for `obs-config.js` (gitignored): OBS host, port, password and which side the overlay sits on |
 
-Things remembered in localStorage (all under `ncd.`): characters (with the ids of their perks and augmentations, their gear with its type and keywords, and the conditions on them and their gear), the open character, player name, GM toggle, webhook, theme, the last tab, the target number, and the last roll.
+Things remembered in localStorage (all under `ncd.`): characters (with the ids of their perks and augmentations, their gear with its type and keywords, and the conditions on them and their gear), the open character, player name, GM toggle, Send to Discord, webhook, theme, the last tab, the target number, and the last roll.
 
 ## Databank
 
 The **Databank** tab is a reference for the rulebook's Equipment chapter, in four tabs: **Gear Basics** (gear
 basics, guided skill software, tool kits, targeted stimulants, computer gear, biotechnology, and other tools),
 **Armory** (weapons and body armor), **Garage** (vehicles), and **Keywords** (positive and negative gear keywords,
-the random gear keywords table, and weapon keywords). It's all in
+and weapon keywords). It's all in
 `databank.js`, written in the same format as ability descriptions (below). Each weapon lists the keywords it allows,
 and each weapon keyword lists the weapons that allow it, both from the `allowed` lists in `databank.js`.
 `tests/databank.test.cjs` checks the keyword tables against each other.
+
+The **Tables** tab holds tables to roll on, in the Databank's style: for now, the random gear keywords table
+(`randomKeywords` in `databank.js`).
 
 ## Gear
 
@@ -192,6 +229,15 @@ Drawback that came up, before cancelling, and is left out when none did. A GM ro
 
 Skill rolls from a running character (Character tab → **Run**, then click a skill) name the skill:
 `Parker rolled *Shoot Someone* against 75 and got a` (the skill in italics). The roll dialog starts at the skill's value and intrinsic dice.
+It also has an **Impact** box (whole numbers above zero, or blank): on a success, the main line gets a third item, the
+total plus the impact (`Success! 32 · Impact 52`).
+
+While running, gear with an obvious roll (`rollOf` in `gear.js`) has a dice button that opens the roll dialog for it,
+with Impact filled in from the item: melee weapons roll *Slash, Stab, or Strike Someone* with 1 extra Advantage die;
+pistols, rifles, shotguns, sniper rifles, and launchers roll *Shoot Someone*; thrown weapons roll *Throw Something*
+(the book's skill for ranged attacks with them); a kit's button is a menu of its set's three skills (pick one to roll it
+with the kit's impact bonus), and a hyper-specialized kit rolls its one skill straight away, with 2 extra Advantage dice (Right Tool for the Job x2); and a vehicle rolls
+*Drive or Pilot Something*. Mines, equipment, armor, and props have no button.
 
 Changing Influence with the −1 / +1 buttons while running posts a one-line message, like
 `Parker gained an Influence.` or `Parker spent an Influence.`, followed by the Influence emoji if one is set, then how much is left (`2 remaining.`).

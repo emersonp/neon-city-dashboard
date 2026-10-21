@@ -13,6 +13,7 @@
   const { formatDescription } = window.NCD_FORMAT;
   const GEAR_UI = window.NCD_GEAR_UI;
   const G = window.NCD_GEAR;
+  const DICE = window.NCD_DICE;
   // The character helpers take localStorage itself, and handle it being null.
   const storage = store.raw;
 
@@ -199,6 +200,7 @@
         renderAbilities($("abilities-run"), C.abilities(current, ABILITIES));
       }
     }
+    copyActions();
   }
 
   // Handle, name, etc. Current Luck, Current Influence, and Wounds can be changed while running, and are saved right away.
@@ -278,9 +280,6 @@
 
   // Edit and Run aren't for a character still being created.
   const enter = (mode) => () => { if (C.isCreating(current)) return; state = mode; render(); };
-  $("character-edit").addEventListener("click", enter("editing"));
-  $("character-run").addEventListener("click", enter("running"));
-  $("character-stop").addEventListener("click", () => { state = "display"; render(); });
 
   // ---- appearance: shown in full on the sheet, and in a dialog while running ----
   const APPEARANCE = [["pronouns", "Pronouns"], ["physical", "Physical Appearance"], ["network", "Network Default"]];
@@ -289,23 +288,49 @@
     el.innerHTML = APPEARANCE.map(([key, title]) =>
       `<div class="sheet-field"><dt>${title}</dt><dd>${escapeHTML(look[key].trim() || "—")}</dd></div>`).join("");
   }
-  $("character-appearance").addEventListener("click", () => {
+  function openAppearance() {
     const dialog = $("appearance-dialog");
     dialog.label = `Appearance: ${C.label(current)}`;
     renderAppearance(dialog.querySelector(".appearance"));
     dialog.open = true;
-  });
+  }
+
+  // ---- action bars ----
+  // Each mode's bar sits at the bottom of its section (Display, Running, Edit's form) and is copied to the top of the
+  // card, so a new button only goes in the bottom bar. Buttons say what they do with data-sheet-action; Save is a
+  // submit button tied to the form with form=, so its copy outside the form still submits.
+  const SHEET_ACTIONS = { edit: enter("editing"), run: enter("running"), stop: () => { state = "display"; render(); }, appearance: openAppearance };
+  $("character-card").addEventListener("click", (e) => SHEET_ACTIONS[e.target.closest("[data-sheet-action]")?.dataset.sheetAction]?.());
+  function copyActions() {
+    const topActions = $("character-actions-top");
+    const bar = [display, running, form].find((section) => !section.hidden)?.querySelector(":scope > .character-actions");
+    topActions.hidden = !bar;
+    topActions.replaceChildren(...(bar ? [...bar.children].map((button) => button.cloneNode(true)) : []));
+  }
 
   // ---- gear: each item shown as "name ×N [label]" with its keyword chips (gear-ui.js); its name opens its rules ----
   // Run and Edit can add, change, or remove gear. Run saves right away and never sets Starter (a changed item keeps its own);
   // Edit also sets Starter, and keeps it all in the draft until Save.
   // Each item's conditions show under it; Run and Edit can add them ("+ condition") and click them.
+  // While running, an item with rolls (G.rollOf: weapons, kits, vehicles) has a dice button that opens the roll dialog,
+  // or, for a kit's three skills, a menu of them to pick from first.
+  const skillNameOf = (id) => C.SKILLS.find((s) => s.id === id)?.name ?? id;
+  function rollButtonHTML(item) {
+    const skills = G.rollOf(item)?.skills ?? [];
+    if (!skills.length) return "";
+    const button = (attrs, title) => `<wa-button size="s" appearance="plain" ${attrs} title="${escapeHTML(title)}">
+        <wa-icon name="dice-d20" label="Roll"></wa-icon></wa-button>`;
+    if (skills.length === 1) return button(`data-gear-action="roll" data-skill="${skills[0]}"`, `Roll ${skillNameOf(skills[0])}`);
+    return `<wa-dropdown class="gear-roll" data-gear-roll>${button(`slot="trigger" with-caret`, "Roll…")}${
+      skills.map((id) => `<wa-dropdown-item value="${id}">${escapeHTML(skillNameOf(id))}</wa-dropdown-item>`).join("")}</wa-dropdown>`;
+  }
   function renderGear(el, character, { editable = false, running = false } = {}) {
     const items = C.gear(character);
     const changeable = editable || running;
     el.innerHTML = items.length
       ? `<ul class="gear-list">${items.map((g) => `<li data-gear="${escapeHTML(g.id)}">
           ${GEAR_UI.rowHTML(g)}
+          ${running ? rollButtonHTML(g) : ""}
           ${changeable ? `<wa-button size="s" appearance="plain" data-gear-action="condition" title="Add a condition">
             <wa-icon slot="start" name="plus"></wa-icon>condition</wa-button>` : ""}
           ${changeable ? `<wa-button size="s" appearance="plain" data-gear-action="edit" title="Change">
@@ -336,6 +361,8 @@
   const D = window.NCD_DATABANK;
   const gearDialog = $("gear-dialog");
   const gearKind = $("gear-kind");
+  // Built here, not in index.html: Firefox restores form state into the page's own radios on reload, blanking their values.
+  gearKind.innerHTML = G.KINDS.map((k) => `<wa-radio appearance="button" value="${k}">${k[0].toUpperCase() + k.slice(1)}</wa-radio>`).join("");
   const gearDescription = $("gear-description");
   const gearQuantity = $("gear-quantity");
   const gearFields = $("gear-fields");
@@ -481,7 +508,8 @@
       const base = state === "editing" ? draft : current;
       const item = C.gear(base).find((g) => String(g.id) === id);
       if (!item) return;
-      if (button.dataset.gearAction === "edit") openGearDialog(item);
+      if (button.dataset.gearAction === "roll") openGearRoll(item, button.dataset.skill);
+      else if (button.dataset.gearAction === "edit") openGearDialog(item);
       else if (state === "editing") {
         draft = C.withoutGear(draft, item.id); // Save (or not) is the confirmation
         renderGear($("gear-edit"), draft, { editable: true });
@@ -858,21 +886,23 @@
   const rollTarget = $("skill-target");
   const rollPools = { adv: $("skill-adv"), chal: $("skill-chal") };
   const rollResult = $("skill-result");
+  const rollImpact = $("skill-impact");
   let rollSkill = null; // { id, name, adv, chal }
 
   const resetRollPools = () => {
     rollPools.adv.value = String(rollSkill.adv);
     rollPools.chal.value = String(rollSkill.chal);
   };
-  function openRollDialog(id) {
+  // From gear (openGearRoll): extra Advantage dice on top of the skill's own, and an impact to start with.
+  function openRollDialog(id, { adv = 0, impact = null } = {}) {
     const sk = C.SKILLS.find((s) => s.id === id);
     const st = sk ? C.skill(current, id) : { value: null, adv: 0, chal: 0 };
-    rollSkill = { id, name: sk ? sk.name : "Anything else", adv: st.adv, chal: st.chal };
+    rollSkill = { id, name: sk ? sk.name : "Anything else", adv: DICE.clampPool(st.adv + adv), chal: st.chal };
     rollDialog.label = `Roll ${rollSkill.name}`;
     rollTarget.value = String(C.shownValue(st.value));
+    rollImpact.value = impact ? String(impact) : "";
     resetRollPools();
-    rollResult.hidden = true;
-    rollResult.innerHTML = "";
+    APP.emptyResult(rollResult);
     rollDialog.open = true;
   }
 
@@ -885,6 +915,18 @@
   $("skills-run").addEventListener("change", (e) => {
     const box = e.target.closest("[data-used]");
     if (box) setUsed(box.dataset.used, box.checked);
+  });
+
+  // `skill` is one of the item's (G.rollOf) skills.
+  function openGearRoll(item, skill) {
+    const r = G.rollOf(item);
+    if (r?.skills.includes(skill)) openRollDialog(skill, r);
+  }
+  // A kit's menu: picking a skill rolls it.
+  $("gear-run").addEventListener("wa-select", (e) => {
+    const id = e.target.closest("[data-gear]")?.dataset.gear;
+    const item = id != null && C.gear(current).find((g) => String(g.id) === id);
+    if (item) openGearRoll(item, e.detail.item.value);
   });
 
   $("skills-run").addEventListener("click", (e) => {
@@ -903,9 +945,16 @@
     scroll: true,
     onRoll: () => setUsed(rollSkill.id, true),
     skill: () => rollSkill.name,
+    readImpact: () => DICE.cleanImpact(rollImpact.value),
   });
   $("skill-roll").addEventListener("click", rollSkillAndPost);
   rollTarget.addEventListener("keydown", (e) => { if (e.key === "Enter") rollSkillAndPost(); });
+  // Impact: digits only, and never zero.
+  rollImpact.addEventListener("input", () => {
+    const v = String(rollImpact.value ?? "").replace(/\D/g, "").replace(/^0+/, "").slice(0, 3);
+    if (v !== rollImpact.value) rollImpact.value = v;
+  });
+  rollImpact.addEventListener("keydown", (e) => { if (e.key === "Enter") rollSkillAndPost(); });
 
   // ---- editing ----
   form.addEventListener("click", (e) => {

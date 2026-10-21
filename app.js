@@ -61,18 +61,25 @@
     store.set("gm", gmSwitch.checked ? "1" : "0");
     window.NCD_ADMIN.setGm(SESSION.gm);
   });
+  // Send to Discord (on unless turned off): when it's off, nothing posts and the webhook isn't checked or needed.
+  const discordSwitch = $("send-to-discord");
+  const sendToDiscord = () => store.get("discord") !== "0";
+  if (sendToDiscord()) discordSwitch.setAttribute("checked", "");
   const webhookInput = $("webhook");
   webhookInput.value = store.get("webhook", "");
   webhookInput.placeholder = "https://discord.com/api/webhooks/…";
-  const checkWebhook = () => customElements.whenDefined("wa-input").then(() =>
-    webhookInput.setCustomValidity(isWebhookUrl(webhookUrl()) ? "" : "Not a Discord webhook address"));
+  const checkWebhook = () => customElements.whenDefined("wa-input").then(() => {
+    webhookInput.disabled = !sendToDiscord();
+    webhookInput.setCustomValidity(!sendToDiscord() || isWebhookUrl(webhookUrl()) ? "" : "Not a Discord webhook address");
+  });
   webhookInput.addEventListener("input", () => { store.set("webhook", text(webhookInput.value)); checkWebhook(); });
+  discordSwitch.addEventListener("change", () => { store.set("discord", discordSwitch.checked ? "1" : "0"); checkWebhook(); });
   checkWebhook();
 
   // ---- tabs ----
-  // Start on Settings until there's a player name and a working webhook.
+  // Start on Settings until there's a player name and, when sending to Discord, a working webhook.
   const tabs = $("tabs");
-  const needsSetup = () => !text(SESSION.playerName) || !isWebhookUrl(webhookUrl());
+  const needsSetup = () => !text(SESSION.playerName) || (sendToDiscord() && !isWebhookUrl(webhookUrl()));
   let forced = false; // a forced trip to Settings isn't remembered as the last tab
   customElements.whenDefined("wa-tab-group").then(() => {
     forced = needsSetup();
@@ -101,13 +108,45 @@
   const dicePair = (tens, ones) => `<div class="d10s">${D10("tens", tens)}${D10("ones", ones)}</div>`;
   const symbol = (kind, cls = "") => `<span class="${kind}${cls}" title="${KINDS[kind].title}">${icon(KINDS[kind].symbol)}</span>`;
 
-  // Each pool die shows what it landed on: a Boon / Drawback, or an empty slot for a blank face.
-  const face = (kind, hit) => (hit ? symbol(kind) : `<span class="${kind} blank" title="Blank"></span>`);
-  function facesHTML(r) {
-    const adv = r.adv.map((hit) => face("adv", hit));
-    const chal = r.chal.map((hit) => face("chal", hit));
-    if (!adv.length && !chal.length) return "";
-    return `<div class="faces">${adv.join("")}${adv.length && chal.length ? `<span class="gap"></span>` : ""}${chal.join("")}</div>`;
+  // Each pool die is a slot-machine reel, like the overlay's: its die icon over a window showing what it landed on,
+  // a Boon / Drawback or a blank. Spinning, the reel runs through random faces (at the die's real odds) first.
+  const ODDS = { adv: 0.5, chal: 0.6 };
+  const reelFace = (kind, hit) => `<div class="face">${hit ? symbol(kind) : ""}</div>`;
+  function reelsHTML(r, spinning) {
+    const dice = [...r.adv.map((hit) => ["adv", hit]), ...r.chal.map((hit) => ["chal", hit])];
+    if (!dice.length) return "";
+    return `<div class="reels">${dice.map(([kind, hit], i) => {
+      const len = spinning ? 14 + i * 3 : 1;
+      const faces = Array.from({ length: len - 1 }, () => reelFace(kind, Math.random() < ODDS[kind])).join("") + reelFace(kind, hit);
+      const gap = kind === "chal" && i === r.adv.length && r.adv.length ? `<span class="gap"></span>` : "";
+      return `${gap}<div class="slot ${kind}" data-len="${len}" title="${hit ? KINDS[kind].title : "Blank"}">
+        ${icon(KINDS[kind].die, "slot-die")}<div class="window"><div class="strip">${faces}</div></div></div>`;
+    }).join("")}</div>`;
+  }
+  // Reel i stops this long after the result shows; with the d10 spin first, that's when the overlay's reel i stops too.
+  const reelStopAt = (i) => 1050 + i * 220;
+  function spinReels(el) {
+    const body = el.querySelector(".result-body") ?? el;
+    const slots = body.querySelectorAll(".slot");
+    const net = body.querySelector(".net");
+    if (!slots.length) return;
+    net?.classList.add("waiting");
+    slots.forEach((slot, i) => {
+      const strip = slot.querySelector(".strip");
+      strip.classList.add("spinning");
+      void strip.offsetWidth;
+      strip.style.transition = `transform ${reelStopAt(i)}ms cubic-bezier(0.2, 0.6, 0.3, 1)`;
+      strip.style.transform = `translateY(calc(var(--s) * -${Number(slot.dataset.len) - 1}))`;
+      el.reelTimers.push(setTimeout(() => { strip.classList.remove("spinning"); slot.classList.add("landed"); }, reelStopAt(i) - 120));
+    });
+    el.reelTimers.push(setTimeout(() => {
+      if (!net) return;
+      net.classList.remove("waiting");
+      // replay the pop it already ran while hidden
+      net.style.animation = "none";
+      void net.offsetWidth;
+      net.style.animation = "";
+    }, reelStopAt(slots.length - 1) + 150));
   }
 
   // Boons and Drawbacks cancel one for one; survivors are bright, cancelled pairs are greyed out.
@@ -123,18 +162,44 @@
     return `<div class="net">${icons ? `<div class="net-icons">${icons}</div>` : ""}<div class="net-label ${label[1]}">${label[0]}</div></div>`;
   }
 
-  function showResult(r, animate, el) {
+  const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
+
+  function rollHTML(r, spinning) {
     const verdict = r.success == null ? "" : `<div class="verdict ${r.success ? "success" : "failure"}">${r.success ? "Success" : "Failure"}</div>`;
-    el.className = "result" + (animate ? " reveal" : "");
-    el.innerHTML = dicePair(DICE.fmtTens(r.tens), r.ones) + `<div class="total">${r.total}</div>` + verdict + facesHTML(r) + netHTML(r);
+    const impact = r.impact ? `<div class="impact">Impact ${r.impact}</div>` : "";
+    return dicePair(DICE.fmtTens(r.tens), r.ones) + `<div class="total">${r.total}</div>` + verdict + impact + reelsHTML(r, spinning) + netHTML(r);
   }
 
-  const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
+  // A panel marked data-steady (the Dice tab's, the roll dialog's) stays the height of the biggest roll there is, a
+  // target and every pool die, so it doesn't jump about from roll to roll: a hidden copy of that roll sits under whatever
+  // is showing. data-steady="impact" counts an impact line too.
+  const all = (hit) => Array(DICE.MAX_POOL).fill(hit);
+  const BIGGEST = { tens: 0, ones: 0, total: 100, success: true, adv: all(true), chal: all(true), boons: DICE.MAX_POOL, net: 0, cancelled: DICE.MAX_POOL };
+  const BIGGEST_IMPACT = { ...BIGGEST, impact: 999 };
+  // With clear, it gets the small button that clears the roll away (a data-clearable panel's, while a roll shows).
+  const CLEAR_BUTTON = `<wa-button class="result-clear" size="s" appearance="plain" title="Clear the roll">
+      <wa-icon name="xmark" label="Clear the roll"></wa-icon></wa-button>`;
+  function fill(el, html, clear = false) {
+    el.innerHTML = !el.hasAttribute("data-steady") ? html
+      : `<div class="result-body">${html}</div><div class="result-hold" aria-hidden="true">${
+        rollHTML(el.dataset.steady === "impact" ? BIGGEST_IMPACT : BIGGEST, false)}</div>`
+        + (clear ? CLEAR_BUTTON : "");
+  }
+
+  function showResult(r, animate, el) {
+    const spinning = animate && !reducedMotion.matches;
+    (el.reelTimers ?? []).forEach(clearTimeout);
+    el.reelTimers = [];
+    el.className = "result" + (animate ? " reveal" : "");
+    fill(el, rollHTML(r, spinning), el.hasAttribute("data-clearable"));
+    if (spinning) spinReels(el);
+  }
   // Spins the d10 faces for a moment before the real result lands.
   function spin(el, ms = 650) {
     if (reducedMotion.matches) return Promise.resolve();
+    (el.reelTimers ?? []).forEach(clearTimeout);
     el.className = "result rolling";
-    el.innerHTML = dicePair("–", "–");
+    fill(el, dicePair("–", "–"));
     const nums = el.querySelectorAll(".num");
     const timer = setInterval(() => {
       nums[0].textContent = DICE.fmtTens(Math.floor(Math.random() * 10));
@@ -171,6 +236,7 @@
   }
 
   async function post(payload, what) {
+    if (!sendToDiscord()) return;
     const url = webhookUrl();
     if (!isWebhookUrl(url)) { toast(`${what}, but there's no Discord webhook. Add one in Settings.`, "warning"); return; }
     try {
@@ -212,8 +278,8 @@
   // A roll button's whole job: roll, reset the pools, spin, show the result, then post it. One roll at a time.
   // The Administrator's rolls also play on the OBS overlay (admin.js), starting with the spin here.
   // `scroll` brings the result into view (the skill dialog, where on phones it's below the fold).
-  // `onRoll` runs once the result shows; `skill` names the skill for the message, if any.
-  function makeRoller({ button, readTarget, pools, result, resetPools, scroll = false, onRoll = () => {}, skill = () => undefined }) {
+  // `onRoll` runs once the result shows; `skill` names the skill for the message, if any; `readImpact` gives the impact, if any.
+  function makeRoller({ button, readTarget, pools, result, resetPools, scroll = false, onRoll = () => {}, skill = () => undefined, readImpact = () => null }) {
     let busy = false;
     const reveal = () => { if (scroll) result.scrollIntoView({ block: "nearest" }); };
     return async function rollAndPost() {
@@ -221,9 +287,9 @@
       busy = true;
       button.loading = true;
       try {
-        const r = DICE.roll({ target: readTarget(), advantage: pools.adv.value, challenge: pools.chal.value });
+        const r = DICE.roll({ target: readTarget(), advantage: pools.adv.value, challenge: pools.chal.value, impact: readImpact() });
         resetPools();
-        window.NCD_ADMIN.sendRoll(r);
+        window.NCD_ADMIN.send("roll", r);
         result.hidden = false;
         const spinning = spin(result);
         reveal();
@@ -256,6 +322,25 @@
     const last = JSON.parse(store.get("lastRoll"));
     if (last) showResult(last, false, $("result"));
   } catch {}
+  // Back to "No rolls yet": by the clear button, or at the end of a Planning countdown (admin-planning.js).
+  // The Administrator's overlay shows what this panel shows, so "No rolls yet" here clears the overlay's roll too,
+  // now and whenever the overlay connects.
+  const noRoll = () => !$("result").querySelector(".result-body .d10s");
+  // Any result panel back to "No rolls yet".
+  function emptyResult(el) {
+    (el.reelTimers ?? []).forEach(clearTimeout);
+    el.reelTimers = [];
+    el.className = "result";
+    fill(el, `<p class="result-empty">No rolls yet</p>`);
+  }
+  function clearResult() {
+    emptyResult($("result"));
+    store.set("lastRoll", null);
+    window.NCD_ADMIN.send("clearRoll");
+  }
+  if (!$("result").querySelector(".result-body")) clearResult();
+  $("result").addEventListener("click", (e) => { if (e.target.closest(".result-clear")) clearResult(); });
+  window.NCD_ADMIN.onLink(({ status }) => { if (status === "connected" && noRoll()) window.NCD_ADMIN.send("clearRoll"); });
 
   $("roll").addEventListener("click", rollAndPost);
   targetInput.addEventListener("keydown", (e) => { if (e.key === "Enter") rollAndPost(); });
@@ -269,7 +354,7 @@
     rollAndPost();
   });
 
-  // ---- the Databank tab ----
+  // ---- the Databank and Tables tabs ----
   // Built once from databank.js. A section with many entries spans the page and flows its entries into columns.
   {
     const DATABANK = window.NCD_DATABANK;
@@ -323,7 +408,6 @@
     $("databank-keywords").innerHTML = [
       section({ title: "Positive gear keywords", kind: "boon", intro: DATABANK.keywordsIntro, entries: DATABANK.keywords.positive }),
       section({ title: "Negative gear keywords", kind: "drawback", entries: DATABANK.keywords.negative }),
-      section({ title: "Random gear keywords", intro: DATABANK.randomKeywordsIntro, table: { head: ["d100", "Positive", "Negative"], rows: DATABANK.randomKeywords } }),
       section({
         title: "Weapon keywords", intro: "Only weapons can have these keywords, and each weapon category allows only some of them.",
         entries: DATABANK.keywords.weapon.map((k) => {
@@ -332,8 +416,13 @@
         }),
       }),
     ].join("");
+
+    // ---- the Tables tab: tables to roll on, in the Databank's style ----
+    $("tables").innerHTML = [
+      section({ title: "Random gear keywords", intro: DATABANK.randomKeywordsIntro, table: { head: ["d100", "Positive", "Negative"], rows: DATABANK.randomKeywords } }),
+    ].join("");
   }
 
   // For the Character tab (roster.js).
-  window.NCD_APP = { KINDS, toast, targetField, makeRoller, postInfluence };
+  window.NCD_APP = { KINDS, toast, targetField, makeRoller, postInfluence, clearResult, emptyResult };
 })();

@@ -83,23 +83,40 @@ wa-tab::part(tab) {
   font-size: var(--wa-font-size-s);
 }
 
-/* roller | result | (empty for now) on wide screens; two columns at medium; one column on phones */
+/* Players: roller | result. The Administrator adds a third column (the Overlay and Ticker cards). Each column is a stack of cards with room for more. Two columns at medium, one on phones. */
 .dice-layout {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--wa-space-l);
   align-items: start;
 }
-.dice-layout > .result { align-self: stretch; }
+html.gm .dice-layout { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.dice-column { display: flex; flex-direction: column; gap: var(--wa-space-l); min-width: 0; }
 @media (max-width: 1100px) {
-  .dice-layout { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  html.gm .dice-layout { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
-@media (max-width: 640px) { .dice-layout { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 640px) { .dice-layout, html.gm .dice-layout { grid-template-columns: minmax(0, 1fr); } }
 
-/* ---- the Administrator's overlay panel (admin.js) ---- */
-.admin-panel[hidden] { display: none; }
+/* ---- Administrator only: anything marked data-admin shows only with the gm class on <html> (admin.js) ---- */
+html:not(.gm) [data-admin] { display: none !important; }
+/* and data-player is the reverse: Players only (the Dice tab is "Dice" for them, "Dashboard" for the Administrator) */
+html.gm [data-player] { display: none !important; }
+
+/* ---- the Administrator's overlay panel (admin-overlay.js) ---- */
 .admin-panel::part(body) { display: flex; flex-direction: column; gap: var(--wa-space-m); }
 .admin-panel .stepper [data-step-value] { flex: 1; }
+/* Heat is red, like on the overlay */
+.admin-panel [data-overlay-stat="heat"] .stat-icon .icon { --ink: #ff5a3c; }
+.wa-dark .admin-panel [data-overlay-stat="heat"] .stat-icon .icon { filter: drop-shadow(0 0 4px color-mix(in srgb, #ff5a3c 60%, transparent)); }
+.ticker-items { display: flex; flex-direction: column; gap: var(--wa-space-xs); }
+#ticker-send { align-self: flex-end; }
+
+/* ---- the Administrator's Planning countdown (admin-planning.js) ---- */
+.planning-edit { display: flex; flex-direction: column; gap: var(--wa-space-xs); }
+.planning-head { display: flex; align-items: baseline; justify-content: space-between; }
+.planning-clock { font-family: "Chakra Petch", sans-serif; font-size: var(--wa-font-size-xl); font-variant-numeric: tabular-nums; }
+.planning-buttons { display: grid; grid-template-columns: repeat(auto-fit, minmax(6rem, 1fr)); gap: var(--wa-space-xs); }
+.planning-buttons[hidden] { display: none; }
 .obs-status { margin: 0; font-size: var(--wa-font-size-s); color: var(--ncd-bad); }
 .obs-status.ok { color: var(--ncd-good); }
 .obs-status:empty { display: none; }
@@ -188,7 +205,13 @@ wa-tab::part(tab) {
   text-align: center;
   min-height: 18rem;
 }
-.result-empty { margin: 0; color: var(--wa-color-text-quiet); font-family: "Orbitron", sans-serif; letter-spacing: 0.2em; text-transform: uppercase; font-size: var(--wa-font-size-s); }
+/* data-steady (app.js): the roll and a hidden copy of the biggest one share a cell, so the panel is always the bigger one's height */
+.result[data-steady] { display: grid; }
+.result[data-steady] > * { grid-area: 1 / 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--wa-space-s); }
+.result-hold { visibility: hidden; }
+.result[data-steady] { position: relative; }
+.result[data-steady] > .result-clear { position: absolute; top: var(--wa-space-xs); right: var(--wa-space-xs); color: var(--wa-color-text-quiet); }
+.result-empty { margin: auto 0; color: var(--wa-color-text-quiet); font-family: "Orbitron", sans-serif; letter-spacing: 0.2em; text-transform: uppercase; font-size: var(--wa-font-size-s); }
 
 .d10s { display: flex; gap: var(--wa-space-s); }
 .d10 { width: 64px; }
@@ -219,19 +242,45 @@ wa-tab::part(tab) {
 .verdict.success { color: var(--ncd-good); }
 .verdict.failure { color: var(--ncd-bad); }
 .wa-dark .verdict.success, .wa-dark .verdict.failure { text-shadow: 0 0 10px currentColor; }
-
-.faces { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--wa-space-2xs); margin-top: var(--wa-space-xs); }
-.faces .icon { width: 26px; height: 26px; }
-.faces .blank {
-  width: 20px;
-  height: 20px;
-  margin: 3px;
-  border: 2px dashed color-mix(in srgb, var(--c) 45%, transparent);
-  border-radius: var(--wa-border-radius-s);
+.impact {
+  font-family: "Chakra Petch", sans-serif;
+  font-weight: 700;
+  font-size: var(--wa-font-size-l);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
-.faces .gap { width: var(--wa-space-s); }
+
+/* Advantage / Challenge dice: slot-machine reels, like the overlay's */
+.reels { --s: 40px; display: flex; flex-wrap: wrap; justify-content: center; gap: var(--wa-space-xs); margin-top: var(--wa-space-xs); }
+.reels .gap { width: var(--wa-space-s); }
+.slot { display: flex; flex-direction: column; align-items: center; gap: var(--wa-space-3xs); }
+.slot-die { width: 18px; height: 18px; }
+.window {
+  position: relative;
+  width: var(--s);
+  height: var(--s);
+  overflow: hidden;
+  border: 2px solid var(--c);
+  border-radius: var(--wa-border-radius-s);
+  background: var(--wa-color-surface-lowered);
+  box-shadow: inset 0 0 8px rgb(0 0 0 / 0.25);
+}
+.wa-dark .window { background: rgb(5 5 12 / 0.85); box-shadow: 0 0 8px color-mix(in srgb, var(--c) 55%, transparent), inset 0 0 10px rgb(0 0 0 / 0.9); }
+/* shading top and bottom, like a slot window */
+.window::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(rgb(0 0 0 / 0.3), transparent 30%, transparent 70%, rgb(0 0 0 / 0.3)); }
+.strip { will-change: transform; }
+.strip.spinning .face { filter: blur(1.5px); }
+.face { width: var(--s); height: var(--s); display: grid; place-items: center; }
+.face .icon { width: 26px; height: 26px; }
+.wa-dark .face .icon { filter: drop-shadow(0 0 4px var(--c)); }
+.face:empty::before { content: ""; width: 30%; height: 3px; border-radius: 2px; background: color-mix(in srgb, var(--c) 40%, transparent); }
+.slot.landed .window { animation: slot-land 0.45s ease-out; }
+@keyframes slot-land { 0% { transform: scale(1.18); box-shadow: 0 0 18px var(--c); } 100% { transform: scale(1); } }
 
 .net { display: flex; flex-direction: column; align-items: center; gap: var(--wa-space-2xs); }
+/* waits for the reels to stop, then pops in */
+.net.waiting { visibility: hidden; }
 .net-icons { display: flex; align-items: center; gap: var(--wa-space-2xs); }
 .net-icons .icon { width: 32px; height: 32px; }
 .wa-dark .net-icons span:not(.cancelled) .icon { filter: drop-shadow(0 0 5px var(--c)); }
@@ -242,16 +291,18 @@ wa-tab::part(tab) {
 .net-label.drawback { color: var(--ncd-bad); }
 .net-label.even { color: var(--wa-color-text-quiet); }
 
-.reveal > * { animation: pop 0.4s ease-out backwards; }
-.reveal > :nth-child(2) { animation-delay: 0.05s; }
-.reveal > :nth-child(3) { animation-delay: 0.1s; }
-.reveal > :nth-child(4) { animation-delay: 0.15s; }
-.reveal > :nth-child(5) { animation-delay: 0.2s; }
+:is(.reveal, .reveal > .result-body) > * { animation: pop 0.4s ease-out backwards; }
+:is(.reveal, .reveal > .result-body) > :nth-child(2) { animation-delay: 0.05s; }
+:is(.reveal, .reveal > .result-body) > :nth-child(3) { animation-delay: 0.1s; }
+:is(.reveal, .reveal > .result-body) > :nth-child(4) { animation-delay: 0.15s; }
+:is(.reveal, .reveal > .result-body) > :nth-child(5) { animation-delay: 0.2s; }
+/* (not the data-steady wrappers themselves, only what's in them) */
+.reveal > :is(.result-body, .result-hold) { animation: none; }
 
 @keyframes pop { 0% { transform: scale(0.6); opacity: 0; } 70% { transform: scale(1.06); } 100% { transform: scale(1); opacity: 1; } }
 @keyframes shake { 0%, 100% { transform: translate(0, 0) rotate(0); } 25% { transform: translate(-2px, 1px) rotate(-6deg); } 75% { transform: translate(2px, -1px) rotate(6deg); } }
 @media (prefers-reduced-motion: reduce) {
-  .reveal > *, .rolling .d10 { animation: none; }
+  :is(.reveal, .reveal > .result-body) > *, .rolling .d10 { animation: none; }
 }
 
 /* ---- Discord card ---- */
@@ -283,6 +334,9 @@ wa-tab[hidden] { display: none; }
 /* ---- character ---- */
 .character-card { max-width: 72rem; }
 .character-actions { display: flex; gap: var(--wa-space-s); }
+/* the copy of the mode's buttons at the top of the card */
+.character-actions.top { justify-content: flex-end; margin-bottom: var(--wa-space-l); }
+.character-actions.top[hidden] { display: none; }
 /* sheet head: identity (left) and stat boxes (right), like the paper sheet */
 .sheet-head {
   display: grid;
@@ -420,6 +474,7 @@ wa-tab[hidden] { display: none; }
 .wa-dark .create-steps .current .create-step-mark { box-shadow: 0 0 10px var(--ncd-glow); }
 .create-nav { display: flex; justify-content: space-between; align-items: center; gap: var(--wa-space-s); flex-wrap: wrap;
   padding-top: var(--wa-space-m); border-top: 1px solid var(--wa-color-surface-border); }
+.create-nav.top { padding: 0 0 var(--wa-space-m); border-top: 0; border-bottom: 1px solid var(--wa-color-surface-border); }
 .create-nav-moves { display: flex; gap: var(--wa-space-s); margin-left: auto; }
 .create-body { display: flex; flex-direction: column; gap: var(--wa-space-l); }
 .create-placeholder { color: var(--wa-color-text-quiet); margin: 0; }
@@ -705,9 +760,17 @@ button.wound:focus-visible { outline: 2px solid var(--wa-color-focus); outline-o
 a.skill-name { color: var(--wa-color-brand); text-decoration: none; }
 a.skill-name:hover, a.skill-name:focus-visible { text-decoration: underline; }
 #character-running[hidden] { display: none; }
-.skill-roll { display: flex; flex-direction: column; gap: var(--wa-space-l); }
+.skill-roll, .skill-roll-controls { display: flex; flex-direction: column; gap: var(--wa-space-l); }
 .skill-roll .result { min-height: 0; padding: var(--wa-space-m); }
-.skill-roll .result[hidden] { display: none; }
+/* Narrow: stacked, the result only once there's a roll, at its own height. Wide: the controls beside a steady result. */
+@media (max-width: 959px) {
+  .skill-roll .result:has(.result-empty) { display: none; }
+  .skill-roll .result-hold { display: none; }
+}
+@media (min-width: 960px) {
+  #skill-dialog { --width: 52rem; }
+  .skill-roll { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
+}
 #dice-dialog wa-radio-group + wa-radio-group { margin-top: var(--wa-space-l); }
 
 .settings-card { max-width: 32rem; }
