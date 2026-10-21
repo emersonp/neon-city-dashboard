@@ -297,7 +297,8 @@
   });
 
   // ---- gear: each item shown as "name ×N [label]" with its keyword chips (gear-ui.js); its name opens its rules ----
-  // Run can add gear (saved right away, never Starter). Edit can add, change, or remove gear and set Starter; kept in the draft until Save.
+  // Run and Edit can add, change, or remove gear. Run saves right away and never sets Starter (a changed item keeps its own);
+  // Edit also sets Starter, and keeps it all in the draft until Save.
   // Each item's conditions show under it; Run and Edit can add them ("+ condition") and click them.
   function renderGear(el, character, { editable = false, running = false } = {}) {
     const items = C.gear(character);
@@ -307,7 +308,7 @@
           ${GEAR_UI.rowHTML(g)}
           ${changeable ? `<wa-button size="s" appearance="plain" data-gear-action="condition" title="Add a condition">
             <wa-icon slot="start" name="plus"></wa-icon>condition</wa-button>` : ""}
-          ${editable ? `<wa-button size="s" appearance="plain" data-gear-action="edit" title="Change">
+          ${changeable ? `<wa-button size="s" appearance="plain" data-gear-action="edit" title="Change">
               <wa-icon name="pen" label="Change"></wa-icon></wa-button>
             <wa-button size="s" appearance="plain" variant="danger" data-gear-action="remove" title="Remove">
               <wa-icon name="trash" label="Remove"></wa-icon></wa-button>` : ""}
@@ -449,7 +450,7 @@
       draft = C.withGear(draft, C.newGear({ ...working, description, quantity, starter: gearStarter.checked }));
       renderGear($("gear-edit"), draft, { editable: true });
     } else if (state === "running") {
-      if (!commit(C.withGear(current, C.newGear({ ...working, description, quantity, starter: false })))) return;
+      if (!commit(C.withGear(current, C.newGear({ ...working, description, quantity, starter: gearChanging?.starter ?? false })))) return;
       renderGear($("gear-run"), current, { running: true });
     }
     gearDialog.open = false;
@@ -459,17 +460,23 @@
   for (const el of [running, form]) {
     el.addEventListener("click", (e) => { if (e.target.closest("[data-add-gear]")) openGearDialog(); });
   }
-  $("gear-edit").addEventListener("click", (e) => {
-    const button = e.target.closest("[data-gear-action]");
-    const id = button?.closest("[data-gear]")?.dataset.gear;
-    if (!id) return;
-    if (button.dataset.gearAction === "condition") return;
-    if (button.dataset.gearAction === "edit") openGearDialog(draft.gear.find((g) => g.id === id));
-    else {
-      draft = C.withoutGear(draft, id);
-      renderGear($("gear-edit"), draft, { editable: true });
-    }
-  });
+  for (const el of [$("gear-edit"), $("gear-run")]) {
+    el.addEventListener("click", (e) => {
+      const button = e.target.closest("[data-gear-action]");
+      const id = button?.closest("[data-gear]")?.dataset.gear;
+      if (!id || button.dataset.gearAction === "condition") return;
+      const base = state === "editing" ? draft : current;
+      const item = C.gear(base).find((g) => String(g.id) === id);
+      if (!item) return;
+      if (button.dataset.gearAction === "edit") openGearDialog(item);
+      else if (state === "editing") {
+        draft = C.withoutGear(draft, item.id);
+        renderGear($("gear-edit"), draft, { editable: true });
+      } else if (state === "running" && commit(C.withoutGear(current, item.id))) {
+        renderGear($("gear-run"), current, { running: true });
+      }
+    });
+  }
 
   // ---- conditions: chips on the character and under gear; in Run and Edit a chip opens its dialog ----
   // Run saves each change right away; Edit keeps them in the draft until Save. Nothing posts to Discord.
