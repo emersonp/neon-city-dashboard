@@ -81,6 +81,7 @@ test("gear: keep acquired gear, add a keyword to starting gear, and gain common 
     { benefit: "keyword", value: { gear: String(coat.id), keyword: "Durable" } },   // 1 + 1
     { benefit: "keyword", value: { gear: String(coat.id), keyword: "Durable" } },   // already has it: skipped
     { benefit: "common-gear", value: { kind: "prop", description: "Umbrella", keywords: ["Stylish"] } },
+    { benefit: "common-gear", value: { kind: "weapon", category: "Sniper rifle", description: "Long gun" } },  // never common: skipped
   ], { acquired: [loot] });
   assert.deepEqual(r.purchases.map((p) => p.cost), [1, 1, 2, 1]);
   assert.deepEqual(C.gear(r.character).map((g) => [g.description, g.starter, g.keywords]),

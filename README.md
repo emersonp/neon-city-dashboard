@@ -189,6 +189,9 @@ in Edit mid-job still counts. After that, the button says **Run**.
   it's confirmed, the character is saved as spending XP (a badge on the Roster) and only opens to this page, and the gear
   picked up on the job is kept so it can be bought as starting gear. **Done**, or spending the last XP, asks to confirm
   the purchases and shows the XP left; Confirm moves the XP spent from Available to Spent and goes to Detail.
+  Common gear opens the gear dialog with only what Gear Basics' Common Gear entry allows (`isCommon` in `gear.js`):
+  weapons with no added keywords (not sniper rifles, launchers or mines, marked `common: false` in `databank.js`),
+  props, improvised or consumable standard tool kits, and equipment tagged common.
 
 The XP table is one table for every origin (the book has one per origin): `advancement.js` holds it, with the costs
 that differ by origin in `ORIGIN_COST`, and the rules for each purchase. The Databank's **XP** tab shows it.

@@ -645,7 +645,7 @@ You can also choose to gain (or worsen) the **Exhausted** negative condition to 
     },
     {
       id: "dragon-scales", type: "augmentation", name: "Dragon Scales", origin: "Gene-Spliced", archetype: "Merc",
-      summary: "Take less damage fro physical attacks",
+      summary: "Take less damage from physical attacks",
     },
     {
       id: "natural-weapons", type: "augmentation", name: "Natural Weapons", origin: "Gene-Spliced", archetype: "Merc",

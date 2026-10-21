@@ -383,8 +383,9 @@
         <wa-button appearance="plain" size="s" data-roll-table="${n}" title="Roll d${die}">
         <wa-icon name="dice" label="Roll d${die}"></wa-icon></wa-button></span>`;
     // `after` is HTML under the table (the Tables tab's buttons). A card is the full width with `wide`, or many entries.
-    const section = ({ title, kind = "", intro, entries = [], table: t, roll, after = "", wide = entries.length > 6 }) => `
-      <section class="sheet-column databank-section${wide ? " wide" : ""}">
+    // `double` makes it two columns wide where the page has room for two.
+    const section = ({ title, kind = "", intro, entries = [], table: t, roll, after = "", wide = entries.length > 6, double = false }) => `
+      <section class="sheet-column databank-section${wide ? " wide" : double ? " double" : ""}">
         <h2 class="${kind}${roll != null ? " rollable" : ""}">${escapeHTML(title)}${roll != null ? rollButton(roll, DICE.tableDie(t)) : ""}</h2>
         ${intro ? rich(intro) : ""}${t ? table(t) : ""}${after}
         ${entries.length ? `<div class="databank-entries">${entries.map(entry).join("")}</div>` : ""}

@@ -302,6 +302,20 @@
     return !keywordsOf(before).includes(k[0]) && slots.find((s) => s.id === mount.target).item.keywords.includes(k[0]);
   }
 
-  root.NCD_GEAR = { KINDS, QUALITIES, EQUIPMENT, keyword, builtIn, keywordsOf, canAdd, keywordChoices, legalize, retype, stats, label, defaultName, descriptionText, rollOf,
+  // ---- common gear (Gear basics' Common Gear entry): weapons with no added keywords (sniper rifles, launchers and mines,
+  // marked common: false, never), props (consumer goods and tools), basic guided skill software, improvised tools,
+  // consumable standard tools, and equipment whose entry says it's common (its tag) ----
+  const COMMON_KINDS = ["weapon", "kit", "equipment", "prop"];
+  function isCommon(item) {
+    switch (item?.kind) {
+      case "weapon": { const w = weaponOf(item); return Boolean(w) && w.common !== false && !strings(item.keywords).length; }
+      case "kit": return Boolean(toolSetOf(item)) && (item.quality === "improvised" || (item.quality === "standard" && item.consumable === true));
+      case "equipment": return /\bcommon\b/.test(equipmentOf(item)?.tag ?? "");
+      case "prop": return true;
+      default: return false;
+    }
+  }
+
+  root.NCD_GEAR = { KINDS, COMMON_KINDS, isCommon, QUALITIES, EQUIPMENT, keyword, builtIn, keywordsOf, canAdd, keywordChoices, legalize, retype, stats, label, defaultName, descriptionText, rollOf,
     starterSlots, weaponMountTargets, slotOpen, gearComplete };
 })(globalThis);

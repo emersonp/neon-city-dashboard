@@ -69,6 +69,7 @@ If the prop is exceptionally well-suited to helping you succeed at some task you
     },
     {
       title: "Specialized tool kits",
+      double: true, // long: two columns wide where the page has room
       intro: "When you use a tool set to help progress a scene objective with one of its associated skills, it adds a bonus to the impact of the roll. Each set comes in one of three qualities.",
       entries: [
         { name: "Improvised Tools", quality: "improvised", impact: 10, tag: "+10 impact · common", text: "Usually incomplete sets of commercially-available tools, or kitbashed tools with a more specialized purpose assembled from spare parts. Improvised tool sets grant a **+10** bonus to impact, but can be carried in pockets or in a backpack or satchel without arousing any suspicion or being particularly cumbersome. Improvised tools are considered to be common gear." },
@@ -199,13 +200,13 @@ Environment suits impose the **Heavily Encumbered** negative condition on the we
     { name: "Shotgun", hands: 2, damage: 40, intrinsic: ["Close Range"],
       allowed: ["Armor-Piercing", "Automatic", "Close Range", "Compact", "Concussive", "Debilitating", "Electromagnetic", "Explosive", "Flechette", "Fusion", "Miniaturized", "Mounted", "Nonlethal", "Phasing", "Plasma"],
       examples: "Break action, pump action, double-barreled, sawed-off, lever-action, and semi-automatic shotguns." },
-    { name: "Sniper rifle", hands: 2, damage: 40, intrinsic: ["Long Range"],
+    { name: "Sniper rifle", common: false, hands: 2, damage: 40, intrinsic: ["Long Range"],
       allowed: ["Armor-Piercing", "Explosive", "Fusion", "Laser", "Long Range", "Miniaturized", "Nonlethal", "Phasing", "Plasma", "Rail", "Silent"],
       examples: "Bolt-action rifles, designated marksman's rifles, anti-materiel rifles." },
-    { name: "Launcher", hands: 2, damage: 20, intrinsic: ["Explosive", "Long Range", "Slow"],
+    { name: "Launcher", common: false, hands: 2, damage: 20, intrinsic: ["Explosive", "Long Range", "Slow"],
       allowed: ["Concussive", "Debilitating", "Electromagnetic", "Explosive", "Long Range", "Miniaturized", "Mounted", "Plasma", "Rail", "Slow"],
       examples: "Rocket-propelled grenade launchers, rocket launchers, bazookas, missile launchers, mortars." },
-    { name: "Mine", hands: 1, damage: 20, intrinsic: ["Explosive", "Stationary"],
+    { name: "Mine", common: false, hands: 1, damage: 20, intrinsic: ["Explosive", "Stationary"],
       allowed: ["Activated", "Compact", "Concussive", "Debilitating", "Electromagnetic", "Explosive", "Flechette", "Laser", "Obfuscating", "Plasma", "Proximity", "Shock", "Stationary"],
       examples: "Land mines, C4, anti-vehicle mines." },
   ];

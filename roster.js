@@ -494,11 +494,14 @@
       ${value != null ? `value="${escapeHTML(value)}"` : ""} placeholder="Choose…">${options.map(([v, text]) =>
       v == null ? `<small>${escapeHTML(text)}</small>` : `<wa-option value="${escapeHTML(v)}">${escapeHTML(text)}</wa-option>`).join("")}</wa-select>`;
   const indexOf = (list, name) => { const i = list.findIndex((x) => x.name === name); return i < 0 ? null : String(i); };
+  // Spend XP's common gear offers only what Gear basics calls common (G.isCommon).
+  const commonOnly = () => state === "spending";
   function renderGearFields() {
     const w = working;
     switch (w.kind) {
       case "weapon":
-        gearFields.innerHTML = select("category", "Category", D.weapons.map((x, i) => [String(i), x.name]), indexOf(D.weapons, w.category));
+        gearFields.innerHTML = select("category", "Category", D.weapons.flatMap((x, i) => (commonOnly() && x.common === false ? [] : [[String(i), x.name]])),
+          indexOf(D.weapons, w.category));
         break;
       case "kit": {
         const set = D.toolSets.find((t) => t.name === w.set);
@@ -506,12 +509,14 @@
           <wa-radio-group data-field="quality" label="Quality" orientation="horizontal" ${w.quality ? `value="${escapeHTML(w.quality)}"` : ""}>${
             Object.keys(G.QUALITIES).map((q) => `<wa-radio appearance="button" value="${q}">${q[0].toUpperCase() + q.slice(1)}</wa-radio>`).join("")}</wa-radio-group>
           ${set ? select("special", "Hyper-specialized for", [["none", "None"], ...set.skills.map((id) => [id, C.SKILLS.find((x) => x.id === id)?.name ?? id])], w.special ?? "none") : ""}
-          <wa-switch data-field="consumable" ${w.consumable === true ? "checked" : ""}>Consumable</wa-switch>`;
+          <wa-switch data-field="consumable" ${w.consumable === true ? "checked" : ""}>Consumable</wa-switch>
+          ${commonOnly() ? `<p class="gear-empty">Common tool kits are improvised, or standard and consumable.</p>` : ""}`;
         break;
       }
       case "equipment": {
         const e = G.EQUIPMENT.find((x) => x.name === w.entry);
-        const grouped = G.EQUIPMENT.flatMap((x, i, all) => [...(i === 0 || all[i - 1].section !== x.section ? [[null, x.section]] : []), [String(i), x.name]]);
+        const listed = G.EQUIPMENT.map((x, i) => [x, i]).filter(([x]) => !commonOnly() || G.isCommon({ kind: "equipment", entry: x.name }));
+        const grouped = listed.flatMap(([x, i], n) => [...(n === 0 || listed[n - 1][0].section !== x.section ? [[null, x.section]] : []), [String(i), x.name]]);
         const choices = e?.choice?.skill ? SKILL_CHOICES.map((x) => [x.id, x.name]) : (e?.choice?.options ?? []).map((o, i) => [String(i), o]);
         const choiceValue = e?.choice?.skill ? w.choice : (e?.choice?.options.indexOf(w.choice) ?? -1) >= 0 ? String(e.choice.options.indexOf(w.choice)) : null;
         gearFields.innerHTML = select("entry", "Equipment", grouped, indexOf(G.EQUIPMENT, w.entry)) + (e?.choice ? select("choice", e.choice.label, choices, choiceValue) : "");
@@ -532,7 +537,8 @@
     working = item ? { ...item } : C.newGear({ description: "" });
     // Spend XP's common gear: a new starting item with no keywords.
     gearDialog.label = item ? "Change gear" : state === "spending" ? "Common gear (no keywords)" : "New gear";
-    gearKeywords.hidden = state === "spending";
+    gearKeywords.hidden = commonOnly();
+    for (const radio of gearKind.querySelectorAll("wa-radio")) radio.hidden = commonOnly() && !G.COMMON_KINDS.includes(radio.value);
     gearKind.value = working.kind;
     autoName = !item;
     gearDescription.value = working.description;
@@ -604,8 +610,10 @@
       if (!commit(C.withGear(current, C.newGear({ ...working, description, quantity, starter: gearChanging?.starter ?? false })))) return;
       renderGear($("gear-run"), current, { running: true });
     } else if (state === "spending") {
+      const item = { ...working, description, quantity, keywords: [] };
+      if (!G.isCommon(item)) { APP.toast("That isn't common gear (Databank: Gear Basics, Common Gear).", "warning"); return; }
       gearDialog.open = false;
-      buy("common-gear", { ...working, description, quantity, keywords: [] });
+      buy("common-gear", item);
       return;
     }
     gearDialog.open = false;

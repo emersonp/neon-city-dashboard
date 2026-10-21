@@ -161,6 +161,9 @@ html.gm [data-player] { display: none !important; }
 /* ---- databank: the cheat sheet's columns; a section with many entries spans the page and flows them into columns ---- */
 .databank-tabs > wa-tab-panel::part(base) { padding-inline: 0; }
 .databank .databank-section.wide { grid-column: 1 / -1; }
+/* two columns wide once the grid has two (2 × 19rem plus the gap); one column below that */
+.databank { container-type: inline-size; }
+@container (min-width: 40rem) { .databank .databank-section.double { grid-column: span 2; } }
 .databank-section h2.boon { color: var(--color-good); }
 .databank-section h2.drawback { color: var(--color-bad); }
 .databank-section .ability-text, .databank-table { font-size: var(--wa-font-size-s); line-height: 1.45; }
@@ -350,7 +353,7 @@ html.gm [data-player] { display: none !important; }
 
 /* ---- Discord card ---- */
 /* WA tabs set their own display, which would override the hidden attribute */
-wa-tab[hidden] { display: none; }
+wa-tab[hidden], wa-radio[hidden] { display: none; }
 
 /* ---- roster ---- */
 .roster-bar { display: flex; justify-content: flex-end; margin-bottom: var(--wa-space-m); }

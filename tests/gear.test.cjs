@@ -197,3 +197,21 @@ test("rollOf: the skills, extra dice and impact an item rolls with", () => {
   assert.deepEqual(G.rollOf(C.newGear({ kind: "vehicle", description: "V", vehicle: "Chopper" })), { skills: ["drive-or-pilot-something"], adv: 0, impact: null });
   for (const kind of ["equipment", "armor", "prop"]) assert.equal(G.rollOf(C.newGear({ kind, description: "X" })), null);
 });
+
+test("common gear, as Gear basics' Common Gear entry defines it", () => {
+  const D = globalThis.NCD_DATABANK, set = D.toolSets[0].name;
+  assert.equal(G.isCommon(w("Pistol")), true);
+  assert.equal(G.isCommon(w("Pistol", ["Silent"])), false);         // added keywords
+  for (const never of ["Sniper rifle", "Launcher", "Mine"]) assert.equal(G.isCommon(w(never)), false, never);
+  assert.equal(G.isCommon(C.newProp("Umbrella")), true);
+  const kit = (quality, consumable = false) => ({ kind: "kit", set, quality, consumable });
+  assert.equal(G.isCommon(kit("improvised")), true);
+  assert.equal(G.isCommon(kit("standard")), false);
+  assert.equal(G.isCommon(kit("standard", true)), true);
+  assert.equal(G.isCommon(kit("exceptional", true)), false);
+  assert.equal(G.isCommon({ kind: "equipment", entry: "Basic" }), true);  // basic guided skill software
+  assert.equal(G.isCommon({ kind: "equipment", entry: "Tablet" }), true);
+  assert.equal(G.isCommon({ kind: "equipment", entry: "Advanced" }), false);
+  assert.equal(G.isCommon({ kind: "armor", level: 1 }), false);
+  assert.ok(D.weapons.filter((x) => x.common === false).length === 3);
+});

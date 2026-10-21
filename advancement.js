@@ -119,7 +119,8 @@
     {
       id: "common-gear", text: "Gain an item of common gear with no keywords as a starting item", costText: "1", pick: "item",
       cost: () => 1,
-      valid: (state, value) => Boolean(value && typeof value === "object" && String(value.description ?? "").trim()),
+      valid: (state, value) => Boolean(value && typeof value === "object" && String(value.description ?? "").trim())
+        && G().isCommon({ ...value, keywords: [] }),
       apply: (state, value) => withCharacter(state, C.withGear(state.character, C.newGear({ ...value, id: undefined, keywords: [], starter: true }))),
     },
     {
