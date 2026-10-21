@@ -628,6 +628,8 @@ wa-tab[hidden], wa-radio[hidden] { display: none; }
   padding-top: var(--wa-space-m); border-top: 1px solid var(--wa-color-surface-border); }
 .create-nav.top { padding: 0 0 var(--wa-space-m); border-top: 0; border-bottom: 1px solid var(--wa-color-surface-border); }
 .create-nav-moves { display: flex; gap: var(--wa-space-s); margin-left: auto; }
+/* phones: only the buttons below the step, so Next comes after every choice (and the archetype's book text) */
+@media (max-width: 640px) { .create-nav.top { display: none; } }
 .create-body { display: flex; flex-direction: column; gap: var(--wa-space-l); }
 .create-placeholder { color: var(--wa-color-text-quiet); margin: 0; }
 .create-details .sheet-identity > .wide { grid-column: 1 / -1; }

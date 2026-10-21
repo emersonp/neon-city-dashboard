@@ -520,17 +520,19 @@
     el.dataset.step = step;
     if (!el.dataset.wired) {
       el.dataset.wired = "true";
-      // Back / Next / Finish / Discard sit both above and below the step
+      // Back / Next / Finish / Discard sit both above and below the step (only below on phones)
       el.innerHTML = `<nav class="create-head" aria-label="Steps"></nav><dl class="create-picks"></dl><div class="create-nav top"></div><div class="create-body"></div><div class="create-nav"></div>`;
       el.addEventListener("click", (e) => {
         const c = shown.character, at = stepOf(c);
         const to = e.target.closest(".create-head [data-step]")?.dataset.step;
         const nav = e.target.closest(".create-nav [data-nav]");
-        if (to) ctx.choose({ step: to });
+        // a new step starts at the top of the page, not wherever the last one was scrolled to
+        const goTo = (step) => { ctx.choose({ step }); root.scrollTo(0, 0); };
+        if (to) goTo(to);
         if (!nav || nav.disabled) return;
         switch (nav.dataset.nav) {
-          case "back": ctx.choose({ step: C.STEPS[C.STEPS.indexOf(at) - 1] }); break;
-          case "next": ctx.choose({ step: nextStep(c, at) }); break;
+          case "back": goTo(C.STEPS[C.STEPS.indexOf(at) - 1]); break;
+          case "next": goTo(nextStep(c, at)); break;
           case "finish": shown.hooks.finish(); break;
           case "discard": openDiscard(); break;
         }
