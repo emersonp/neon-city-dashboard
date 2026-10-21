@@ -81,11 +81,18 @@
   const tabs = $("tabs");
   const needsSetup = () => !text(SESSION.playerName) || (sendToDiscord() && !isWebhookUrl(webhookUrl()));
   let forced = false; // a forced trip to Settings isn't remembered as the last tab
+  // A tab marked data-admin (Tables) is there only for the Administrator.
+  const tabShown = (name) => {
+    const tab = tabs.querySelector(`:scope > wa-tab[panel="${CSS.escape(name)}"]`);
+    return Boolean(tab) && (!tab.hasAttribute("data-admin") || SESSION.gm);
+  };
   customElements.whenDefined("wa-tab-group").then(() => {
     forced = needsSetup();
-    // a remembered tab that no longer exists (renamed or removed) falls back to Dice
+    // a remembered tab that no longer exists (renamed or removed), or is the Administrator's, falls back to Dice
     const last = store.get("tab", "dice");
-    tabs.active = forced ? "settings" : tabs.querySelector(`:scope > wa-tab[panel="${CSS.escape(last)}"]`) ? last : "dice";
+    tabs.active = forced ? "settings" : tabShown(last) ? last : "dice";
+    // turning the Administrator switch off while on one of their tabs leaves for Dice
+    window.NCD_ADMIN.onGm(() => { if (!tabShown(tabs.active)) tabs.active = "dice"; });
   });
   tabs.addEventListener("wa-tab-show", (e) => {
     if (e.target !== tabs) return; // the Databank tab's own Gear/Keywords tabs bubble up here too
@@ -362,18 +369,24 @@
     const { escapeHTML } = window.NCD_UTIL;
     const ICON_COLOR = { "advantage-die": "adv", boon: "adv", "challenge-die": "chal", drawback: "chal" };
     const rich = (s) => `<div class="ability-text">${formatDescription(s, (name) => icon(name, ICON_COLOR[name] ?? ""))}</div>`;
+    // A table's cells are plain text, unless it has its own cell(value, column) giving HTML.
     const table = (t) => `<div class="databank-table-wrap"><table class="databank-table">
       <thead><tr>${t.head.map((h) => `<th>${escapeHTML(h)}</th>`).join("")}</tr></thead>
-      <tbody>${t.rows.map((r) => `<tr>${r.map((c) => `<td>${escapeHTML(c)}</td>`).join("")}</tr>`).join("")}</tbody>
+      <tbody>${t.rows.map((r) => `<tr>${r.map((c, j) => `<td>${t.cell ? t.cell(c, j) : escapeHTML(c)}</td>`).join("")}</tr>`).join("")}</tbody>
     </table></div>`;
     const entry = (e) => `<article class="databank-entry">
       <h3>${escapeHTML(e.name)}${e.tag ? ` <span class="databank-tag">${escapeHTML(e.tag)}</span>` : ""}</h3>
       ${e.text ? rich(e.text) : ""}${e.table ? table(e.table) : ""}
     </article>`;
-    const section = ({ title, kind = "", intro, entries = [], table: t }) => `
+    // `roll` (the Tables tab) puts a dice button in the card's title, for rolling on its table.
+    const rollButton = (n, die) => `<span class="table-roller"><span class="table-roll" aria-live="polite"></span>
+        <wa-button appearance="plain" size="s" data-roll-table="${n}" title="Roll d${die}">
+        <wa-icon name="dice" label="Roll d${die}"></wa-icon></wa-button></span>`;
+    // `after` is HTML under the table (the Tables tab's buttons).
+    const section = ({ title, kind = "", intro, entries = [], table: t, roll, after = "" }) => `
       <section class="sheet-column databank-section${entries.length > 6 ? " wide" : ""}">
-        <h2 class="${kind}">${escapeHTML(title)}</h2>
-        ${intro ? rich(intro) : ""}${t ? table(t) : ""}
+        <h2 class="${kind}${roll != null ? " rollable" : ""}">${escapeHTML(title)}${roll != null ? rollButton(roll, DICE.tableDie(t)) : ""}</h2>
+        ${intro ? rich(intro) : ""}${t ? table(t) : ""}${after}
         ${entries.length ? `<div class="databank-entries">${entries.map(entry).join("")}</div>` : ""}
       </section>`;
     const list = (names) => names.length ? names.join(", ") : "none";
@@ -417,10 +430,46 @@
       }),
     ].join("");
 
-    // ---- the Tables tab: tables to roll on, in the Databank's style ----
+    // ---- the Tables tab: tables to roll on or look up (tables.js), in the Databank's style ----
+    const TABLES = window.NCD_TABLES;
+    // A card whose table's first column names a die ("d100") gets a dice button in its title: it rolls that die, lights
+    // up the row the roll falls in, and shows the roll beside the button.
+    const tables = [];
+    const tableSection = (s) => {
+      if (!DICE.tableDie(s.table)) return section(s);
+      tables.push(s.table);
+      return section({ ...s, roll: tables.length - 1 });
+    };
+    // Security system tiers: each defense with a description opens it, and the Security Tiers button opens every tier's.
+    const defense = (name) => TABLES.securityDefenses.findIndex((d) => d.name.toLowerCase() === name.toLowerCase());
+    const defensesHTML = (names) => names.map((name) => (defense(name) < 0 ? escapeHTML(name)
+      : `<button type="button" class="ability-name" data-defense="${defense(name)}">${escapeHTML(name)}</button>`)).join(", ") || "–";
+    const securityTable = { head: ["Tier", "Typical defenses"], rows: TABLES.securityTiers.map((t) => [t.name, t.defenses]),
+      cell: (c, j) => (j ? defensesHTML(c) : escapeHTML(c)) };
+    const securityTiersButton = `<wa-button size="s" appearance="outlined" data-security-tiers>
+        <wa-icon slot="start" name="circle-info"></wa-icon>Security Tiers</wa-button>`;
+
     $("tables").innerHTML = [
-      section({ title: "Random gear keywords", intro: DATABANK.randomKeywordsIntro, table: { head: ["d100", "Positive", "Negative"], rows: DATABANK.randomKeywords } }),
+      tableSection({ title: "Random gear keywords", intro: TABLES.randomKeywordsIntro, table: { head: ["d100", "Positive", "Negative"], rows: TABLES.randomKeywords } }),
+      tableSection({ title: "Security system tiers", table: securityTable, after: securityTiersButton }),
     ].join("");
+
+    const info = $("tables-info-dialog");
+    const showInfo = (label, html) => { info.label = label; $("tables-info-body").innerHTML = html; info.open = true; };
+    $("tables").addEventListener("click", (e) => {
+      const d = TABLES.securityDefenses[e.target.closest("[data-defense]")?.dataset.defense];
+      if (d) showInfo(d.name, `${d.tag ? `<p class="ability-tag">${escapeHTML(d.tag)}</p>` : ""}${rich(d.text)}`);
+      if (e.target.closest("[data-security-tiers]")) {
+        showInfo("Security Tiers", rich([...TABLES.securityTiers.map((t) => `**${t.name}:** ${t.text}`), TABLES.securityTiersOutro].join("\n\n")));
+      }
+      const button = e.target.closest("[data-roll-table]");
+      if (!button) return;
+      const r = DICE.rollTable(tables[Number(button.dataset.rollTable)]);
+      const el = button.closest("section");
+      el.querySelectorAll("tbody tr").forEach((tr, i) => tr.classList.toggle("rolled", i === r.row));
+      el.querySelector(".table-roll").textContent = r.total;
+      el.querySelector("tr.rolled")?.scrollIntoView({ block: "nearest" });
+    });
   }
 
   // For the Character tab (roster.js).

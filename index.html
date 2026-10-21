@@ -49,7 +49,7 @@
       <wa-tab panel="character" id="character-tab" hidden>Character</wa-tab>
       <wa-tab panel="cheat-sheet">Cheat Sheet</wa-tab>
       <wa-tab panel="databank">Databank</wa-tab>
-      <wa-tab panel="tables">Tables</wa-tab>
+      <wa-tab panel="tables" data-admin>Tables</wa-tab>
       <wa-tab panel="settings">Settings</wa-tab>
 
       <wa-tab-panel name="dice">
@@ -211,7 +211,7 @@
         </wa-tab-group>
       </wa-tab-panel>
 
-      <wa-tab-panel name="tables">
+      <wa-tab-panel name="tables" data-admin>
         <!-- Tables to roll on, filled from databank.js by app.js -->
         <div class="cheat-sheet databank" id="tables"></div>
       </wa-tab-panel>
@@ -573,6 +573,11 @@
     <div id="gear-info-body"></div>
   </wa-dialog>
 
+  <!-- The Tables tab's pop-up: a security defense's description, or every security tier's (app.js) -->
+  <wa-dialog id="tables-info-dialog" label="Security" light-dismiss>
+    <div id="tables-info-body"></div>
+  </wa-dialog>
+
   <!-- Edit: every portrait in portraits/portraits.js; picking one closes the dialog -->
   <wa-dialog id="portrait-dialog" label="Choose a portrait" light-dismiss>
     <div id="portrait-choices" class="portrait-choices"></div>
@@ -639,6 +644,7 @@
   <script src="characters.js"></script>
   <script src="rules.js"></script>
   <script src="databank.js"></script>
+  <script src="tables.js"></script>
   <script src="gear.js"></script>
   <script src="overlay-rules.js"></script>
   <script src="admin.js"></script>

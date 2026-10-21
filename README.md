@@ -73,7 +73,7 @@ jump about and whatever goes under it stays put.
 ## Tests
 
 ```
-node --test tests/dice.test.cjs tests/discord.test.cjs tests/characters.test.cjs tests/format.test.cjs tests/abilities.test.cjs tests/rules.test.cjs tests/databank.test.cjs tests/gear.test.cjs tests/overlay-rules.test.cjs
+node --test tests/dice.test.cjs tests/discord.test.cjs tests/characters.test.cjs tests/format.test.cjs tests/abilities.test.cjs tests/rules.test.cjs tests/databank.test.cjs tests/tables.test.cjs tests/gear.test.cjs tests/overlay-rules.test.cjs
 ```
 
 ## What's here
@@ -93,7 +93,8 @@ node --test tests/dice.test.cjs tests/discord.test.cjs tests/characters.test.cjs
 | `create.js` | Create mode: a new character built step by step from `rules.js` (step header, Back/Next/Finish, Discard, each step's controls) |
 | `abilities.js` | The perk and augmentation catalog; edit it to add abilities |
 | `rules.js` | Rulebook data for Create: archetype skills, initiative, knows, starting gear templates; origin options and augmentation gear (needs `characters.js`; testable in Node) |
-| `databank.js` | The Databank and Tables tabs' text from the rulebook's Equipment chapter: gear, tool sets, weapons, armor, vehicles, gear and weapon keywords with their restrictions, and the random gear keywords table (testable in Node) |
+| `databank.js` | The Databank tab's text from the rulebook's Equipment chapter: gear, tool sets, weapons, armor, vehicles, gear and weapon keywords with their restrictions (testable in Node) |
+| `tables.js` | The Tables tab's tables: random gear keywords, and security system tiers with each defense's description (testable in Node) |
 | `gear.js` | Gear rules from `databank.js`: built-in keywords, which keywords an item can take, damage and impact, labels, rules text, and Create's starting gear (testable in Node) |
 | `gear-ui.js` | Gear on the page: item rows, keyword chips, rules text, and the keyword picker the gear dialog and Create share |
 | `format.js` | Turns ability descriptions into HTML: paragraphs, bold, italic, lists, icon tokens (testable in Node) |
@@ -121,8 +122,10 @@ and weapon keywords). It's all in
 and each weapon keyword lists the weapons that allow it, both from the `allowed` lists in `databank.js`.
 `tests/databank.test.cjs` checks the keyword tables against each other.
 
-The **Tables** tab holds tables to roll on, in the Databank's style: for now, the random gear keywords table
-(`randomKeywords` in `databank.js`).
+The **Tables** tab (Administrator only) holds tables to roll on or look up, in the Databank's style, all from
+`tables.js`: the random gear keywords table, and the security system tiers. A table whose first column is headed by a
+die ("d100") gets a dice button in its card's title that rolls it and lights up the row; the security tiers table links
+each defense to its description. `tests/tables.test.cjs` checks them.
 
 ## Gear
 

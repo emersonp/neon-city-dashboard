@@ -43,5 +43,38 @@
     };
   }
 
-  root.NCD_DICE = { MAX_POOL, clampPool, cleanImpact, rand10, roll, fmtTens };
+  // A table to roll on (the Tables tab): its first column's head names the die ("d100", "d6") and each row's first
+  // cell the range it covers ("01-10", "96-100", or one number; "00" is the die's top face).
+  const tableDie = (table) => Number(/^d(\d+)$/i.exec(String(table?.head?.[0] ?? "").trim())?.[1]) || null;
+  function rowRange(cell, sides) {
+    const m = /^\s*(\d+)\s*(?:[-–]\s*(\d+))?\s*$/.exec(String(cell));
+    if (!m) return null;
+    const face = (s) => Number(s) || sides;
+    return [face(m[1]), face(m[2] ?? m[1])];
+  }
+  // A roll of a die with this many sides, 1 to sides. A d100 is tens and ones (00 + 0 is 100), like roll(); a d10 or
+  // smaller is one d10 folded onto its faces; any other die comes from Math.random.
+  function rollDie(sides, rng = rand10) {
+    if (sides === 100) return rng() * 10 + rng() || 100;
+    if (sides <= 10) {
+      let n;
+      do { n = rng(); } while (n >= sides * Math.floor(10 / sides)); // avoid bias: 0-9 folds evenly onto the faces
+      return (n % sides) + 1;
+    }
+    return Math.floor(Math.random() * sides) + 1;
+  }
+  // Rolls the table's die and finds the row the result falls in: { die, total, row } (row is its index, or -1).
+  // null for a table without a die to roll.
+  function rollTable(table, rng = rand10) {
+    const die = tableDie(table);
+    if (!die) return null;
+    const total = rollDie(die, rng);
+    const row = table.rows.findIndex((r) => {
+      const range = rowRange(r[0], die);
+      return range && total >= range[0] && total <= range[1];
+    });
+    return { die, total, row };
+  }
+
+  root.NCD_DICE = { MAX_POOL, clampPool, cleanImpact, rand10, roll, fmtTens, tableDie, rollDie, rollTable };
 })(globalThis);

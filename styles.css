@@ -76,6 +76,11 @@ wa-tab::part(tab) {
 wa-tab:hover::part(tab) { color: var(--color-ink); }
 wa-tab[active]::part(tab) { color: var(--color-accent-text); }
 .wa-dark wa-tab[active]::part(tab) { text-shadow: 0 0 12px var(--glow-accent); }
+/* the Character tab is the character's handle, not a place: italic, in the holo cyan, glowing when open */
+#character-tab::part(tab) { font-style: italic; color: var(--color-holo-text); }
+#character-tab:hover::part(tab) { color: var(--color-ink); }
+#character-tab[active]::part(tab) { color: var(--color-holo-text); }
+.wa-dark #character-tab[active]::part(tab) { text-shadow: 0 0 12px var(--glow-holo); }
 /* the Databank's own tabs, one step quieter */
 .databank-tabs wa-tab::part(tab) { font-size: var(--wa-font-size-s); }
 
@@ -169,6 +174,17 @@ html.gm [data-player] { display: none !important; }
 .databank-table :is(th, td) { padding: var(--wa-space-2xs) var(--wa-space-s); border-bottom: 1px solid var(--color-rule); text-align: left; vertical-align: top; }
 .databank-table td:first-child { white-space: nowrap; }
 .databank-table th { font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; font-size: var(--wa-font-size-xs); }
+/* Long words wrap rather than push the table wider than its card. */
+.databank-table td { overflow-wrap: break-word; }
+/* the Tables tab: the dice button and its roll at the right of the card's title, and the row the roll fell in lit up */
+.databank-section h2.rollable { display: flex; align-items: center; }
+.databank-section h2.rollable::before { flex-shrink: 0; }
+.table-roller { margin-left: auto; display: inline-flex; align-items: center; gap: var(--wa-space-2xs); margin-block: -0.5em; }
+.table-roller wa-button { font-size: var(--wa-font-size-l); }
+.table-roll { color: var(--color-accent-text); font-variant-numeric: tabular-nums; }
+.databank-table tr.rolled td { background: color-mix(in oklch, var(--color-accent) 18%, transparent); color: var(--color-ink); }
+.databank-table tr.rolled td:first-child { box-shadow: inset 3px 0 0 var(--color-accent); }
+#tables-info-body .ability-text > p { margin-block: 0 var(--wa-space-s); }
 
 /* ---- roller ---- */
 .roller::part(body) { display: flex; flex-direction: column; gap: var(--wa-space-l); }

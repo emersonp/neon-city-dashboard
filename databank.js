@@ -1,4 +1,4 @@
-// The Databank and Tables tabs' reference text, from the rulebook's Equipment chapter: gear (tools, specialized equipment, weapons,
+// The Databank tab's reference text, from the rulebook's Equipment chapter: gear (tools, specialized equipment, weapons,
 // vehicles) and keywords (gear and weapon). No page code here, so it can be tested in Node.
 // Text uses the format.js description format: paragraphs, "- " lists, **bold**, *italic*, and [advantage]-style icons.
 // Wording follows the book, with its own typos fixed where they'd mislead.
@@ -16,7 +16,6 @@
 //                 notOn: "weapon" / "vehicle" can't have it; excludes: can't share an item with these (either way round);
 //                 requires: only on an item that also has these; damage / hands: what a weapon keyword changes
 //                 (tool kit quality entries likewise carry quality and impact)
-// randomKeywords  the random gear keywords table: [range, positive, negative]
 (function (root) {
   const gear = [
     {
@@ -376,22 +375,5 @@ The Administrator has final say as to whether a piece of gear can have the Cyber
     ],
   };
 
-  const randomKeywordsIntro = "When the crew acquires a piece of gear during a session, you can give it a positive and a negative keyword and describe what makes the item different: roll twice on this table (once for each), or just pick two that make sense. Re-roll a keyword that doesn't make sense for the item or the situation.";
-  const randomKeywords = [
-    ["01-10", "Compact", "Bulky"],
-    ["11-20", "Durable", "Cheap"],
-    ["21-30", "Reliable", "Complicated"],
-    ["31-40", "Secured", "Flashy"],
-    ["41-50", "Standardized", "Fragile"],
-    ["51-60", "Stylish", "Knockoff"],
-    ["61-70", "Wearable", "Loud"],
-    ["71-75", "Cybernetic", "Archaic"],
-    ["76-80", "Easily Nanoprinted", "Expensive"],
-    ["81-85", "Mastercraft", "Jury-Rigged"],
-    ["86-90", "Stealthy", "Rare"],
-    ["91-95", "Subtle", "Unpredictable"],
-    ["96-100", "Versatile", "Unreliable"],
-  ];
-
-  root.NCD_DATABANK = { gear, armor, toolSets, weapons, weaponsIntro, vehicleRules, vehicles, keywordsIntro, keywords, randomKeywordsIntro, randomKeywords };
+  root.NCD_DATABANK = { gear, armor, toolSets, weapons, weaponsIntro, vehicleRules, vehicles, keywordsIntro, keywords };
 })(globalThis);

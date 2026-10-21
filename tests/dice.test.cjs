@@ -73,3 +73,37 @@ test("impact: added to the total on a success, otherwise none", () => {
   assert.equal(roll({ impact: 20 }, seq(3, 2)).impact, null);
   for (const bad of [0, -5, 1.5, "", null, "x"]) assert.equal(roll({ target: 45, impact: bad }, seq(3, 2)).impact, null, String(bad));
 });
+
+test("tables: the first column's head names the die", () => {
+  const { tableDie } = globalThis.NCD_DICE;
+  assert.equal(tableDie({ head: ["d100", "Positive"] }), 100);
+  assert.equal(tableDie({ head: ["D6", "Result"] }), 6);
+  assert.equal(tableDie({ head: ["Tool set", "Skills"] }), null);
+});
+
+test("tables: the roll picks the row whose range it falls in", () => {
+  const { rollTable } = globalThis.NCD_DICE;
+  const table = { head: ["d100", "Positive", "Negative"], rows: [["01-10", "a", "b"], ["11-95", "c", "d"], ["96-00", "e", "f"]] };
+  assert.deepEqual(rollTable(table, seq(0, 1)), { die: 100, total: 1, row: 0 });
+  assert.deepEqual(rollTable(table, seq(1, 0)), { die: 100, total: 10, row: 0 });
+  assert.deepEqual(rollTable(table, seq(4, 7)), { die: 100, total: 47, row: 1 });
+  assert.deepEqual(rollTable(table, seq(0, 0)), { die: 100, total: 100, row: 2 });
+  assert.equal(rollTable({ head: ["Name"], rows: [] }), null);
+});
+
+test("tables: every roll on the random gear keywords table lands on a row", () => {
+  require("../tables.js");
+  const { rollTable } = globalThis.NCD_DICE;
+  const table = { head: ["d100"], rows: globalThis.NCD_TABLES.randomKeywords };
+  for (let tens = 0; tens < 10; tens++) for (let ones = 0; ones < 10; ones++) {
+    assert.notEqual(rollTable(table, seq(tens, ones)).row, -1, `${tens}${ones}`);
+  }
+});
+
+test("tables: small dice read off d10s, every face reachable", () => {
+  const { rollDie } = globalThis.NCD_DICE;
+  assert.equal(rollDie(6, seq(5)), 6);
+  assert.equal(rollDie(6, seq(7, 2)), 3); // 6-9 rerolled
+  assert.equal(rollDie(4, seq(8, 3)), 4);
+  for (let i = 0; i < 500; i++) { const n = rollDie(20); assert.ok(n >= 1 && n <= 20); }
+});

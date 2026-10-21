@@ -22,7 +22,6 @@ function* texts() {
   yield ["vehicles", L.vehicleRules];
   for (const v of L.vehicles) yield [v.name, v.text];
   yield ["keywords", L.keywordsIntro];
-  yield ["random keywords", L.randomKeywordsIntro];
   for (const k of Object.values(L.keywords).flat()) yield [k.name, k.text];
 }
 
@@ -37,7 +36,6 @@ test("databank: tables are rectangular", () => {
   // the tool set and armor tables are built in app.js from toolSets and armor.levels
   const tables = [...L.gear.flatMap((s) => s.entries), L.armor].filter((e) => e.table).map((e) => e.table);
   for (const t of tables) for (const r of t.rows) assert.equal(r.length, t.head.length);
-  for (const r of L.randomKeywords) assert.equal(r.length, 3);
 });
 
 test("databank: keyword restrictions name real keywords and match their text", () => {
@@ -80,22 +78,6 @@ test("databank: equipment choices, and reference entries are marked", () => {
 
 test("databank: no keyword is listed twice in its group", () => {
   for (const [group, list] of Object.entries(L.keywords)) assert.equal(new Set(names(list)).size, list.length, group);
-});
-
-test("databank: the random gear keywords table covers 1-100 with the gear keywords", () => {
-  const positive = names(L.keywords.positive), negative = names(L.keywords.negative);
-  let next = 1;
-  for (const [range, pos, neg] of L.randomKeywords) {
-    const [lo, hi] = range.split("-").map(Number);
-    assert.equal(lo, next, range);
-    next = hi + 1;
-    assert.ok(positive.includes(pos), pos);
-    assert.ok(negative.includes(neg), neg);
-  }
-  assert.equal(next, 101);
-  // and every gear keyword can be rolled
-  assert.deepEqual(new Set(L.randomKeywords.map((r) => r[1])), new Set(positive));
-  assert.deepEqual(new Set(L.randomKeywords.map((r) => r[2])), new Set(negative));
 });
 
 test("databank: weapons allow only weapon keywords, intrinsic ones included, and every weapon keyword is allowed somewhere", () => {
