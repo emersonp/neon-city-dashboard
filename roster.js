@@ -469,26 +469,23 @@
       const item = C.gear(base).find((g) => String(g.id) === id);
       if (!item) return;
       if (button.dataset.gearAction === "edit") openGearDialog(item);
-      else openRemoveGear(item);
+      else if (state === "editing") {
+        draft = C.withoutGear(draft, item.id); // Save (or not) is the confirmation
+        renderGear($("gear-edit"), draft, { editable: true });
+      } else openRemoveGear(item);
     });
   }
-  // Removing asks first: Run removes it for good, Edit once you save.
+  // Removing while running asks first, since it saves right away.
   const removeDialog = $("gear-remove-dialog");
   let removing = null;
   function openRemoveGear(item) {
     removing = item;
-    $("gear-remove-text").textContent = state === "running"
-      ? `Remove ${item.description}? This can't be undone.`
-      : `Remove ${item.description}? It's gone when you save.`;
+    $("gear-remove-text").textContent = `Remove ${item.description}? This can't be undone.`;
     removeDialog.open = true;
   }
   $("gear-remove-confirm").addEventListener("click", () => {
     removeDialog.open = false;
-    if (!removing) return;
-    if (state === "editing") {
-      draft = C.withoutGear(draft, removing.id);
-      renderGear($("gear-edit"), draft, { editable: true });
-    } else if (state === "running" && commit(C.withoutGear(current, removing.id))) {
+    if (removing && state === "running" && commit(C.withoutGear(current, removing.id))) {
       renderGear($("gear-run"), current, { running: true });
     }
     removing = null;
