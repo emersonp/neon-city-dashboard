@@ -791,3 +791,7 @@ html:not(.bevel).wa-dark .portrait-frame { filter: drop-shadow(0 0 6px color-mix
 .create-gear-name { font-weight: 600; }
 .create-gear-keywords { display: flex; flex-direction: column; gap: var(--wa-space-xs); }
 .create-gear-mount { display: flex; flex-direction: column; gap: var(--wa-space-s); margin-top: var(--wa-space-m); }
+
+/* the gear pop-up: description, then the keywords folded away */
+#gear-info-body .ability-text > :is(p, ul) { margin-block: 0 var(--wa-space-s); }
+.gear-info-keywords { margin-top: var(--wa-space-m); }

@@ -21,7 +21,12 @@
   const nameHTML = (item) => `<button type="button" class="ability-name" data-gear-info="${escapeHTML(item.id)}">${escapeHTML(item.description)}${
     item.quantity > 1 ? ` <span class="gear-quantity">×${item.quantity}</span>` : ""}</button>`;
   const rowHTML = (item) => `<span class="gear-text">${nameHTML(item)} <span class="gear-kind">[${escapeHTML(G.label(item))}]</span></span>`;
-  const rulesHTML = (item) => `<div class="ability-text">${rich(G.rulesText(item))}</div>`;
+  // The pop-up: what the item is, then its keywords folded away under "Keywords (n)".
+  function rulesHTML(item) {
+    const description = G.descriptionText(item), keywords = G.keywordsOf(item);
+    return `${description ? `<div class="ability-text">${rich(description)}</div>` : ""}${keywords.length
+      ? `<wa-details class="gear-info-keywords" summary="Keywords (${keywords.length})"><div class="ability-text">${rich(G.keywordsText(item))}</div></wa-details>` : ""}`;
+  }
 
   // Checkboxes for every keyword the item could take, in a weapon group and a gear group, each with its rules text in a
   // tooltip on an info button (hover, or focus, which a tap gives). Built-in keywords are ticked and locked; ones the rules forbid are

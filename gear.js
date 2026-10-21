@@ -172,8 +172,41 @@
     }
   }
 
-  // The pop-up text for an item, in the format.js description format: each of its keywords and what it does.
-  const rulesText = (item) => keywordsOf(item).map((name) => `**${name}:** ${keyword(name, item).text}`).join("\n\n");
+  // An item's keywords and what each does, in the format.js description format (the pop-up's collapsible part).
+  const keywordsText = (item) => keywordsOf(item).map((name) => `**${name}:** ${keyword(name, item).text}`).join("\n\n");
+
+  // What the item is, in the book's own words but only the parts worth a glance (the label already gives the numbers):
+  // a weapon's examples; a kit's quality, skills, and hyper-specialized / consumable rules; an equipment entry (without
+  // its list of options once one is chosen); armor; a vehicle's rules (not its blurb); and the props rule.
+  const paragraphs = (text) => String(text ?? "").split(/\n\s*\n/);
+  const kitEntry = (name) => byName(entries("Specialized tool kits"), name);
+  function descriptionText(item) {
+    const parts = [];
+    switch (item?.kind ?? "prop") {
+      case "weapon": {
+        const w = weaponOf(item);
+        if (w) parts.push(`*${w.examples}*`);
+        break;
+      }
+      case "kit": {
+        const set = toolSetOf(item), quality = KIT_QUALITIES.find((e) => e.quality === item.quality);
+        if (quality) parts.push(quality.text);
+        if (set) parts.push(`**${set.name}:** ${set.skills.map(skillName).join(", ")}`);
+        if (skillName(item.special)) parts.push(paragraphs(kitEntry("Hyper-Specialized Tools").text)[0]);
+        if (item.consumable === true) parts.push(kitEntry("Consumable Tools").text);
+        break;
+      }
+      case "equipment": {
+        const e = equipmentOf(item);
+        if (e) parts.push(e.choice?.options ? e.text.split("\n").filter((line) => !line.startsWith("- ")).join("\n") : e.text);
+        break;
+      }
+      case "armor": parts.push(D.armor.text); break;
+      case "vehicle": if (vehicleOf(item)) parts.push(vehicleOf(item).text); break;
+      case "prop": parts.push(paragraphs(byName(entries("Gear basics"), "Props").text)[1]); break;
+    }
+    return parts.join("\n\n");
+  }
 
   // ---- Create: starting gear from the rules.js templates and the player's picks ----
   // creation.gear holds the "choose one" answers by line; creation.gearPicks holds, by item id, { category?, vehicle?,
@@ -241,6 +274,6 @@
     return !keywordsOf(before).includes(k[0]) && slots.find((s) => s.id === mount.target).item.keywords.includes(k[0]);
   }
 
-  root.NCD_GEAR = { KINDS, QUALITIES, EQUIPMENT, keyword, builtIn, keywordsOf, canAdd, keywordChoices, legalize, retype, stats, label, defaultName, rulesText,
+  root.NCD_GEAR = { KINDS, QUALITIES, EQUIPMENT, keyword, builtIn, keywordsOf, canAdd, keywordChoices, legalize, retype, stats, label, defaultName, descriptionText, keywordsText,
     starterSlots, weaponMountTargets, slotOpen, gearComplete };
 })(globalThis);
