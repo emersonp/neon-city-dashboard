@@ -2,7 +2,7 @@
 // No page code here, so it can be tested in Node. Text uses the format.js description format, like databank.js.
 //
 // randomKeywords  the random gear keywords table: [range, positive, negative]
-// securityTiers   the security system tiers: { name, text, defenses: [names, as the table shows them] }, and securityTiersOutro
+// securityTiers   the security system tiers: { name, text, defenses: [names, as the table shows them] }
 // alarmHeat       the heat an obstacle's alarm adds to the heat pool, by security tier: [tier, heat], and alarmHeatIntro
 // securityDefenses the security systems the tiers' defenses name: { name, tag?, text }. A defense in a tier links to the
 //                 one here of the same name (any case); X-ray scanners are described but in no tier.
@@ -36,7 +36,6 @@
     { name: "Corporate-Grade", defenses: ["Biometric sensors", "Laser tripwires", "Pressure sensors"], text: "Real money is being spent on security of this tier, which is used to guard corporate secrets and high-value assets. Corporate headquarters, private security guard dispatch offices, R&D laboratories, high-tech manufactories, and some of the homes of more junior executives usually have security of this tier." },
     { name: "Military-Grade", defenses: ["Tremor detectors", "Thermal sensors", "Ultrasonic receptors"], text: "A combination of cutting-edge technology and paranoia is the hallmark of this security tier, which is usually found in locations where dark secrets, weapons of mass destruction, or priceless items are kept. Military outposts, secret research facilities, and the homes of senior executives have security of this tier." },
   ];
-  const securityTiersOutro = "Administrators can find objectives modeled after these security systems for use as obstacles, under “Security Systems” on page 218.";
   const alarmHeatIntro = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.";
   const alarmHeat = [
     ["Monitored", 1],
@@ -123,5 +122,5 @@
     ["99-100", "A patch of exposed metal or circuitry on an otherwise flesh-covered surface"],
   ];
 
-  root.NCD_TABLES = { randomKeywordsIntro, randomKeywords, securityTiers, securityTiersOutro, alarmHeatIntro, alarmHeat, securityDefenses, liabilities, distinctiveTraits };
+  root.NCD_TABLES = { randomKeywordsIntro, randomKeywords, securityTiers, alarmHeatIntro, alarmHeat, securityDefenses, liabilities, distinctiveTraits };
 })(globalThis);

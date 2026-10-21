@@ -17,7 +17,6 @@ const names = (list) => list.map((k) => k.name);
 function* texts() {
   yield ["random keywords", T.randomKeywordsIntro];
   for (const t of T.securityTiers) yield [t.name, t.text];
-  yield ["security tiers", T.securityTiersOutro];
   yield ["alarm heat", T.alarmHeatIntro];
   for (const d of T.securityDefenses) yield [d.name, d.text];
 }
