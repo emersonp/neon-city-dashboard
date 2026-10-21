@@ -53,6 +53,15 @@ test("databank: keyword restrictions name real keywords and match their text", (
   assert.deepEqual(all.filter((k) => k.notOn?.includes("weapon")).map((k) => k.name), ["Cybernetic"]);
 });
 
+test("databank: keyword damage and kit impact match their text", () => {
+  const changers = L.keywords.weapon.filter((k) => k.damage != null);
+  assert.deepEqual(changers.map((k) => [k.name, k.damage]), [["Jagged", 5], ["Miniaturized", -10], ["Mounted", 10]]);
+  for (const k of changers) assert.match(k.text, new RegExp(`\\*\\*${k.damage > 0 ? "\\+" : "−"}${Math.abs(k.damage)}\\*\\*`), k.name);
+  const kits = L.gear.flatMap((s) => s.entries).filter((e) => e.impact != null);
+  assert.deepEqual(kits.map((e) => [e.quality, e.impact]), [["improvised", 10], ["standard", 20], ["exceptional", 30]]);
+  for (const e of kits) assert.ok(e.tag.startsWith(`+${e.impact} impact`), e.name);
+});
+
 test("databank: tool sets use real skill ids, armor has four levels", () => {
   const ids = new Set(globalThis.NCD_CHARACTERS.SKILLS.map((s) => s.id));
   assert.equal(L.toolSets.length, 7);

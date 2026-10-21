@@ -21,7 +21,7 @@ test("gear: props with a description, Starter off unless set", () => {
   c = C.withGear(c, { ...coat, description: "Duster", starter: true });
   assert.deepEqual(C.gear(c).map((g) => [g.description, g.starter]), [["Duster", true], ["Burner phone", false]]);
   assert.deepEqual(C.gear(C.withoutGear(c, coat.id)).map((g) => g.description), ["Burner phone"]);
-  assert.deepEqual(C.gear({ gear: [null, { id: 1, description: "Old" }] }), [{ id: 1, kind: "prop", description: "Old", starter: false, conditions: [] }]);
+  assert.deepEqual(C.gear({ gear: [null, { id: 1, description: "Old" }] }), [{ id: 1, kind: "prop", description: "Old", starter: false, quantity: 1, keywords: [], fixed: [], conditions: [] }]);
 });
 
 test("conditions: added with a name, severity 1-4, and intrinsic off unless set", () => {

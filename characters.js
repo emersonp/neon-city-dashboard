@@ -106,14 +106,19 @@
   const knows = (character) => KNOWLEDGE.filter((k) => Array.isArray(character?.knows) && character.knows.includes(k));
 
   // ---- gear: everything a character carries ----
-  // For now every item is a prop (just a description). Other kinds, with rules attached, come later,
-  // so each item records its kind. Starter marks gear the character began play with.
+  // Each item has a kind (weapon, kit, equipment, armor, vehicle, prop; no kind is a prop), a description (its name),
+  // a quantity, the keywords added to it, and fixed keywords an ability granted against the usual rules.
+  // The kind's own fields (category, set, level...) pass through; gear.js gives them meaning. Starter marks gear the
+  // character began play with.
+  const keywordNames = (list) => [...new Set((Array.isArray(list) ? list : [])
+    .filter((k) => typeof k === "string").map((k) => k.trim()).filter(Boolean))];
+  const gearFields = (item) => ({ kind: item.kind || "prop", description: String(item.description ?? "").trim(), starter: item.starter === true,
+    quantity: clampInt(item.quantity, { min: 1, fallback: 1 }), keywords: keywordNames(item.keywords), fixed: keywordNames(item.fixed) });
   const gear = (character) => (Array.isArray(character?.gear) ? character.gear : [])
     .filter((item) => item && typeof item === "object" && item.id != null)
-    .map((item) => ({ ...item, kind: item.kind || "prop", description: String(item.description ?? "").trim(), starter: item.starter === true,
-      conditions: conditions(item) }));
-  const newProp = (description, starter = false) =>
-    ({ id: newId(), kind: "prop", description: String(description ?? "").trim(), starter: starter === true });
+    .map((item) => ({ ...item, ...gearFields(item), conditions: conditions(item) }));
+  const newGear = (fields = {}) => ({ ...fields, id: fields.id ?? newId(), ...gearFields(fields) });
+  const newProp = (description, starter = false) => newGear({ description, starter });
   // Replaces the item with the same id, or adds it at the end.
   function withGear(character, item) {
     const list = gear(character);
@@ -423,7 +428,7 @@
     MAX_WOUNDS, wounds, clickWound,
     canBeUsed, isUsed, withUsed,
     KNOWLEDGE, knows, xp, clampXp, appearance,
-    gear, newProp, withGear, withoutGear,
+    gear, newGear, newProp, withGear, withoutGear,
     MAX_SEVERITY, CONDITION_SUGGESTIONS, conditions, severityLabel, withCondition, withSeverity, withoutCondition,
     abilityIds, abilities, withAbility, withoutAbility, abilityTag, findAbilities,
     DEFAULT_PORTRAIT, ADMIN_PORTRAIT, PORTRAIT_DIR, availablePortraits, portraitFile, portraitLabel,
