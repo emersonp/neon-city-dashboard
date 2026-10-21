@@ -24,7 +24,7 @@
   const rulesHTML = (item) => `<div class="ability-text">${rich(G.rulesText(item))}</div>`;
 
   // Checkboxes for every keyword the item could take, in a weapon group and a gear group, each with its rules text in a
-  // tooltip on an info button (hover, focus or tap). Built-in keywords are ticked and locked; ones the rules forbid are
+  // tooltip on an info button (hover, or focus, which a tap gives). Built-in keywords are ticked and locked; ones the rules forbid are
   // disabled. With a limit, once that many of `pickable` are ticked the rest of `pickable` lock too.
   let pickers = 0;
   function keywordPickerHTML(item, { limit = null, pickable = null } = {}) {
@@ -38,7 +38,7 @@
           <wa-checkbox size="small" data-keyword="${escapeHTML(k.name)}" ${k.checked ? "checked" : ""} ${locked || full || !k.allowed ? "disabled" : ""}>${
             k.builtIn ? `<i>${escapeHTML(k.name)}</i>` : escapeHTML(k.name)}</wa-checkbox>
           <wa-button id="${id}" size="small" appearance="plain" class="keyword-info"><wa-icon name="circle-info" label="What ${escapeHTML(k.name)} does"></wa-icon></wa-button>
-          <wa-tooltip for="${id}" trigger="hover focus click"><div class="keyword-tip">${rich(k.text)}</div></wa-tooltip>
+          <wa-tooltip for="${id}" trigger="hover focus"><div class="keyword-tip">${rich(k.text)}</div></wa-tooltip>
         </span>`;
     };
     const group = (title, list) => (list.length ? `<fieldset class="keyword-group"><legend>${title}</legend>

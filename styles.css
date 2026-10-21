@@ -477,6 +477,10 @@ wa-tab[hidden] { display: none; }
 .gear-kind, .gear-empty { color: var(--wa-color-text-quiet); }
 .gear-empty { margin: 0; }
 .gear-form { display: flex; flex-direction: column; gap: var(--wa-space-l); }
+#gear-dialog { --width: min(46rem, 100vw); }
+.gear-form-row { display: grid; grid-template-columns: 1fr 7rem; gap: var(--wa-space-m); }
+.gear-fields { display: flex; flex-direction: column; gap: var(--wa-space-m); }
+.gear-fields:empty { display: none; }
 
 /* ---- conditions: pill chips; intrinsic names in italics; clickable in Run and Edit ---- */
 .condition-list { display: flex; flex-wrap: wrap; gap: var(--wa-space-2xs); }

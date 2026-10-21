@@ -417,10 +417,24 @@
     <wa-button slot="footer" variant="brand" data-dialog="close">Done</wa-button>
   </wa-dialog>
 
-  <!-- New gear (Run and Edit) and changing gear (Edit). Only props for now. Starter is shown only in Edit. -->
+  <!-- New gear (Run and Edit) and changing gear (Edit): its type, name, quantity, the type's fields, and keywords.
+       roster.js fills in the type's fields and the keyword picker. Starter is shown only in Edit. -->
   <wa-dialog id="gear-dialog" label="New gear" light-dismiss>
     <div class="gear-form">
-      <wa-input id="gear-description" label="Description" autocomplete="off" autofocus></wa-input>
+      <wa-radio-group id="gear-kind" label="Type" orientation="horizontal">
+        <wa-radio appearance="button" value="weapon">Weapon</wa-radio>
+        <wa-radio appearance="button" value="kit">Kit</wa-radio>
+        <wa-radio appearance="button" value="equipment">Equipment</wa-radio>
+        <wa-radio appearance="button" value="armor">Armor</wa-radio>
+        <wa-radio appearance="button" value="vehicle">Vehicle</wa-radio>
+        <wa-radio appearance="button" value="prop">Prop</wa-radio>
+      </wa-radio-group>
+      <div class="gear-form-row">
+        <wa-input id="gear-description" label="Name" autocomplete="off" autofocus></wa-input>
+        <wa-input id="gear-quantity" label="Quantity" type="number" min="1" value="1"></wa-input>
+      </div>
+      <div id="gear-fields" class="gear-fields"></div>
+      <div id="gear-keywords"></div>
       <wa-switch id="gear-starter">Starter</wa-switch>
     </div>
     <wa-button slot="footer" id="gear-save" variant="brand">

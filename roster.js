@@ -330,27 +330,126 @@
     });
   }
 
+  // The gear dialog edits a working copy of the item: changing the type (G.retype) or a field (G.legalize) drops
+  // keywords that no longer fit, and the fields and keyword picker are redrawn after every change.
+  const D = window.NCD_DATABANK;
   const gearDialog = $("gear-dialog");
+  const gearKind = $("gear-kind");
   const gearDescription = $("gear-description");
+  const gearQuantity = $("gear-quantity");
+  const gearFields = $("gear-fields");
+  const gearKeywords = $("gear-keywords");
   const gearStarter = $("gear-starter");
   let gearChanging = null; // the item being changed in Edit, or null for new gear
+  let working = null;      // the item as the dialog has it
+  const SKILL_CHOICES = C.SKILLS.filter((s) => s.type !== "initiative");
+  // A select of `options` ([value, label]); values are indexes or ids, never names (which can have spaces).
+  const select = (fieldName, label, options, value, extra = "") => `<wa-select data-field="${fieldName}" label="${escapeHTML(label)}" ${extra}
+      ${value != null ? `value="${escapeHTML(value)}"` : ""} placeholder="Choose…">${options.map(([v, text]) =>
+      v == null ? `<small>${escapeHTML(text)}</small>` : `<wa-option value="${escapeHTML(v)}">${escapeHTML(text)}</wa-option>`).join("")}</wa-select>`;
+  const indexOf = (list, name) => { const i = list.findIndex((x) => x.name === name); return i < 0 ? null : String(i); };
+  function renderGearFields() {
+    const w = working;
+    switch (w.kind) {
+      case "weapon":
+        gearFields.innerHTML = select("category", "Category", D.weapons.map((x, i) => [String(i), x.name]), indexOf(D.weapons, w.category));
+        break;
+      case "kit": {
+        const set = D.toolSets.find((t) => t.name === w.set);
+        gearFields.innerHTML = `${select("set", "Tool set", D.toolSets.map((t, i) => [String(i), t.name]), indexOf(D.toolSets, w.set))}
+          <wa-radio-group data-field="quality" label="Quality" orientation="horizontal" ${w.quality ? `value="${escapeHTML(w.quality)}"` : ""}>${
+            Object.keys(G.QUALITIES).map((q) => `<wa-radio appearance="button" value="${q}">${q[0].toUpperCase() + q.slice(1)}</wa-radio>`).join("")}</wa-radio-group>
+          ${set ? select("special", "Hyper-specialized for", [["none", "None"], ...set.skills.map((id) => [id, C.SKILLS.find((x) => x.id === id)?.name ?? id])], w.special ?? "none") : ""}
+          <wa-switch data-field="consumable" ${w.consumable === true ? "checked" : ""}>Consumable</wa-switch>`;
+        break;
+      }
+      case "equipment": {
+        const e = G.EQUIPMENT.find((x) => x.name === w.entry);
+        const grouped = G.EQUIPMENT.flatMap((x, i, all) => [...(i === 0 || all[i - 1].section !== x.section ? [[null, x.section]] : []), [String(i), x.name]]);
+        const choices = e?.choice?.skill ? SKILL_CHOICES.map((x) => [x.id, x.name]) : (e?.choice?.options ?? []).map((o, i) => [String(i), o]);
+        const choiceValue = e?.choice?.skill ? w.choice : (e?.choice?.options.indexOf(w.choice) ?? -1) >= 0 ? String(e.choice.options.indexOf(w.choice)) : null;
+        gearFields.innerHTML = select("entry", "Equipment", grouped, indexOf(G.EQUIPMENT, w.entry)) + (e?.choice ? select("choice", e.choice.label, choices, choiceValue) : "");
+        break;
+      }
+      case "armor":
+        gearFields.innerHTML = select("level", "Armor", D.armor.levels.map((k, i) => [String(i + 1), `Armored${i ? ` x${i + 1}` : ""}${k.length ? ` (${k.join(", ")})` : ""}`]), String(w.level ?? 1));
+        break;
+      case "vehicle":
+        gearFields.innerHTML = select("vehicle", "Vehicle", D.vehicles.map((v, i) => [String(i), `${v.name} (${v.size})`]), indexOf(D.vehicles, w.vehicle));
+        break;
+      default: gearFields.innerHTML = "";
+    }
+  }
+  const renderGearKeywords = () => { gearKeywords.innerHTML = GEAR_UI.keywordPickerHTML(working); };
   function openGearDialog(item = null) {
     gearChanging = item;
+    working = item ? { ...item } : C.newGear({ description: "" });
     gearDialog.label = item ? "Change gear" : "New gear";
-    gearDescription.value = item?.description ?? "";
+    gearKind.value = working.kind;
+    gearDescription.value = working.description;
+    gearQuantity.value = String(working.quantity);
     gearStarter.checked = item?.starter ?? false;
     gearStarter.hidden = state !== "editing";
+    renderGearFields();
+    renderGearKeywords();
     gearDialog.open = true;
+  }
+  gearKind.addEventListener("change", () => {
+    if (!working || gearKind.value === working.kind) return;
+    working = G.retype(working, gearKind.value);
+    if (working.kind === "armor") working.level = 1;
+    renderGearFields();
+    renderGearKeywords();
+  });
+  // A field's control gives an index or id; this turns it into what the item stores.
+  const FIELD_VALUE = {
+    category: (v) => D.weapons[v]?.name, set: (v) => D.toolSets[v]?.name, quality: (v) => v || undefined,
+    special: (v) => (v && v !== "none" ? v : undefined), entry: (v) => G.EQUIPMENT[v]?.name, level: (v) => Number(v) || 1,
+    vehicle: (v) => D.vehicles[v]?.name,
+    choice: (v) => { const e = G.EQUIPMENT.find((x) => x.name === working.entry); return e?.choice?.skill ? v || undefined : e?.choice?.options[v]; },
+  };
+  gearFields.addEventListener("change", (e) => {
+    const control = e.target.closest("[data-field]");
+    if (!control || !working) return;
+    const name = control.dataset.field;
+    const next = { ...working, [name]: name === "consumable" ? control.checked : FIELD_VALUE[name](control.value) };
+    if (name === "set") delete next.special;   // the old set's skill doesn't belong to the new one
+    if (name === "entry") delete next.choice;
+    working = G.legalize(next);
+    if (["set", "entry"].includes(name)) renderGearFields();
+    renderGearKeywords();
+  });
+  gearKeywords.addEventListener("change", (e) => {
+    const box = e.target.closest("[data-keyword]");
+    if (!box || !working) return;
+    const k = box.dataset.keyword;
+    working = G.legalize({ ...working, keywords: box.checked ? [...working.keywords, k] : working.keywords.filter((x) => x !== k) });
+    renderGearKeywords();
+  });
+  // What a type needs before it can be saved (armor always has a level).
+  function gearMissing(w) {
+    switch (w.kind) {
+      case "weapon": return !w.category && "category";
+      case "kit": return (!w.set && "set") || (!w.quality && "quality");
+      case "equipment": {
+        const e = G.EQUIPMENT.find((x) => x.name === w.entry);
+        return (!e && "entry") || (e.choice && !w.choice && "choice");
+      }
+      case "vehicle": return !w.vehicle && "vehicle";
+      default: return false;
+    }
   }
   function saveGear() {
     const description = text(gearDescription.value);
     if (!description) { gearDescription.focus(); return; }
+    const missing = gearMissing(working);
+    if (missing) { gearFields.querySelector(`[data-field="${missing}"]`)?.focus(); return; }
+    const quantity = Math.max(1, Math.round(Number(gearQuantity.value)) || 1);
     if (state === "editing") {
-      const starter = gearStarter.checked;
-      draft = C.withGear(draft, gearChanging ? { ...gearChanging, description, starter } : C.newProp(description, starter));
+      draft = C.withGear(draft, C.newGear({ ...working, description, quantity, starter: gearStarter.checked }));
       renderGear($("gear-edit"), draft, { editable: true });
     } else if (state === "running") {
-      if (!commit(C.withGear(current, C.newProp(description)))) return;
+      if (!commit(C.withGear(current, C.newGear({ ...working, description, quantity, starter: false })))) return;
       renderGear($("gear-run"), current, { running: true });
     }
     gearDialog.open = false;
