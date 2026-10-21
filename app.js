@@ -1,4 +1,4 @@
-// Page wiring: theme toggle, tabs, settings, the dice roller, posting to Discord, and the Lore tab.
+// Page wiring: theme toggle, tabs, settings, the dice roller, posting to Discord, and the Databank tab.
 (function () {
   const DICE = window.NCD_DICE;
   const C = window.NCD_CHARACTERS;
@@ -74,7 +74,7 @@
     tabs.active = forced ? "settings" : store.get("tab", "dice");
   });
   tabs.addEventListener("wa-tab-show", (e) => {
-    if (e.target !== tabs) return; // the Lore tab's own Gear/Keywords tabs bubble up here too
+    if (e.target !== tabs) return; // the Databank tab's own Gear/Keywords tabs bubble up here too
     if (forced && e.detail.name === "settings") return;
     forced = false;
     store.set("tab", e.detail.name);
@@ -260,7 +260,7 @@
     rollAndPost();
   });
 
-  // ---- the Lore tab ----
+  // ---- the Databank tab ----
   // Built once from lore.js. A section with many entries spans the page and flows its entries into columns.
   {
     const LORE = window.NCD_LORE;
