@@ -498,6 +498,18 @@ button.condition { display: inline-flex; height: auto; min-height: 0; cursor: po
 button.condition:hover, button.condition:focus-visible { background: color-mix(in srgb, var(--wa-color-brand) 15%, transparent); }
 .condition-severity { font-weight: 600; color: var(--wa-color-brand); }
 .gear-list li .condition-list { flex-basis: 100%; }
+/* gear keywords: quieter chips than conditions; negative ones dashed red */
+.gear-keyword { border-color: var(--wa-color-surface-border); font-size: var(--wa-font-size-s); }
+.gear-keyword.negative { border-style: dashed; border-color: var(--wa-color-danger-border-loud, var(--wa-color-red-50)); }
+.gear-quantity { margin-inline-start: 0.25em; color: var(--wa-color-text-quiet); }
+.keyword-picker { display: flex; flex-direction: column; gap: var(--wa-space-s); }
+.keyword-group { border: 0; margin: 0; padding: 0; }
+.keyword-group legend { padding: 0; margin-bottom: var(--wa-space-2xs); font-size: var(--wa-font-size-xs); letter-spacing: 0.2em; text-transform: uppercase; color: var(--wa-color-text-quiet); }
+.keyword-options { display: grid; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); gap: var(--wa-space-3xs) var(--wa-space-s); }
+.keyword-option { display: inline-flex; align-items: center; gap: 0; }
+.keyword-info::part(base) { padding-inline: var(--wa-space-2xs); }
+.keyword-tip { max-width: 20rem; text-align: start; }
+.keyword-tip p { margin: 0 0 0.5em; }
 .gear-list li:has(.condition-list) { flex-wrap: wrap; }
 .condition-form { display: flex; flex-direction: column; gap: var(--wa-space-m); }
 .condition-for, .condition-intrinsic-note { margin: 0; }

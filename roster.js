@@ -11,6 +11,8 @@
   const icon = window.NCD_ICONS.svg;
   const ABILITIES = window.NCD_ABILITIES ?? [];
   const { formatDescription } = window.NCD_FORMAT;
+  const GEAR_UI = window.NCD_GEAR_UI;
+  const G = window.NCD_GEAR;
   // The character helpers take localStorage itself, and handle it being null.
   const storage = store.raw;
 
@@ -294,7 +296,7 @@
     dialog.open = true;
   });
 
-  // ---- gear: props for now, each shown as "description [prop]" ----
+  // ---- gear: each item shown as "name ×N [label]" with its keyword chips (gear-ui.js); its name opens its rules ----
   // Run can add gear (saved right away, never Starter). Edit can add, change, or remove gear and set Starter; kept in the draft until Save.
   // Each item's conditions show under it; Run and Edit can add them ("+ condition") and click them.
   function renderGear(el, character, { editable = false, running = false } = {}) {
@@ -302,16 +304,30 @@
     const changeable = editable || running;
     el.innerHTML = items.length
       ? `<ul class="gear-list">${items.map((g) => `<li data-gear="${escapeHTML(g.id)}">
-          <span class="gear-text">${escapeHTML(g.description)} <span class="gear-kind">[${escapeHTML(g.kind)}]</span></span>
+          ${GEAR_UI.rowHTML(g)}
           ${changeable ? `<wa-button size="s" appearance="plain" data-gear-action="condition" title="Add a condition">
             <wa-icon slot="start" name="plus"></wa-icon>condition</wa-button>` : ""}
           ${editable ? `<wa-button size="s" appearance="plain" data-gear-action="edit" title="Change">
               <wa-icon name="pen" label="Change"></wa-icon></wa-button>
             <wa-button size="s" appearance="plain" variant="danger" data-gear-action="remove" title="Remove">
               <wa-icon name="trash" label="Remove"></wa-icon></wa-button>` : ""}
+          ${GEAR_UI.keywordChipsHTML(g)}
           ${conditionsHTML(g, { clickable: changeable, gearId: g.id })}
         </li>`).join("")}</ul>`
       : `<p class="gear-empty">None</p>`;
+  }
+
+  // Any mode: an item's name opens its rules, from the draft while editing.
+  const gearInfo = $("gear-info-dialog");
+  for (const el of [$("gear-display"), $("gear-run"), $("gear-edit")]) {
+    el.addEventListener("click", (e) => {
+      const id = e.target.closest("[data-gear-info]")?.dataset.gearInfo;
+      const item = id != null && C.gear(state === "editing" ? draft : current).find((g) => String(g.id) === id);
+      if (!item) return;
+      gearInfo.label = item.description;
+      $("gear-info-body").innerHTML = `<p class="ability-tag">${escapeHTML(G.label(item))}</p>${GEAR_UI.rulesHTML(item)}`;
+      gearInfo.open = true;
+    });
   }
 
   const gearDialog = $("gear-dialog");

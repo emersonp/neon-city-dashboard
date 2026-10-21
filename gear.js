@@ -148,7 +148,8 @@
     switch (item?.kind ?? "prop") {
       case "weapon": {
         const w = weaponOf(item);
-        if (w) parts.push(`**${w.name}** (${label(item)} damage)`, `*${w.examples}*`);
+        const s = stats(item);
+        if (w) parts.push(`**${w.name}** (${[s.hands && `${s.hands}-handed`, `+${s.damage} damage`].filter(Boolean).join(", ")})`, `*${w.examples}*`);
         break;
       }
       case "kit": {
