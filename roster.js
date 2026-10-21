@@ -289,6 +289,7 @@
         $("conditions-display-section").hidden = !C.conditions(current).length;
         renderConditions($("conditions-display"), current);
         renderSkillsDisplay($("skills-display"));
+        $("gear-display-section").hidden = !C.gear(current).length;
         renderGear($("gear-display"), current);
         renderAbilities($("abilities-display"), C.abilities(current, ABILITIES));
       } else {
@@ -304,10 +305,10 @@
     copyActions();
   }
 
-  // ---- sheet tabs: Skills, Gear, Abilities, Story ----
+  // ---- sheet tabs: Sheet (skills, gear, abilities) and Story (appearance, liability, repercussions) ----
   // Display, Running, and Edit each have their own tab group; switching modes keeps the same tab, and it's remembered.
   // Panels are named sheet-*, so form.querySelector('[name="story"]') still finds Edit's field, not its tab panel.
-  const SHEET_TABS = ["sheet-skills", "sheet-gear", "sheet-abilities", "sheet-story"];
+  const SHEET_TABS = ["sheet-main", "sheet-story"];
   let sheetTab = SHEET_TABS.includes(store.get("sheetTab")) ? store.get("sheetTab") : SHEET_TABS[0];
   function showSheetTab() {
     const group = [display, running, form].find((section) => !section.hidden)?.querySelector(".sheet-tabs");
@@ -829,15 +830,14 @@
 
   // ---- abilities: Perks and Augmentations, each name opening its full text ----
   const ABILITY_TYPES = [["perk", "Perks"], ["augmentation", "Augmentations"]];
-  // `none`: say so when there are none (the sheet's Abilities tab), rather than showing nothing (Create's review).
-  function renderAbilities(el, list, { none = true } = {}) {
+  function renderAbilities(el, list) {
     el.innerHTML = ABILITY_TYPES.map(([type, heading]) => {
       const items = list.filter((a) => a.type === type);
       return items.length ? `<section class="ability-group"><h3>${heading}</h3><ul class="ability-list">${items.map((a) => `<li>
           <button type="button" class="ability-name" data-ability="${escapeHTML(a.id)}">${escapeHTML(a.name)}</button>
           ${a.summary ? `<span class="ability-summary">${escapeHTML(a.summary)}</span>` : ""}
         </li>`).join("")}</ul></section>` : "";
-    }).join("") || (none ? `<p class="gear-empty">None</p>` : "");
+    }).join("");
   }
 
   // Icons in ability text: advantage and boon in the good color, challenge and drawback in the bad one, others in brand.
@@ -1461,7 +1461,7 @@
     renderSkillsDisplay(el.querySelector(".skills"));
     el.querySelector("section.gear").hidden = !C.gear(current).length;
     renderGear(el.querySelector(".summary-gear"), current);
-    renderAbilities(el.querySelector(".abilities"), C.abilities(current, ABILITIES), { none: false });
+    renderAbilities(el.querySelector(".abilities"), C.abilities(current, ABILITIES));
   }
   create.addEventListener("click", (e) => {
     const id = e.target.closest(".create-summary [data-ability]")?.dataset.ability;

@@ -339,15 +339,20 @@
               </div>
               <div id="conditions-display"></div>
             </section>
-            <!-- The same four tabs in Display, Running, and Edit; roster.js keeps them on the same one -->
+            <!-- The same two tabs in Display, Running, and Edit: the sheet, and the story (appearance, liability, repercussions); roster.js keeps them on the same one -->
             <wa-tab-group class="sheet-tabs">
-              <wa-tab panel="sheet-skills">Skills</wa-tab>
-              <wa-tab panel="sheet-gear">Gear</wa-tab>
-              <wa-tab panel="sheet-abilities">Abilities</wa-tab>
+              <wa-tab panel="sheet-main">Sheet</wa-tab>
               <wa-tab panel="sheet-story">Story</wa-tab>
-              <wa-tab-panel name="sheet-skills"><div id="skills-display" class="skills"></div></wa-tab-panel>
-              <wa-tab-panel name="sheet-gear"><div id="gear-display"></div></wa-tab-panel>
-              <wa-tab-panel name="sheet-abilities"><div id="abilities-display" class="abilities"></div></wa-tab-panel>
+              <wa-tab-panel name="sheet-main">
+                <div id="skills-display" class="skills"></div>
+                <section class="gear" id="gear-display-section">
+                  <div class="gear-head">
+                    <h3>Gear</h3>
+                  </div>
+                  <div id="gear-display"></div>
+                </section>
+                <div id="abilities-display" class="abilities"></div>
+              </wa-tab-panel>
               <wa-tab-panel name="sheet-story">
                 <dl id="appearance-display" class="appearance"></dl>
                 <section class="gear story" id="story-display-section">
@@ -389,14 +394,13 @@
               <div id="conditions-run"></div>
             </section>
             <wa-tab-group class="sheet-tabs">
-              <wa-tab panel="sheet-skills">Skills</wa-tab>
-              <wa-tab panel="sheet-gear">Gear</wa-tab>
-              <wa-tab panel="sheet-abilities">Abilities</wa-tab>
+              <wa-tab panel="sheet-main">Sheet</wa-tab>
               <wa-tab panel="sheet-story">Story</wa-tab>
-              <wa-tab-panel name="sheet-skills"><div id="skills-run" class="skills running"></div></wa-tab-panel>
-              <wa-tab-panel name="sheet-gear">
+              <wa-tab-panel name="sheet-main">
+                <div id="skills-run" class="skills running"></div>
                 <section class="gear">
                   <div class="gear-head">
+                    <h3>Gear</h3>
                     <wa-button size="s" appearance="outlined" data-add-gear>
                       <wa-icon slot="start" name="plus"></wa-icon>
                       Add gear
@@ -404,8 +408,8 @@
                   </div>
                   <div id="gear-run"></div>
                 </section>
+                <div id="abilities-run" class="abilities"></div>
               </wa-tab-panel>
-              <wa-tab-panel name="sheet-abilities"><div id="abilities-run" class="abilities"></div></wa-tab-panel>
               <wa-tab-panel name="sheet-story">
                 <dl id="appearance-run" class="appearance"></dl>
                 <section class="gear story">
@@ -616,20 +620,17 @@
               <div id="conditions-edit"></div>
             </section>
             <wa-tab-group class="sheet-tabs">
-              <wa-tab panel="sheet-skills">Skills</wa-tab>
-              <wa-tab panel="sheet-gear">Gear</wa-tab>
-              <wa-tab panel="sheet-abilities">Abilities</wa-tab>
+              <wa-tab panel="sheet-main">Sheet</wa-tab>
               <wa-tab panel="sheet-story">Story</wa-tab>
-              <wa-tab-panel name="sheet-skills">
+              <wa-tab-panel name="sheet-main">
                 <div id="skills-edit" class="skills editing"></div>
                 <div class="knows-edit" role="group" aria-labelledby="knows-edit-label">
                   <span class="sheet-label" id="knows-edit-label">Knows something about…</span>
                   <div id="knows-edit" class="knows-boxes"></div>
                 </div>
-              </wa-tab-panel>
-              <wa-tab-panel name="sheet-gear">
                 <section class="gear">
                   <div class="gear-head">
+                    <h3>Gear</h3>
                     <wa-button size="s" appearance="outlined" data-add-gear>
                       <wa-icon slot="start" name="plus"></wa-icon>
                       Add gear
@@ -637,10 +638,9 @@
                   </div>
                   <div id="gear-edit"></div>
                 </section>
-              </wa-tab-panel>
-              <wa-tab-panel name="sheet-abilities">
                 <section class="gear">
                   <div class="gear-head">
+                    <h3>Perks &amp; Augmentations</h3>
                     <wa-button size="s" appearance="outlined" data-add-ability>
                       <wa-icon slot="start" name="plus"></wa-icon>
                       Add ability
