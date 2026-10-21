@@ -22,6 +22,17 @@ test("every archetype and origin has rules", () => {
   }
 });
 
+test("every archetype has its opening paragraph and what it does on the job", () => {
+  for (const [name, a] of Object.entries(R.archetypes)) {
+    assert.ok(typeof a.intro === "string" && a.intro.length > 0, name);
+    assert.equal(a.job.length, 2, name);
+    for (const b of a.job) {
+      assert.ok(typeof b.lead === "string" && b.lead.endsWith(":"), name);
+      assert.ok(b.items.length > 0 && b.items.every((i) => typeof i === "string" && i.length > 0), name);
+    }
+  }
+});
+
 test("archetype skills use known skill ids, legal values, and at most 2 dice", () => {
   for (const [name, a] of Object.entries(R.archetypes)) {
     assert.equal(Object.keys(a.skills).length, 12, name);

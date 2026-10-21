@@ -557,6 +557,15 @@ wa-tab[hidden], wa-radio[hidden] { display: none; }
 .create-steps .current .create-step-mark { background: var(--wa-color-brand); border-color: var(--wa-color-brand); color: var(--wa-color-brand-on-loud); }
 .create-steps .current .create-step-label { color: var(--wa-color-brand); }
 .wa-dark .create-steps .current .create-step-mark { box-shadow: 0 0 10px var(--glow-accent); }
+/* the archetype and origin picked so far: label, name, and the book's one-line pitch */
+.create-picks { display: flex; flex-wrap: wrap; gap: var(--wa-space-2xs) var(--wa-space-xl); margin: 0; }
+.create-picks[hidden] { display: none; }
+.create-pick { display: flex; align-items: baseline; gap: var(--wa-space-s); min-width: 0; }
+.create-pick dt { font-family: var(--font-display); font-size: var(--wa-font-size-2xs); letter-spacing: 0.15em; text-transform: uppercase;
+  color: var(--wa-color-text-quiet); }
+.create-pick dd { margin: 0; min-width: 0; }
+.create-pick-name { font-family: var(--font-mono); font-weight: 700; color: var(--wa-color-brand); }
+.create-pick-pitch { color: var(--wa-color-text-quiet); font-size: var(--wa-font-size-s); }
 .create-nav { display: flex; justify-content: space-between; align-items: center; gap: var(--wa-space-s); flex-wrap: wrap;
   padding-top: var(--wa-space-m); border-top: 1px solid var(--wa-color-surface-border); }
 .create-nav.top { padding: 0 0 var(--wa-space-m); border-top: 0; border-bottom: 1px solid var(--wa-color-surface-border); }
@@ -570,6 +579,22 @@ wa-tab[hidden], wa-radio[hidden] { display: none; }
 /* selectable cards (archetypes, perks): a plain button with a name and a line of text; the picked one is outlined */
 .create-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr)); gap: var(--wa-space-s); }
 .create-perk-cards { grid-template-columns: minmax(0, 1fr); }
+/* the archetype cards, then (beside them on wide screens) the picked one's book text */
+.create-archetype-pick { display: grid; gap: var(--wa-space-l); align-items: start; }
+.create-archetype-detail { padding: var(--wa-space-m) var(--wa-space-l); border-left: 2px solid var(--wa-color-brand);
+  background: var(--wa-color-surface-lowered); font-size: var(--wa-font-size-s); line-height: 1.5; }
+.create-archetype-detail > :first-child { margin-top: 0; }
+.create-archetype-detail > :last-child { margin-bottom: 0; }
+.create-archetype-detail :is(p, ul) { margin-block: 0 var(--wa-space-s); }
+.create-archetype-detail ul { padding-inline-start: 1.5em; }
+.create-archetype-detail li + li { margin-top: var(--wa-space-2xs); }
+.create-detail-name { margin: 0 0 var(--wa-space-s); font-family: var(--font-mono); color: var(--wa-color-brand); }
+.create-archetype-detail h4 { margin: var(--wa-space-m) 0 var(--wa-space-xs); font-size: var(--wa-font-size-xs);
+  letter-spacing: 0.2em; text-transform: uppercase; color: var(--wa-color-text-quiet); }
+@media (min-width: 64rem) {
+  .create-archetype-pick:has(.create-archetype-detail) { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .create-archetype-detail { position: sticky; top: var(--wa-space-m); }
+}
 .create-card { border: 1px solid var(--wa-color-surface-border); border-radius: var(--wa-border-radius-m); min-width: 0; }
 .create-card.selected { border-color: var(--wa-color-brand); box-shadow: 0 0 0 1px var(--wa-color-brand); }
 .wa-dark .create-card.selected { box-shadow: 0 0 0 1px var(--wa-color-brand), 0 0 12px var(--glow-accent); }

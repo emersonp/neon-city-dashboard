@@ -2,7 +2,8 @@
 // Edit this to fix a typo or add a rule; tests/rules.test.cjs checks it against characters.js and abilities.js.
 // Needs characters.js loaded first (for the Mastermind's full Things You Know About list).
 //
-// archetypes[name]  pitch; initiative {world, network} (50 is stored as null); skills {skillId: {value, adv, chal}}
+// archetypes[name]  pitch; intro (the opening paragraph); job ("What Does the … Do on the Job?": two {lead, items} lists);
+//                   initiative {world, network} (50 is stored as null); skills {skillId: {value, adv, chal}}
 //                   (value null is the book's "-"); knows {count, from}; gear: the starting gear lines, each
 //                   {text, items} or {choose: [{text, items}]}, where items are templates (below).
 // origins[name]     pitch; augmentations (granted automatically); options (the two optional choices), each with:
@@ -32,6 +33,21 @@
   const archetypes = {
     Assassin: {
       pitch: "Killers who make enemies go away…permanently.",
+      intro: "You are the hitman. You can work independently, but when on a crew you are valued for your ability to quickly and quietly dispose of anyone who has become a problem. You are equally comfortable with blades or firearms, and specialize in reaching your targets unseen and unheard. While on a Job, you can be relied upon to gain access to secure locations, and if necessary eliminate the opposition with a minimal amount of danger to the crew.",
+      job: [
+        { lead: "As an assassin, you are often tasked with eliminating obstacles before they can become a problem during the execution of your crew's plan. Some suggestions for legwork scenes you might create include:", items: [
+          "Locating and neutralizing (through violence, or otherwise) a head of security, bodyguard, or overseer",
+          "Infiltrating a heavily-guarded facility to steal an asset that is crucial to your crew's plans",
+          "Administering a poison to weaken someone who is an obstacle, or a mark, in the final scene",
+          "Destroying a combat-ready security drone to weaken the defenses surrounding the mark",
+        ] },
+        { lead: "During other characters' legwork scenes, you might contribute to their success by:", items: [
+          "Taking out an enemy serving as an obstacle to your crewmate's success",
+          "Being on-hand in case the Administrator introduces an enemy character as a complication",
+          "Pretending to attack your crewmate to give them a credible cover for a grift",
+          "Acting as a lookout from a hidden position in order to keep a crewmate from being discovered",
+        ] },
+      ],
       initiative: { world: 70, network: 50 },
       skills: {
         "case-the-joint": { value: 60, adv: 0, chal: 0 },
@@ -61,6 +77,21 @@
     },
     Bruiser: {
       pitch: "Enforcers who bring equal parts muscle and intimidation to the crew.",
+      intro: "You're the muscle on your crew. You might be an underground pit fighter who needs only fists, feet, and a hard head to come out victorious on the other side of a fight. Perhaps you studied martial arts under the tutelage of a master, or maybe you earned your scars trading punches with corporate goons in run-down dive bars, or you could have learned the art of high frequency sword fighting as a part of formal paramilitary training. Regardless of your pedigree, you're a hell of a fighter, and most of the Right Kind of People would be thrilled to have you on their side in a scrap.",
+      job: [
+        { lead: "The bruiser isn't just a smasher who roughs people up; they keep the crew from being attacked in the first place. Some suggestions for legwork scenes you might create include:", items: [
+          "Convincing members of the executive's security team to mysteriously \"come down sick\" the day the heist is to go off",
+          "Seriously injure someone who threatens to interfere with the job",
+          "Scare someone associated with the mark into giving up a critical piece of information",
+          "Evaluating the site where the final scene is going to take place, looking for potential dangers",
+        ] },
+        { lead: "During other characters' legwork scenes, you might contribute to their success by:", items: [
+          "Acting as a security detail to make sure no one messes with your fellow crew member",
+          "Looming intimidatingly over your comrade's shoulder to put a threat behind their words",
+          "Causing a distraction by creating a ruckus, like a bar fight or a street brawl",
+          "Breaking down doors, smashing walls, and getting rid of other physical impediments",
+        ] },
+      ],
       initiative: { world: 70, network: 55 },
       skills: {
         "analyze-data": { value: null, adv: 0, chal: 1 },
@@ -86,6 +117,21 @@
     },
     Doc: {
       pitch: "The ones who keep the crew up and running at peak performance, or above.",
+      intro: "You keep the crew's physical bodies running at peak performance. Your combination of medical knowledge and mechanical skill affords you the ability to maintain both the human and synthetic shells on your crew, and your capabilities extend beyond simply patching up wounds. You have a clear understanding of the way technology and biology can work together, allowing you to provide upgrades to your crew's shells that corporate medicine has deemed unprofitable or unsafe.",
+      job: [
+        { lead: "The Doc isn't just the crew's doctor; they are the engineer of the physical form, responsible for any connection between mind, body, and machine. Some suggestions for legwork scenes you might create include:", items: [
+          "Sabotaging the body of an enemy while their mind is unloaded from it",
+          "Acquiring a new and highly-capable shell for another crew member to use during the heist",
+          "Stealing the schematics for a piece of bespoke cyberware that allows your crew to bypass a security system",
+          "Breaking into a corporate hospital to steal doses of an inoculant against hazardous chemicals",
+        ] },
+        { lead: "During other characters' legwork scenes, you might contribute to their success by:", items: [
+          "Being on hand to provide medical support when things turn violent",
+          "Providing legitimacy to a crewmate's ruse when they pose as someone wounded or ill",
+          "Creating a distraction by releasing a mild neurotoxin into the ventilation system of a building",
+          "Identifying the weak spots in an enemy in the physical world",
+        ] },
+      ],
       initiative: { world: 70, network: 55 },
       skills: {
         "analyze-data": { value: 65, adv: 1, chal: 0 },
@@ -110,6 +156,21 @@
     },
     Gearhead: {
       pitch: "Tinkerers who make sure the crew has the right tools for the job.",
+      intro: "You are the tinkerer, the one who makes sure all of the guns, gear, and vehicles are ready to do the job you need them to do. You often act as the crew's quartermaster, making sure that everyone has what they need to succeed, and sometimes you find yourself taking on the role of mechanic, gunsmith, or even a doctor, patching up wounds on your human crewmates just like you patch up damage to the synthetic ones.",
+      job: [
+        { lead: "The gearhead makes sure that the crew has all of the tools they need, and often is responsible for the technical failures of their opposition. Some suggestions for legwork scenes you might create include:", items: [
+          "Looking for exploitable design flaws in security technology and surveillance systems, then designing an exploit",
+          "Building and placing an elaborate piece of technology that the crew will use in the final scene",
+          "Acquiring contraband technology to outfit the crew",
+          "Physically sabotaging security scanners to keep them from sounding the alarm when the crew arrives",
+        ] },
+        { lead: "During other characters' legwork scenes, you might contribute to their success by:", items: [
+          "Sabotaging surveillance systems so that their comrade can operate without being observed",
+          "Disabling police vehicles so that the crew can make a fast getaway without being pursued",
+          "Jury-rigging a tool or piece of tech that one of their crewmates can use to open locked doors",
+          "Analyzing blueprints and schematics for weaknesses that their fellow crew members can exploit",
+        ] },
+      ],
       initiative: { world: 70, network: 55 },
       skills: {
         "analyze-data": { value: 55, adv: 1, chal: 0 },
@@ -135,6 +196,21 @@
     },
     Grifter: {
       pitch: "Con artists who act as the face of the crew.",
+      intro: "You've been called a charmer, a huckster, a sham, a hustler, and a thousand other names, but it all comes down to being a confidence artist. You lull your targets into a false sense of trust and security and then extract what you want from them, leaving them confused or oblivious to your scheme. Once you identify your marks, you earn their trust, becoming their friends and confidants before betraying them at the right moment.",
+      job: [
+        { lead: "As the grifter, you are one of the primary \"face\" characters of the crew, excelling at social engineering and deception. Some suggestions for legwork scenes you might create include:", items: [
+          "Securing access to a protected location by pretending to be a staff member or other approved employee",
+          "Teasing critical information out of someone by convincing them that you are already in the know",
+          "Impersonating a security chief, personal assistant, or other character that your crew previously neutralized so as not to arouse suspicions.",
+          "Bolstering your crew's resources by running a con game on a low-level executive and siphoning off some of their wealth",
+        ] },
+        { lead: "During other characters' legwork scenes, you might contribute to their success by:", items: [
+          "Distracting bodyguards or private security personnel while one of your crewmates sneaks by them",
+          "Reinforcing the cover story a crewmate is using by pretending to come across them by accident",
+          "Convincing bystanders not to report the suspicious activities of the crew",
+          "Convincing someone at the security desk that your companion merely forgot their ID badge",
+        ] },
+      ],
       initiative: { world: 65, network: 65 },
       skills: {
         "conceal-an-object": { value: 55, adv: 0, chal: 0 },
@@ -159,6 +235,20 @@
     },
     Hacker: {
       pitch: "Computer experts who make the Network their domain.",
+      intro: "The digital realm is your domain and you play the virtual keyboard like a maestro, opening up files that would remain sealed to others and sifting through their precious data. You access information, overcome security systems, track things down, and generally hide your tracks from the Corporations and others who try and stop you. You're a virtual specter, gone with the swag before anyone even knows you were there. With your help, your crew can be in and out like a breeze without anyone the wiser.",
+      job: [
+        { lead: "In a world where computers are both ubiquitous and responsible for the smooth function of society, a hacker is a critical asset to any crew. Some suggestions for legwork scenes you might create include:", items: [
+          "Introducing a virus into a security drone's operating system to neutralize an obstacle",
+          "Breaking into a secure Network node to download crucial information on a mark",
+          "Establishing false identification credentials for your crew, including a digital paper trail that gives their identities long histories",
+          "Counterfeiting access cards to allow your crew to bypass security doors during the final scene",
+        ] },
+        { lead: "During other characters' legwork scenes, you might contribute to their success by:", items: [
+          "Disabling security cameras to make it easier for a crewmate to infiltrate a location",
+          "Running interference against moderation drones while your comrade scams someone in a Network node",
+          "Creating a distracting by making a security system send out false alarm signals",
+        ] },
+      ],
       initiative: { world: 55, network: 70 },
       skills: {
         "analyze-data": { value: 55, adv: 2, chal: 0 },
@@ -186,6 +276,20 @@
     },
     Mastermind: {
       pitch: "The architects of complex schemes who always have a contingency plan.",
+      intro: "No job goes well without a plan, and you are the person who hatches that plan. You have a mind for inventing complex schemes and intricate plots. You see the connections between people, places, and events in a complex web, and know how to formulate and execute a plan with many moving parts. You create plans that require precise timing, complex cons, and so many twists and turns that only you can see the full shape of it. Even when it looks like things are starting to fall apart, you reveal another facet of your plan that turns the tables.",
+      job: [
+        { lead: "The mastermind is often the crew's leader, someone who makes sure the pieces of the plan all fit together and that everyone contributes as befits their specialties. Some suggestions for legwork scenes you might create include:", items: [
+          "Acquiring blueprints or schematics for a location where the job is going to take place to build out a plan",
+          "Analyzing the security presence surrounding the target after seeing it first-hand",
+          "Removing a potentially troublesome individual from the equation by convincing them to leave the city for a time",
+          "Turning a potential threat into an asset by convincing them to join your side",
+        ] },
+        { lead: "During other characters' legwork scenes, you might contribute to their success by:", items: [
+          "Overseeing their efforts and offering support and advice during the scene",
+          "Making sure that all of the loose ends get tied up and no evidence is left behind",
+          "Providing guidance on the best way to avoid a security system",
+        ] },
+      ],
       initiative: { world: 65, network: 65 },
       skills: {
         "analyze-data": { value: 65, adv: 2, chal: 0 },
@@ -211,6 +315,21 @@
     },
     Merc: {
       pitch: "Adaptable problem-solvers who are ready for anything.",
+      intro: "Reliable, flexible, and adaptable: these are the traits that have kept you alive across jobs both dangerous and lucrative. You've sold your skills to anyone that could pay for it, and you have a reputation as someone that can be depended on to get the job done, no matter how little intel or resources you're given at the start. You find a way to succeed, and while some might call you a jack of all trades, in your case this is a selling point, making you the perfect addition to any crew.",
+      job: [
+        { lead: "The bruiser isn't just a smasher who roughs people up; they keep the crew from being attacked in the first place. Some suggestions for legwork scenes you might create include:", items: [
+          "Scoping out a location when the crew doesn't know what's going on inside",
+          "Accessing a Network node where the mark is known to do business",
+          "Using physical violence to take down a bodyguard, security chief, or other personnel that stands in the way of the crew's plan",
+          "Going into a dive bar in a rival crew's turf to convince them to set aside their plans for the crew's target",
+        ] },
+        { lead: "During other characters' legwork scenes, you might contribute to their success by:", items: [
+          "Being on-hand to help out when the situation calls for a skill they don't possess",
+          "Tackling unexpected obstacles that the crew couldn't have predicted",
+          "Serving as an extra gun or pair of fists for when a fight inevitably breaks out",
+          "Scouting ahead to make sure the coast is clear",
+        ] },
+      ],
       initiative: { world: 65, network: 65 },
       skills: {
         "cover-your-tracks": { value: null, adv: 0, chal: 2 },
@@ -237,6 +356,21 @@
     },
     Operator: {
       pitch: "Drivers and pilots that keep the crew from being caught by surprise.",
+      intro: "You are the driver, the drone pilot, the robot jockey. If it rolls, flies, or travels on water, it's your tool for the using. You are the crew's escape hatch, responsible for making sure that no one gets caught while on the job. You are often entrusted with being the lookout and making sure that everyone sees trouble coming, and usually have a plan on hand to make sure that any unexpected hitches get smoothed out before they become a problem. Your natural talents as a driver translate well into the digital realm, and your skills often make you a tough competitor in digital racing and other esports.",
+      job: [
+        { lead: "When it comes to vehicles and drones, no one is better at getting what they want than the operator. Some suggestions for legwork scenes you might create include:", items: [
+          "Hijacking a shipment of critical supplies as it enters or leaves the city",
+          "Fly a spy drone into the upper, secure floors of a skyscraper to obtain a floor plan of the target space",
+          "Stealing a security drone and modifying it to obey your commands instead of the security system's",
+          "Kidnapping a VIP by running their armored limousine off the road and grabbing them from the wreckage",
+        ] },
+        { lead: "During other characters' legwork scenes, you might contribute to their success by:", items: [
+          "Serving as a lookout in case there is unexpected trouble",
+          "Being on-hand in scenes where the heat pool is large enough that the Administrator is likely to introduce a complication",
+          "Using a drone to distract the guards and provide cover for your crewmate",
+          "Being the getaway driver for your crewmates",
+        ] },
+      ],
       initiative: { world: 70, network: 55 },
       skills: {
         "case-the-joint": { value: 55, adv: 0, chal: 0 },
@@ -265,6 +399,21 @@
     },
     Thief: {
       pitch: "Skulkers in the shadows that specialize in getting into secure places.",
+      intro: "You are the sneak, the infiltrator, the light-fingered, clever-handed crew member with a knack for getting into places that are trying to keep you out. Anything the corporations try to protect, you want to take, and the security system hasn't been invented yet that is invulnerable to your kind. You are likely the most nimble member of the crew, and subtlety is your preferred methodology. Your best work is done when no one notices that you are even there, and most of your marks never notice that you've taken their valuables until you are already long gone.",
+      job: [
+        { lead: "The bruiser isn't just a smasher who roughs people up; they keep the crew from being attacked in the first place. Some suggestions for legwork scenes you might create include:", items: [
+          "Breaking into the secure facility where the heist is going to go down and scouting the location for info",
+          "Worming your way through utility conduits to sabotage a security system",
+          "Getting close enough to a security chief to copy their hive's identifier codes without them noticing",
+          "Stealing a valuable heirloom from an executive to use as leverage over them",
+        ] },
+        { lead: "During other characters' legwork scenes, you might contribute to their success by:", items: [
+          "Cracking the locks on security doors to allow your crewmate access to a private area",
+          "Breaking into the upper floor of the building and intentionally setting off alarms as a distraction for your comrades infiltrating a lower floor",
+          "Lifting an identifying badge off of a guard to enhance a crewmate's disguise",
+          "Infiltrating a secure server room to give your crew's hacker access to the system by proxy",
+        ] },
+      ],
       initiative: { world: 70, network: 55 },
       skills: {
         "case-the-joint": { value: 60, adv: 1, chal: 0 },

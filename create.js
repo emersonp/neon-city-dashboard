@@ -1,6 +1,6 @@
 // Create mode: a new character built step by step from the rulebook (rules.js), shown in the Character tab.
 // The choices live in character.creation (characters.js); roster.js saves every change right away (hooks.change).
-// The step header and Back / Next / Finish / Discard are shared; each step's controls come from STEP_RENDERERS.
+// The step header, the archetype and origin picked so far, and Back / Next / Finish / Discard are shared; each step's controls come from STEP_RENDERERS.
 (function (root) {
   const C = root.NCD_CHARACTERS;
 
@@ -45,13 +45,27 @@
   const toggled = (list, value, on, max) => (!on ? list.filter((v) => v !== value)
     : list.includes(value) || list.length >= max ? list : [...list, value]);
 
-  // Archetype: one card each. Changing it clears the knowledge, perk, gear, and augmentation picks made for the old one.
+  // Archetype: one card each, and beside them the picked one's opening paragraph and "What Does the … Do on the Job?".
+  // Changing it clears the knowledge, perk, gear, and augmentation picks made for the old one.
   const hasPicks = (cr) => cr.knows.length > 0 || cr.perk != null || Object.keys(cr.gear ?? {}).length > 0
     || Object.keys(cr.gearPicks ?? {}).length > 0 || cr.augmentations.length > 0;
+  function archetypeDetail(name) {
+    const arch = C.ruleFor(rules().archetypes, name);
+    if (!arch) return "";
+    return `<section class="create-archetype-detail" aria-label="${esc(name)}">
+        <h3 class="create-detail-name">${esc(name)}</h3>
+        <p>${esc(arch.intro)}</p>
+        <h4>What Does the ${esc(name)} Do on the Job?</h4>
+        ${arch.job.map((b) => `<p>${esc(b.lead)}</p><ul>${b.items.map((item) => `<li>${esc(item)}</li>`).join("")}</ul>`).join("")}
+      </section>`;
+  }
   function renderArchetype(body, character) {
     const picked = character.creation.archetype;
-    body.innerHTML = `<div class="create-cards" role="group" aria-label="Archetype">${C.ARCHETYPES.map((name) =>
-      card("data-archetype", name, name === picked, name, C.ruleFor(rules().archetypes, name)?.pitch)).join("")}</div>`;
+    body.innerHTML = `<div class="create-archetype-pick">
+        <div class="create-cards" role="group" aria-label="Archetype">${C.ARCHETYPES.map((name) =>
+          card("data-archetype", name, name === picked, name, C.ruleFor(rules().archetypes, name)?.pitch)).join("")}</div>
+        ${archetypeDetail(picked)}
+      </div>`;
     body.addEventListener("click", (e) => {
       const archetype = e.target.closest("[data-archetype]")?.dataset.archetype;
       if (!archetype) return;
@@ -435,6 +449,15 @@
     }).join("")}</ol>`;
   }
 
+  // The archetype and origin picked so far, kept in view on every step
+  function renderPicks(character) {
+    const cr = character.creation, r = rules();
+    return [["Archetype", r.archetypes, cr.archetype], ["Origin", r.origins, cr.origin]].filter(([, , name]) => name)
+      .map(([label, list, name]) => `<div class="create-pick"><dt>${label}</dt>
+          <dd><span class="create-pick-name">${esc(name)}</span> <span class="create-pick-pitch">${esc(C.ruleFor(list, name)?.pitch ?? "")}</span></dd></div>`)
+      .join("");
+  }
+
   function renderNav(character, step) {
     const i = C.STEPS.indexOf(step), last = i === C.STEPS.length - 1;
     const ready = C.stepComplete(character, step, rules(), catalog());
@@ -483,7 +506,7 @@
     if (!el.dataset.wired) {
       el.dataset.wired = "true";
       // Back / Next / Finish / Discard sit both above and below the step
-      el.innerHTML = `<nav class="create-head" aria-label="Steps"></nav><div class="create-nav top"></div><div class="create-body"></div><div class="create-nav"></div>`;
+      el.innerHTML = `<nav class="create-head" aria-label="Steps"></nav><dl class="create-picks"></dl><div class="create-nav top"></div><div class="create-body"></div><div class="create-nav"></div>`;
       el.addEventListener("click", (e) => {
         const c = shown.character, at = stepOf(c);
         const to = e.target.closest(".create-head [data-step]")?.dataset.step;
@@ -499,6 +522,9 @@
       });
     }
     el.querySelector(".create-head").innerHTML = renderHead(character, step);
+    const picks = el.querySelector(".create-picks");
+    picks.innerHTML = renderPicks(character);
+    picks.hidden = picks.innerHTML === "";
     for (const nav of el.querySelectorAll(".create-nav")) nav.innerHTML = renderNav(character, step);
     if (keep) return;
     // a new element each time, so a step's listeners go with it

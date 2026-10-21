@@ -90,9 +90,9 @@ node --test tests/dice.test.cjs tests/discord.test.cjs tests/characters.test.cjs
 | `dice.js` | Dice rules (no page code, so it's testable in Node) |
 | `characters.js` | Archetypes, origins, random handles and names, gear items and conditions, Create's choices, saving characters (needs `dice.js`; testable in Node) |
 | `roster.js` | Roster tab and the Character tab, including the condition chips and dialogs |
-| `create.js` | Create mode: a new character built step by step from `rules.js` (step header, Back/Next/Finish, Discard, each step's controls) |
+| `create.js` | Create mode: a new character built step by step from `rules.js` (step header, the archetype and origin picked so far, Back/Next/Finish, Discard, each step's controls) |
 | `abilities.js` | The perk and augmentation catalog; edit it to add abilities |
-| `rules.js` | Rulebook data for Create: archetype skills, initiative, knows, starting gear templates; origin options and augmentation gear (needs `characters.js`; testable in Node) |
+| `rules.js` | Rulebook data for Create: archetype intros and "on the job" text, skills, initiative, knows, starting gear templates; origin options and augmentation gear (needs `characters.js`; testable in Node) |
 | `databank.js` | The Databank tab's text from the rulebook's Equipment chapter: gear, tool sets, weapons, armor, vehicles, gear and weapon keywords with their restrictions (testable in Node) |
 | `tables.js` | The Tables tab's tables: random gear keywords, and security system tiers with each defense's description (testable in Node) |
 | `gear.js` | Gear rules from `databank.js`: built-in keywords, which keywords an item can take, damage and impact, labels, rules text, and Create's starting gear (testable in Node) |
