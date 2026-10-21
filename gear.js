@@ -143,6 +143,35 @@
     }
   }
 
+  // A name for an item the player didn't name, from what it is: "Improvised Hacker's Deck", "Rail Pistol",
+  // "Environment Suit (Underwater)", "Body Armor x2". Each word starts with a capital.
+  const title = (s) => s.replace(/(^|\s)(\S)/g, (_, gap, c) => gap + c.toUpperCase());
+  const WEAPON_NOUN = { "One-handed melee": "One-handed melee weapon", "Two-handed melee": "Two-handed melee weapon", Thrown: "Thrown weapon" };
+  function defaultName(item) {
+    const named = (base, extra) => title(base) + (extra ? ` (${extra})` : "");
+    switch (item?.kind ?? "prop") {
+      case "weapon": {
+        const w = weaponOf(item);
+        if (!w) return "Weapon";
+        const added = strings(item.keywords).filter((k) => keyword(k, item)?.group === "weapon" && !builtIn(item).includes(k));
+        return title([...added, WEAPON_NOUN[w.name] ?? w.name].join(" "));
+      }
+      case "kit": {
+        const set = toolSetOf(item);
+        return set ? named([QUALITIES[item.quality] ? item.quality : "", set.name].filter(Boolean).join(" "), skillName(item.special)) : "Kit";
+      }
+      case "equipment": {
+        const e = equipmentOf(item);
+        if (!e) return "Equipment";
+        return named(e.section === "Guided skill software" ? `${e.name} ${e.section}` : e.name, choiceName(e, item.choice));
+      }
+      case "armor": return `Body Armor${armorLevel(item) > 1 ? ` x${armorLevel(item)}` : ""}`;
+      case "vehicle": return vehicleOf(item)?.name ?? "Vehicle";
+      case "prop": return "Prop";
+      default: return "Gear";
+    }
+  }
+
   // The pop-up text for an item, in the format.js description format: each of its keywords and what it does.
   const rulesText = (item) => keywordsOf(item).map((name) => `**${name}:** ${keyword(name, item).text}`).join("\n\n");
 
@@ -212,6 +241,6 @@
     return !keywordsOf(before).includes(k[0]) && slots.find((s) => s.id === mount.target).item.keywords.includes(k[0]);
   }
 
-  root.NCD_GEAR = { KINDS, QUALITIES, EQUIPMENT, keyword, builtIn, keywordsOf, canAdd, keywordChoices, legalize, retype, stats, label, rulesText,
+  root.NCD_GEAR = { KINDS, QUALITIES, EQUIPMENT, keyword, builtIn, keywordsOf, canAdd, keywordChoices, legalize, retype, stats, label, defaultName, rulesText,
     starterSlots, weaponMountTargets, slotOpen, gearComplete };
 })(globalThis);

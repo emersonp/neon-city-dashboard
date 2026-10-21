@@ -343,6 +343,13 @@
   const gearStarter = $("gear-starter");
   let gearChanging = null; // the item being changed in Edit, or null for new gear
   let working = null;      // the item as the dialog has it
+  let autoName = false;    // new gear: the name follows G.defaultName until the player types their own
+  // The name box: filled from the formula while it's automatic; the formula is always its placeholder (a blank name saves as it).
+  function refreshGearName() {
+    const name = G.defaultName(working);
+    gearDescription.placeholder = name;
+    if (autoName) gearDescription.value = name;
+  }
   const SKILL_CHOICES = C.SKILLS.filter((s) => s.type !== "initiative");
   // A select of `options` ([value, label]); values are indexes or ids, never names (which can have spaces).
   const select = (fieldName, label, options, value, extra = "") => `<wa-select data-field="${fieldName}" label="${escapeHTML(label)}" ${extra}
@@ -387,12 +394,14 @@
     working = item ? { ...item } : C.newGear({ description: "" });
     gearDialog.label = item ? "Change gear" : "New gear";
     gearKind.value = working.kind;
+    autoName = !item;
     gearDescription.value = working.description;
     gearQuantity.value = String(working.quantity);
     gearStarter.checked = item?.starter ?? false;
     gearStarter.hidden = state !== "editing";
     renderGearFields();
     renderGearKeywords();
+    refreshGearName();
     gearDialog.open = true;
   }
   gearKind.addEventListener("change", () => {
@@ -401,6 +410,7 @@
     if (working.kind === "armor") working.level = 1;
     renderGearFields();
     renderGearKeywords();
+    refreshGearName();
   });
   // A field's control gives an index or id; this turns it into what the item stores.
   const FIELD_VALUE = {
@@ -419,6 +429,7 @@
     working = G.legalize(next);
     if (["set", "entry"].includes(name)) renderGearFields();
     renderGearKeywords();
+    refreshGearName();
   });
   gearKeywords.addEventListener("change", (e) => {
     const box = e.target.closest("[data-keyword]");
@@ -426,6 +437,7 @@
     const k = box.dataset.keyword;
     working = G.legalize({ ...working, keywords: box.checked ? [...working.keywords, k] : working.keywords.filter((x) => x !== k) });
     renderGearKeywords();
+    refreshGearName();
   });
   // What a type needs before it can be saved (armor always has a level).
   function gearMissing(w) {
@@ -441,8 +453,7 @@
     }
   }
   function saveGear() {
-    const description = text(gearDescription.value);
-    if (!description) { gearDescription.focus(); return; }
+    const description = text(gearDescription.value) || G.defaultName(working);
     const missing = gearMissing(working);
     if (missing) { gearFields.querySelector(`[data-field="${missing}"]`)?.focus(); return; }
     const quantity = Math.max(1, Math.round(Number(gearQuantity.value)) || 1);
@@ -457,6 +468,8 @@
   }
   $("gear-save").addEventListener("click", saveGear);
   gearDescription.addEventListener("keydown", (e) => { if (e.key === "Enter") saveGear(); });
+  // typing a name stops the automatic one; clearing the box brings it back
+  gearDescription.addEventListener("input", () => { autoName = !text(gearDescription.value); });
   for (const el of [running, form]) {
     el.addEventListener("click", (e) => { if (e.target.closest("[data-add-gear]")) openGearDialog(); });
   }

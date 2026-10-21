@@ -130,3 +130,26 @@ test("retype to another kind drops fixed keywords; the same kind keeps them", ()
   assert.deepEqual(G.retype(gauntlet, "prop").fixed ?? [], []);
   assert.deepEqual(G.retype(gauntlet, "weapon").fixed, ["Mounted"]);
 });
+
+test("defaultName: a name from what the item is", () => {
+  const n = (f) => G.defaultName(C.newGear(f));
+  assert.equal(n({ kind: "kit", set: "Hacker's Deck", quality: "improvised" }), "Improvised Hacker's Deck");
+  assert.equal(n({ kind: "kit", set: "Paramedic's Kit", quality: "exceptional", special: "heal-someone" }), "Exceptional Paramedic's Kit (Heal Someone)");
+  assert.equal(n({ kind: "kit", set: "Paramedic's Kit" }), "Paramedic's Kit");
+  assert.equal(n({ kind: "kit" }), "Kit");
+  assert.equal(n({ kind: "weapon", category: "Pistol", keywords: ["Rail", "Durable"] }), "Rail Pistol");
+  assert.equal(n({ kind: "weapon", category: "One-handed melee" }), "One-handed Melee Weapon");
+  assert.equal(n({ kind: "weapon", category: "Thrown", keywords: ["Explosive", "Obfuscating"] }), "Explosive Obfuscating Thrown Weapon");
+  assert.equal(n({ kind: "weapon", category: "Sniper rifle" }), "Sniper Rifle");
+  assert.equal(n({ kind: "weapon" }), "Weapon");
+  assert.equal(n({ kind: "equipment", entry: "Ripcord" }), "Ripcord");
+  assert.equal(n({ kind: "equipment", entry: "Environment Suit", choice: "Underwater" }), "Environment Suit (Underwater)");
+  assert.equal(n({ kind: "equipment", entry: "Expert", choice: "shoot-someone" }), "Expert Guided Skill Software (Shoot Someone)");
+  assert.equal(n({ kind: "equipment" }), "Equipment");
+  assert.equal(n({ kind: "armor", level: 1 }), "Body Armor");
+  assert.equal(n({ kind: "armor", level: 3 }), "Body Armor x3");
+  assert.equal(n({ kind: "vehicle", vehicle: "Muscle Car" }), "Muscle Car");
+  assert.equal(n({ kind: "vehicle" }), "Vehicle");
+  assert.equal(n({ kind: "prop" }), "Prop");
+  assert.doesNotThrow(() => G.defaultName({ kind: "blimp", keywords: [5] }));
+});
