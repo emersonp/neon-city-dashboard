@@ -289,19 +289,35 @@
         $("conditions-display-section").hidden = !C.conditions(current).length;
         renderConditions($("conditions-display"), current);
         renderSkillsDisplay($("skills-display"));
-        $("gear-display-section").hidden = !C.gear(current).length;
         renderGear($("gear-display"), current);
         renderAbilities($("abilities-display"), C.abilities(current, ABILITIES));
       } else {
         renderConditions($("conditions-run"), current, { clickable: true });
+        renderAppearance($("appearance-run"));
         renderStory($("story-run"));
         renderSkillsDisplay($("skills-run"), { links: true });
         renderGear($("gear-run"), current, { running: true });
         renderAbilities($("abilities-run"), C.abilities(current, ABILITIES));
       }
     }
+    showSheetTab();
     copyActions();
   }
+
+  // ---- sheet tabs: Skills, Gear, Abilities, Story ----
+  // Display, Running, and Edit each have their own tab group; switching modes keeps the same tab, and it's remembered.
+  // Panels are named sheet-*, so form.querySelector('[name="story"]') still finds Edit's field, not its tab panel.
+  const SHEET_TABS = ["sheet-skills", "sheet-gear", "sheet-abilities", "sheet-story"];
+  let sheetTab = SHEET_TABS.includes(store.get("sheetTab")) ? store.get("sheetTab") : SHEET_TABS[0];
+  function showSheetTab() {
+    const group = [display, running, form].find((section) => !section.hidden)?.querySelector(".sheet-tabs");
+    if (group) customElements.whenDefined("wa-tab-group").then(() => { group.active = sheetTab; });
+  }
+  $("character-card").addEventListener("wa-tab-show", (e) => {
+    if (!e.target.classList.contains("sheet-tabs") || !SHEET_TABS.includes(e.detail.name)) return;
+    sheetTab = e.detail.name;
+    store.set("sheetTab", sheetTab);
+  });
 
   // Handle, name, etc. Current Luck, Current Influence, and Wounds can be changed while running, and are saved right away.
   function renderFields() {
@@ -382,7 +398,7 @@
   const settled = () => !C.isCreating(current) && !A.isSpending(current);
   const enter = (mode) => () => { if (!settled()) return; state = mode; render(); };
 
-  // ---- appearance: shown in full on the sheet, and in a dialog while running ----
+  // ---- appearance: in the Story tab ----
   // The liability goes under it, except in Create's review (it's picked at the first End Session or Finish Job).
   const APPEARANCE = [["pronouns", "Pronouns"], ["physical", "Physical Appearance"], ["network", "Network Default"]];
   function renderAppearance(el, { liability = true } = {}) {
@@ -391,14 +407,8 @@
     el.innerHTML = APPEARANCE.map(([key, title]) => field(title, look[key])).join("")
       + (liability ? field("Liability", C.liability(current), " liability") : "");
   }
-  function openAppearance() {
-    const dialog = $("appearance-dialog");
-    dialog.label = `Appearance: ${C.label(current)}`;
-    renderAppearance(dialog.querySelector(".appearance"));
-    dialog.open = true;
-  }
 
-  // ---- repercussions and story rewards: shown on Display and Running; Running's pencil changes them in a dialog ----
+  // ---- repercussions and story rewards: in Display's and Running's Story tab; Running's pencil changes them in a dialog ----
   // (Edit has a box for them, and Finish Job's page starts with one.)
   const renderStory = (el) => { el.textContent = C.story(current) || "—"; };
   const storyDialog = $("story-dialog");
@@ -432,7 +442,7 @@
     render();
   }
   const SHEET_ACTIONS = { edit: enter("editing"), run, stop: toDisplay, "discard-edit": toDisplay,
-    appearance: openAppearance, close: closeCharacter, "end-session": endSession, "finish-job": enter("finishing"),
+    close: closeCharacter, "end-session": endSession, "finish-job": enter("finishing"),
     "confirm-finish": confirmFinish, "spend-done": openSpendConfirm };
   $("character-card").addEventListener("click", (e) => SHEET_ACTIONS[e.target.closest("[data-sheet-action]")?.dataset.sheetAction]?.());
   function copyActions() {
@@ -819,14 +829,15 @@
 
   // ---- abilities: Perks and Augmentations, each name opening its full text ----
   const ABILITY_TYPES = [["perk", "Perks"], ["augmentation", "Augmentations"]];
-  function renderAbilities(el, list) {
+  // `none`: say so when there are none (the sheet's Abilities tab), rather than showing nothing (Create's review).
+  function renderAbilities(el, list, { none = true } = {}) {
     el.innerHTML = ABILITY_TYPES.map(([type, heading]) => {
       const items = list.filter((a) => a.type === type);
       return items.length ? `<section class="ability-group"><h3>${heading}</h3><ul class="ability-list">${items.map((a) => `<li>
           <button type="button" class="ability-name" data-ability="${escapeHTML(a.id)}">${escapeHTML(a.name)}</button>
           ${a.summary ? `<span class="ability-summary">${escapeHTML(a.summary)}</span>` : ""}
         </li>`).join("")}</ul></section>` : "";
-    }).join("");
+    }).join("") || (none ? `<p class="gear-empty">None</p>` : "");
   }
 
   // Icons in ability text: advantage and boon in the good color, challenge and drawback in the bad one, others in brand.
@@ -1435,22 +1446,22 @@
   });
 
   // ---- creating: create.js draws the steps; these hooks save, finish, and discard ----
-  // The Detail sheet, read-only, for Create's review step: a copy of the sheet head, then appearance, skills, gear, abilities.
+  // The Detail sheet, read-only, for Create's review step: a copy of the sheet head, then skills, gear, abilities, appearance.
   function renderSummary(el) {
     renderFields();
     const head = fields.cloneNode(true);
     head.hidden = false;
     for (const node of [head, ...head.querySelectorAll("[id]")]) node.removeAttribute("id");
     for (const button of head.querySelectorAll("[data-luck], [data-influence]")) button.remove();
-    el.innerHTML = `<dl class="appearance"></dl><div class="skills"></div>
+    el.innerHTML = `<div class="skills"></div>
       <section class="gear"><div class="gear-head"><h3>Gear</h3></div><div class="summary-gear"></div></section>
-      <div class="abilities"></div>`;
+      <div class="abilities"></div><dl class="appearance"></dl>`;
     el.prepend(head);
     renderAppearance(el.querySelector(".appearance"), { liability: false });
     renderSkillsDisplay(el.querySelector(".skills"));
     el.querySelector("section.gear").hidden = !C.gear(current).length;
     renderGear(el.querySelector(".summary-gear"), current);
-    renderAbilities(el.querySelector(".abilities"), C.abilities(current, ABILITIES));
+    renderAbilities(el.querySelector(".abilities"), C.abilities(current, ABILITIES), { none: false });
   }
   create.addEventListener("click", (e) => {
     const id = e.target.closest(".create-summary [data-ability]")?.dataset.ability;

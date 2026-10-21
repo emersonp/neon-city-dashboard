@@ -196,6 +196,15 @@ html.gm [data-player] { display: none !important; }
 
 /* ---- databank: the cheat sheet's columns; a section with many entries spans the page and flows them into columns ---- */
 .databank-tabs > wa-tab-panel::part(base) { padding-inline: 0; }
+/* the character sheet's Skills / Gear / Abilities / Story tabs: one step quieter than the page's, like the Databank's */
+.sheet-tabs wa-tab::part(tab) { font-size: var(--wa-font-size-s); }
+.sheet-tabs > wa-tab-panel::part(base) { padding-inline: 0; padding-bottom: 0; }
+.sheet-tabs { margin-bottom: var(--wa-space-l); }
+/* in a tab the tab names the list, so the head only holds its Add button */
+.sheet-tabs .gear-head:not(:has(h3)) { justify-content: flex-end; }
+.character-form .sheet-tabs { margin-bottom: 0; }
+/* Edit's Skills tab: what they know about, under the skills */
+.sheet-tabs .knows-edit { margin-top: var(--wa-space-xl); padding-bottom: 0; border-bottom: 0; }
 .databank .databank-section.wide { grid-column: 1 / -1; }
 /* two columns wide once the grid has two (2 × 19rem plus the gap); one column below that */
 .databank { container-type: inline-size; }
@@ -526,10 +535,9 @@ wa-tab[hidden], wa-radio[hidden] { display: none; }
 .xp-part > [data-field], #xp-total-edit { min-height: 2.25rem; display: flex; align-items: center; }
 .character-form .stat-xp wa-input::part(form-control-label) { font-size: var(--wa-font-size-2xs); }
 
-/* appearance: written-in fields across the sheet, stacked in the dialog and on phones */
+/* appearance: written-in fields across the Story tab, stacked on phones */
 .appearance { display: grid; grid-template-columns: minmax(8rem, 1fr) 3fr 3fr; gap: var(--wa-space-m) var(--wa-space-l); margin: 0 0 var(--wa-space-xl); }
 .appearance dd { margin: 0; white-space: pre-line; overflow-wrap: anywhere; }
-.appearance.stacked { grid-template-columns: minmax(0, 1fr); margin: 0; }
 .appearance-edit { margin: 0; align-items: start; }
 .appearance :is(.liability, [name="liability"], [name="story"]) { grid-column: 1 / -1; }
 @media (max-width: 800px) { .appearance { grid-template-columns: minmax(0, 1fr); } }

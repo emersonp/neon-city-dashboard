@@ -339,21 +339,25 @@
               </div>
               <div id="conditions-display"></div>
             </section>
-            <dl id="appearance-display" class="appearance"></dl>
-            <section class="gear story" id="story-display-section">
-              <div class="gear-head">
-                <h3>Repercussions and Story Rewards</h3>
-              </div>
-              <p class="story-text" id="story-display"></p>
-            </section>
-            <div id="skills-display" class="skills"></div>
-            <section class="gear" id="gear-display-section">
-              <div class="gear-head">
-                <h3>Gear</h3>
-              </div>
-              <div id="gear-display"></div>
-            </section>
-            <div id="abilities-display" class="abilities"></div>
+            <!-- The same four tabs in Display, Running, and Edit; roster.js keeps them on the same one -->
+            <wa-tab-group class="sheet-tabs">
+              <wa-tab panel="sheet-skills">Skills</wa-tab>
+              <wa-tab panel="sheet-gear">Gear</wa-tab>
+              <wa-tab panel="sheet-abilities">Abilities</wa-tab>
+              <wa-tab panel="sheet-story">Story</wa-tab>
+              <wa-tab-panel name="sheet-skills"><div id="skills-display" class="skills"></div></wa-tab-panel>
+              <wa-tab-panel name="sheet-gear"><div id="gear-display"></div></wa-tab-panel>
+              <wa-tab-panel name="sheet-abilities"><div id="abilities-display" class="abilities"></div></wa-tab-panel>
+              <wa-tab-panel name="sheet-story">
+                <dl id="appearance-display" class="appearance"></dl>
+                <section class="gear story" id="story-display-section">
+                  <div class="gear-head">
+                    <h3>Repercussions and Story Rewards</h3>
+                  </div>
+                  <p class="story-text" id="story-display"></p>
+                </section>
+              </wa-tab-panel>
+            </wa-tab-group>
             <div class="character-actions">
               <wa-button data-sheet-action="edit" appearance="outlined">
                 <wa-icon slot="start" name="pen"></wa-icon>
@@ -384,32 +388,38 @@
               </div>
               <div id="conditions-run"></div>
             </section>
-            <section class="gear story">
-              <div class="gear-head">
-                <h3>Repercussions and Story Rewards</h3>
-                <wa-button size="s" appearance="plain" data-edit-story title="Change">
-                  <wa-icon name="pen" label="Change"></wa-icon>
-                </wa-button>
-              </div>
-              <p class="story-text" id="story-run"></p>
-            </section>
-            <div id="skills-run" class="skills running"></div>
-            <section class="gear">
-              <div class="gear-head">
-                <h3>Gear</h3>
-                <wa-button size="s" appearance="outlined" data-add-gear>
-                  <wa-icon slot="start" name="plus"></wa-icon>
-                  Add gear
-                </wa-button>
-              </div>
-              <div id="gear-run"></div>
-            </section>
-            <div id="abilities-run" class="abilities"></div>
+            <wa-tab-group class="sheet-tabs">
+              <wa-tab panel="sheet-skills">Skills</wa-tab>
+              <wa-tab panel="sheet-gear">Gear</wa-tab>
+              <wa-tab panel="sheet-abilities">Abilities</wa-tab>
+              <wa-tab panel="sheet-story">Story</wa-tab>
+              <wa-tab-panel name="sheet-skills"><div id="skills-run" class="skills running"></div></wa-tab-panel>
+              <wa-tab-panel name="sheet-gear">
+                <section class="gear">
+                  <div class="gear-head">
+                    <wa-button size="s" appearance="outlined" data-add-gear>
+                      <wa-icon slot="start" name="plus"></wa-icon>
+                      Add gear
+                    </wa-button>
+                  </div>
+                  <div id="gear-run"></div>
+                </section>
+              </wa-tab-panel>
+              <wa-tab-panel name="sheet-abilities"><div id="abilities-run" class="abilities"></div></wa-tab-panel>
+              <wa-tab-panel name="sheet-story">
+                <dl id="appearance-run" class="appearance"></dl>
+                <section class="gear story">
+                  <div class="gear-head">
+                    <h3>Repercussions and Story Rewards</h3>
+                    <wa-button size="s" appearance="plain" data-edit-story title="Change">
+                      <wa-icon name="pen" label="Change"></wa-icon>
+                    </wa-button>
+                  </div>
+                  <p class="story-text" id="story-run"></p>
+                </section>
+              </wa-tab-panel>
+            </wa-tab-group>
             <div class="character-actions">
-              <wa-button data-sheet-action="appearance" appearance="outlined">
-                <wa-icon slot="start" name="user"></wa-icon>
-                Appearance
-              </wa-button>
               <wa-button data-sheet-action="stop" appearance="outlined">
                 <wa-icon slot="start" name="stop"></wa-icon>
                 Stop
@@ -605,38 +615,50 @@
               </div>
               <div id="conditions-edit"></div>
             </section>
-            <div class="knows-edit" role="group" aria-labelledby="knows-edit-label">
-              <span class="sheet-label" id="knows-edit-label">Knows something about…</span>
-              <div id="knows-edit" class="knows-boxes"></div>
-            </div>
-            <div class="appearance appearance-edit">
-              <wa-input name="pronouns" label="Pronouns" autocomplete="off"></wa-input>
-              <wa-textarea name="physical" label="Physical Appearance" rows="3" resize="auto"></wa-textarea>
-              <wa-textarea name="network" label="Network Default" rows="3" resize="auto"></wa-textarea>
-              <wa-textarea name="liability" label="Liability" rows="2" resize="auto"></wa-textarea>
-              <wa-textarea name="story" label="Repercussions and Story Rewards" rows="5" resize="auto"></wa-textarea>
-            </div>
-            <div id="skills-edit" class="skills editing"></div>
-            <section class="gear">
-              <div class="gear-head">
-                <h3>Gear</h3>
-                <wa-button size="s" appearance="outlined" data-add-gear>
-                  <wa-icon slot="start" name="plus"></wa-icon>
-                  Add gear
-                </wa-button>
-              </div>
-              <div id="gear-edit"></div>
-            </section>
-            <section class="gear">
-              <div class="gear-head">
-                <h3>Perks &amp; Augmentations</h3>
-                <wa-button size="s" appearance="outlined" data-add-ability>
-                  <wa-icon slot="start" name="plus"></wa-icon>
-                  Add ability
-                </wa-button>
-              </div>
-              <div id="abilities-edit"></div>
-            </section>
+            <wa-tab-group class="sheet-tabs">
+              <wa-tab panel="sheet-skills">Skills</wa-tab>
+              <wa-tab panel="sheet-gear">Gear</wa-tab>
+              <wa-tab panel="sheet-abilities">Abilities</wa-tab>
+              <wa-tab panel="sheet-story">Story</wa-tab>
+              <wa-tab-panel name="sheet-skills">
+                <div id="skills-edit" class="skills editing"></div>
+                <div class="knows-edit" role="group" aria-labelledby="knows-edit-label">
+                  <span class="sheet-label" id="knows-edit-label">Knows something about…</span>
+                  <div id="knows-edit" class="knows-boxes"></div>
+                </div>
+              </wa-tab-panel>
+              <wa-tab-panel name="sheet-gear">
+                <section class="gear">
+                  <div class="gear-head">
+                    <wa-button size="s" appearance="outlined" data-add-gear>
+                      <wa-icon slot="start" name="plus"></wa-icon>
+                      Add gear
+                    </wa-button>
+                  </div>
+                  <div id="gear-edit"></div>
+                </section>
+              </wa-tab-panel>
+              <wa-tab-panel name="sheet-abilities">
+                <section class="gear">
+                  <div class="gear-head">
+                    <wa-button size="s" appearance="outlined" data-add-ability>
+                      <wa-icon slot="start" name="plus"></wa-icon>
+                      Add ability
+                    </wa-button>
+                  </div>
+                  <div id="abilities-edit"></div>
+                </section>
+              </wa-tab-panel>
+              <wa-tab-panel name="sheet-story">
+                <div class="appearance appearance-edit">
+                  <wa-input name="pronouns" label="Pronouns" autocomplete="off"></wa-input>
+                  <wa-textarea name="physical" label="Physical Appearance" rows="3" resize="auto"></wa-textarea>
+                  <wa-textarea name="network" label="Network Default" rows="3" resize="auto"></wa-textarea>
+                  <wa-textarea name="liability" label="Liability" rows="2" resize="auto"></wa-textarea>
+                  <wa-textarea name="story" label="Repercussions and Story Rewards" rows="5" resize="auto"></wa-textarea>
+                </div>
+              </wa-tab-panel>
+            </wa-tab-group>
             <div class="character-actions">
               <!-- form= lets the copy at the top of the card submit too -->
               <wa-button type="submit" form="character-form" variant="brand">
@@ -829,10 +851,6 @@
       <wa-icon slot="start" name="floppy-disk"></wa-icon>
       Save
     </wa-button>
-  </wa-dialog>
-
-  <wa-dialog id="appearance-dialog" label="Appearance" light-dismiss>
-    <dl class="appearance stacked"></dl>
   </wa-dialog>
 
   <wa-dialog id="skill-dialog" label="Roll" light-dismiss>
