@@ -347,6 +347,9 @@
     if (changed("archetype")) Object.assign(resets, { knows: [], perk: null, gear: {}, gearPicks: {}, augmentations: [], placements: {} });
     if (changed("origin")) Object.assign(resets, { augmentations: [], option: null, placements: {}, optionBumps: [] });
     if (changed("option")) Object.assign(resets, { placements: {}, optionBumps: [] });
+    // a new origin or set of augmentations clears the picks for augmentation gear and Weapon Mount
+    if (changed("origin") || changed("augmentations")) resets.gearPicks = Object.fromEntries(Object.entries(cur.gearPicks ?? {})
+      .filter(([id]) => !id.startsWith("create-aug-") && id !== "weapon-mount"));
     const next = { ...cur, ...resets, ...changes };
     if (changed("archetype")) { const legal = bumpable(next, rules); next.bumps = next.bumps.filter((id) => legal.includes(id)); }
     if (changed("option") && !optionOf(next, rules)?.extraAugmentation) next.augmentations = next.augmentations.slice(0, 1);

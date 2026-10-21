@@ -115,3 +115,16 @@ test("gear: junk fields don't throw", () => {
   assert.match(G.label({ id: 1, kind: "weapon", category: "Laser cannon" }), /\?/);
   assert.deepEqual(G.keywordsOf({ id: 1, kind: "prop", keywords: ["Nope", "Durable"] }), ["Durable"]);
 });
+
+test("gear: an unknown fixed keyword is ignored, not thrown on", () => {
+  const item = w("Pistol", [], { fixed: ["Nope"] });
+  assert.deepEqual(G.builtIn(item), []);
+  for (const f of [G.label, G.stats, G.rulesText, G.keywordChoices]) assert.doesNotThrow(() => f(item));
+  assert.doesNotThrow(() => G.rulesText(C.newGear({ description: "Hat", fixed: ["Nope"] })));
+});
+
+test("retype to another kind drops fixed keywords; the same kind keeps them", () => {
+  const gauntlet = w("Two-handed melee", [], { fixed: ["Mounted"] });
+  assert.deepEqual(G.retype(gauntlet, "prop").fixed ?? [], []);
+  assert.deepEqual(G.retype(gauntlet, "weapon").fixed, ["Mounted"]);
+});

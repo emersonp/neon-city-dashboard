@@ -652,3 +652,14 @@ test("create gear: changing archetype clears picks", () => {
   const c = C.withCreation(make({ archetype: "Merc", gearPicks: { "create-gear-0-0-0": { keywords: ["Rail"] } } }), { archetype: "Doc" }, R, CAT);
   assert.deepEqual(c.creation.gearPicks, {});
 });
+
+test("create gear: changing origin or augmentations clears their gear picks, not the archetype's", () => {
+  const picks = { "create-gear-0-0-0": { keywords: ["Laser"] }, "create-aug-filtered-lungs-0": { keywords: [] },
+    "weapon-mount": { target: "create-gear-0-0-0", keywords: ["Shock"] } };
+  const start = make({ archetype: "Doc", origin: "Cybernetic", augmentations: ["weapon-mount"], gearPicks: picks });
+  for (const change of [{ origin: "Gene-Spliced" }, { augmentations: [] }]) {
+    const c = C.withCreation(start, change, R, CAT);
+    assert.deepEqual(Object.keys(c.creation.gearPicks), ["create-gear-0-0-0"], JSON.stringify(change));
+  }
+  assert.equal(Object.keys(C.withCreation(start, { perk: "x" }, R, CAT).creation.gearPicks).length, 3);
+});

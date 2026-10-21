@@ -317,11 +317,11 @@
       : `<p class="gear-empty">None</p>`;
   }
 
-  // Any mode: an item's name opens its rules, from the draft while editing.
+  // Any mode (and Create's Review): an item's name opens its rules, from the draft while editing.
   const gearInfo = $("gear-info-dialog");
-  for (const el of [$("gear-display"), $("gear-run"), $("gear-edit")]) {
+  for (const el of [$("gear-display"), $("gear-run"), $("gear-edit"), create]) {
     el.addEventListener("click", (e) => {
-      const id = e.target.closest("[data-gear-info]")?.dataset.gearInfo;
+      const id = e.target.closest(el === create ? ".create-summary [data-gear-info]" : "[data-gear-info]")?.dataset.gearInfo;
       const item = id != null && C.gear(state === "editing" ? draft : current).find((g) => String(g.id) === id);
       if (!item) return;
       gearInfo.label = item.description;

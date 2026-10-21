@@ -48,7 +48,7 @@
 
   // What the item always has: its weapon category's intrinsic keywords, its armor level's keywords, and fixed ones.
   const builtIn = (item) => unique([...(weaponOf(item)?.intrinsic ?? []),
-    ...(armorLevel(item) ? D.armor.levels[armorLevel(item) - 1] : []), ...strings(item?.fixed)]);
+    ...(armorLevel(item) ? D.armor.levels[armorLevel(item) - 1] : []), ...strings(item?.fixed).filter((k) => keyword(k, item))]);
   // Built-in keywords, then the added ones that are real keywords.
   const keywordsOf = (item) => unique([...builtIn(item), ...strings(item?.keywords).filter((k) => keyword(k, item))]);
 
@@ -94,10 +94,11 @@
     return { ...item, keywords: kept };
   }
 
-  // Another kind: keeps the name, quantity, starter, conditions and keywords that still fit; drops the old kind's fields.
+  // Another kind: keeps the name, quantity, starter, conditions and keywords that still fit; drops the old kind's fields
+  // and any fixed keywords (an ability granted those to this kind of item).
   function retype(item, kind) {
     const next = { ...item, kind };
-    if (kind !== item.kind) for (const f of KIND_FIELDS) delete next[f];
+    if (kind !== item.kind) for (const f of [...KIND_FIELDS, "fixed"]) delete next[f];
     return legalize(next);
   }
 
