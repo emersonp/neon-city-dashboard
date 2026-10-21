@@ -23,6 +23,10 @@ function* texts() {
   for (const v of L.vehicles) yield [v.name, v.text];
   yield ["keywords", L.keywordsIntro];
   for (const k of Object.values(L.keywords).flat()) yield [k.name, k.text];
+  for (const s of L.skills) {
+    yield [s.title, s.intro];
+    for (const e of s.entries) yield [e.name, e.text];
+  }
 }
 
 test("databank: every entry has a name and text, and only known icon tokens", () => {
@@ -89,4 +93,15 @@ test("databank: weapons allow only weapon keywords, intrinsic ones included, and
     assert.ok(w.damage > 0 && w.damage % 10 === 0, w.name);
   }
   for (const k of weaponKeywords) assert.ok(L.weapons.some((w) => w.allowed.includes(k)), k);
+});
+
+test("databank: the Skills tab describes every mental and physical skill on the sheet", () => {
+  const { SKILLS } = globalThis.NCD_CHARACTERS;
+  const described = L.skills.flatMap((s) => s.entries.map((e) => e.name.toLowerCase()));
+  const gossip = described.find((n) => n.startsWith("gossip with ["));
+  for (const { name, type } of SKILLS) {
+    if (type === "initiative") continue;
+    const n = name.toLowerCase();
+    assert.ok(described.includes(n) || (n.startsWith("gossip with") && gossip.includes(n.split(" ").pop())), name);
+  }
 });

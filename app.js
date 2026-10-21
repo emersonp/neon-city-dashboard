@@ -450,6 +450,9 @@
     $("databank-archetypes").innerHTML = profileTabs("archetype", C.ARCHETYPES, PROFILES.archetype);
     $("databank-origins").innerHTML = profileTabs("origin", C.ORIGINS, PROFILES.origin);
 
+    // The skill descriptions, mental then physical, then Anything Else.
+    $("databank-skills").innerHTML = DATABANK.skills.map(section).join("");
+
     // ---- the Tables tab: tables to roll on or look up (tables.js), in the Databank's style ----
     const TABLES = window.NCD_TABLES;
     // A card whose table's first column names a die ("d100") gets a dice button in its title: it rolls that die, lights
