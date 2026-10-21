@@ -3,13 +3,18 @@
 // Text uses the format.js description format: paragraphs, "- " lists, **bold**, *italic*, and [advantage]-style icons.
 // Wording follows the book, with its own typos fixed where they'd mislead.
 //
-// gear            sections: { title, intro?, entries: [{ name, tag?, text, table? }] }
-//                 a table is { head: [...], rows: [[...]] } of plain text
-// armor           body armor, one entry like those in gear (it goes in the Armory with the weapons)
+// gear            sections: { title, intro?, entries: [{ name, tag?, text, table?, reference?, choice? }] }
+//                 a table is { head: [...], rows: [[...]] } of plain text; reference: true for entries that aren't gear you can own;
+//                 choice: what owning one needs picked, { label, skill: true } or { label, options: [...] }
+// armor           body armor, one entry like those in gear (it goes in the Armory with the weapons), plus levels:
+//                 the keywords Armored x1-x4 add
+// toolSets        the specialized tool sets: { name, skills: [skill ids] }
 // weapons         the weapon categories: hands (1 or 2, null if the book doesn't say), damage bonus, intrinsic keywords,
 //                 the keywords each category allows, and examples
 // vehicleRules    the general vehicle rules (a list), vehicles: { name, size, blurb, text }
-// keywords        { positive, negative, weapon }: [{ name, text }]
+// keywords        { positive, negative, weapon }: [{ name, text, notOn?, excludes?, requires? }]
+//                 notOn: "weapon" / "vehicle" can't have it; excludes: can't share an item with these (either way round);
+//                 requires: only on an item that also has these
 // randomKeywords  the random gear keywords table: [range, positive, negative]
 (function (root) {
   const gear = [
@@ -19,6 +24,7 @@
       entries: [
         {
           name: "Breaking & Repairing Gear",
+          reference: true,
           text: `Typically, you do not need to track the everyday wear and tear on the gear you are using. Sometimes, however, the Administrator might choose to have your bad luck affect your gear instead of you directly.
 
 Whenever you roll a drawback [drawback] on a roll while using a piece of gear, the Administrator can choose for the effect of that drawback to be the piece of gear gaining (or worsening) the **Damaged** negative condition. If the piece of gear already has the condition at x4 severity, the piece of gear instead becomes **broken**.
@@ -27,6 +33,7 @@ A broken piece of gear cannot be used until it is repaired; repairing the object
         },
         {
           name: "Common Gear",
+          reference: true,
           text: `Some perks and montage actions refer to common gear as a category. Broadly speaking, common gear encompasses the following objects:
 - Weapons with no additional keywords (except for sniper rifles, launchers, and mines, which are never considered to be common)
 - Consumer goods and tools available through normal retail channels to citizens
@@ -37,6 +44,7 @@ A broken piece of gear cannot be used until it is repaired; repairing the object
         },
         {
           name: "Props",
+          reference: true,
           text: `Props are a special category of gear that have no intrinsic mechanics of their own, but are instead intended to provide inspiration for what your character does and how they go about doing it. They can be just about anything other than the gear specifically called out in this chapter, purely decorative or with some simple function that doesn't warrant its own mechanics. Many of the pieces of starting gear provided by your archetype will be props, and they will be labeled as such.
 
 If the prop is exceptionally well-suited to helping you succeed at some task you are attempting, the Administrator can grant you 1 advantage die [advantage] on a roll you are making as a part of that attempt if your description makes use of that item, though this is purely at the Administrator's discretion and should not be expected.`,
@@ -49,13 +57,14 @@ If the prop is exceptionally well-suited to helping you succeed at some task you
       entries: [
         {
           name: "Rules",
+          reference: true,
           text: `- Each instance is associated with a single skill
 - The software overrides your own chance of success with that skill
 - When you make a check using that skill while you have guided skill software installed, you do not check the "used" checkbox for that skill`,
         },
-        { name: "Basic", tag: "60% · common", text: "This software grants the user a 60% chance of success in the chosen skill. Basic skill software is considered to be common gear." },
-        { name: "Advanced", tag: "70%", text: "This software grants the user a 70% chance of success in the skill. However, if the user by default has less than a 60% chance of success with that skill, they also roll 1 challenge die [challenge] as they lack the experience with the basic principles of that skill and are prone to mistakes." },
-        { name: "Expert", tag: "80%", text: "This software grants the user an 80% chance of success in the skill. However, if the user by default has less than a 70% chance of success with that skill, they also roll 2 challenge dice [challenge][challenge] as they lack the experience with intermediary techniques for that skill and are prone to mistakes." },
+        { name: "Basic", tag: "60% · common", choice: { label: "Skill", skill: true }, text: "This software grants the user a 60% chance of success in the chosen skill. Basic skill software is considered to be common gear." },
+        { name: "Advanced", tag: "70%", choice: { label: "Skill", skill: true }, text: "This software grants the user a 70% chance of success in the skill. However, if the user by default has less than a 60% chance of success with that skill, they also roll 1 challenge die [challenge] as they lack the experience with the basic principles of that skill and are prone to mistakes." },
+        { name: "Expert", tag: "80%", choice: { label: "Skill", skill: true }, text: "This software grants the user an 80% chance of success in the skill. However, if the user by default has less than a 70% chance of success with that skill, they also roll 2 challenge dice [challenge][challenge] as they lack the experience with intermediary techniques for that skill and are prone to mistakes." },
       ],
     },
     {
@@ -67,27 +76,14 @@ If the prop is exceptionally well-suited to helping you succeed at some task you
         { name: "Exceptional Tools", tag: "+30 impact", text: "Lovingly-made tools that are either costly or difficult to get a hold of, and may be the handiwork of a craftsperson of exceptional skill. They grant a **+30** bonus to impact, but typically require a large carrying case that must be either carried in two hands or transported by vehicle." },
         {
           name: "Hyper-Specialized Tools",
+          reference: true,
           text: `For each tool set, a hyper-specialized tool exists that grants its impact bonus to only one of the associated skills (and no bonus to the other skills from the base tool set). However, hyper-specialized tool sets also have the **Right Tool for the Job x2** intrinsic positive condition.
 
 For example, a *hyper-specialized standard hacker's deck (Crash a System)* grants a +20 bonus to the impact of a Crash a System roll to progress an objective, and adds 2 advantage dice [advantage][advantage] to all rolls made while using it.`,
         },
-        { name: "Consumable Tools", text: "Single-use tools that are destroyed or otherwise made unusable by the action in which you gain their benefit. Consumable tools are almost always either of standard or exceptional quality, and can be hyper-specialized. Standard-quality consumable tools are considered to be common gear." },
-        {
-          name: "Tool Sets",
-          text: "The tool sets available, and the skills each one helps.",
-          table: {
-            head: ["Tool set", "Associated skills"],
-            rows: [
-              ["Commercial Laptop", "Analyze Data, Cover Your Tracks, Play a Game"],
-              ["Hacker's Deck", "Crash a System, Infiltrate a System, Override a System"],
-              ["Infiltration Kit", "Case the Joint, Climb, Jump or Tumble, Sneak Around"],
-              ["Mechanic's Tools", "Break or Destroy Something, Drive or Pilot Something, Fix or Modify Something"],
-              ["Overwatch Supplies", "Distract Someone, Read the Situation, Run Like Hell"],
-              ["Paramedic's Kit", "Heal Someone, Size Someone Up, Tough it Out"],
-              ["Smuggler's Pack", "Conceal an Object, Lift or Move Something, Throw Money at the Problem"],
-            ],
-          },
-        },
+        { name: "Consumable Tools", reference: true, text: "Single-use tools that are destroyed or otherwise made unusable by the action in which you gain their benefit. Consumable tools are almost always either of standard or exceptional quality, and can be hyper-specialized. Standard-quality consumable tools are considered to be common gear." },
+        // The table is built from toolSets (below) by the page.
+        { name: "Tool Sets", reference: true, text: "The tool sets available, and the skills each one helps." },
       ],
     },
     {
@@ -95,6 +91,7 @@ For example, a *hyper-specialized standard hacker's deck (Crash a System)* grant
       entries: [
         {
           name: "Targeted Stimulant",
+          choice: { label: "Skill", skill: true },
           text: `Each dose delivers a specialized chemical payload that briefly boosts specific organs and centers of the brain. A targeted stimulant has a single skill associated with it as its beneficiary skill. After using one (via inhaler, dermal patch, injection, or some other user-triggered method that does not require an action during a conflict scene), until the end of the scene you add 4 advantage dice [advantage][advantage][advantage][advantage] to all rolls made with that skill.
 
 Each also has side effects: you gain a negative condition for the rest of the scene, chosen by the Administrator when the beneficiary skill is chosen:
@@ -126,6 +123,7 @@ Each also has side effects: you gain a negative condition for the rest of the sc
       entries: [
         {
           name: "Environment Suit",
+          choice: { label: "Environment", options: ["Underwater", "Space vacuum", "Extreme heat or cold", "Chemically toxic/radioactive environment", "Non-Earth planet/moon/asteroid surface"] },
           text: `Covers the wearer from head to toe: cumbersome, but essential protection. Each environment suit is tailored to one environment, chosen when it is acquired:
 - Underwater
 - Space vacuum
@@ -146,6 +144,7 @@ Environment suits impose the **Heavily Encumbered** negative condition on the we
         { name: "Bug Spray", tag: "consumable", text: "Slang for a small, handheld device that emits a short-range burst of electromagnetism capable of shorting out nanomachines. It has enough battery for a single burst, and is harmless to anything other than free-floating nanite clouds (like those used for nanoprinting); the swarms inside people's bodies are safe. In a conflict scene, activating bug spray requires an action, and the burst destroys any free-floating nanite clouds that are up close to the user." },
         {
           name: "Handheld Scanner",
+          choice: { label: "Energy", options: ["Electricity/electromagnetic fields", "Ultraviolet light", "Thermal energy/temperature", "Radiation", "Psionic energy", "Motion", "Sound/vibration"] },
           text: `Held in one hand, it either passively detects what it's meant to detect anywhere up close or near to it, or can be focused into a tight beam to detect it even far away (focusing the beam in a direction takes an action during a conflict scene). Each scanner is keyed to one type of energy or wave, chosen when it is acquired:
 - Electricity/electromagnetic fields
 - Ultraviolet light
@@ -166,16 +165,20 @@ Environment suits impose the **Heavily Encumbered** negative condition on the we
   const armor = {
     name: "Body Armor",
     text: "Wearing body armor gives you the **Armored** intrinsic positive condition, which acts as a negative condition for enemies making physical attacks against you. Heavier varieties increase the strength of the Armored condition but add extra keywords to the armor.",
-    table: {
-      head: ["Armor benefit", "Keywords"],
-      rows: [
-        ["Armored", "–"],
-        ["Armored x2", "Expensive"],
-        ["Armored x3", "Expensive, Bulky"],
-        ["Armored x4", "Expensive, Bulky, Complicated"],
-      ],
-    },
+    // the keywords each level adds, Armored (x1) to x4; the page builds the table from these
+    levels: [[], ["Expensive"], ["Expensive", "Bulky"], ["Expensive", "Bulky", "Complicated"]],
   };
+
+  // Specialized tool kits: each set and the skill ids it helps (NCD_CHARACTERS.SKILLS)
+  const toolSets = [
+    { name: "Commercial Laptop", skills: ["analyze-data", "cover-your-tracks", "play-a-game"] },
+    { name: "Hacker's Deck", skills: ["crash-a-system", "infiltrate-a-system", "override-a-system"] },
+    { name: "Infiltration Kit", skills: ["case-the-joint", "climb-jump-or-tumble", "sneak-around"] },
+    { name: "Mechanic's Tools", skills: ["break-or-destroy-something", "drive-or-pilot-something", "fix-or-modify-something"] },
+    { name: "Overwatch Supplies", skills: ["distract-someone", "read-the-situation", "run-like-hell"] },
+    { name: "Paramedic's Kit", skills: ["heal-someone", "size-someone-up", "tough-it-out"] },
+    { name: "Smuggler's Pack", skills: ["conceal-an-object", "lift-or-move-something", "throw-money-at-the-problem"] },
+  ];
 
   const weapons = [
     { name: "One-handed melee", hands: 1, damage: 10, intrinsic: ["Compact", "Silent"],
@@ -310,31 +313,31 @@ Vehicles can have the general gear keywords, though some keywords can't be appli
   const keywords = {
     positive: [
       { name: "Compact", text: "A compact piece of gear has miniaturized components and eliminates empty space to make it smaller than expected. Add 1 advantage die [advantage] to any roll made to conceal a compact piece of gear." },
-      { name: "Cybernetic", text: `A cybernetic piece of gear is meant to be integrated directly into the body of the owner just like other cybernetic augmentations. It draws power from the owner's body and is controlled by their nanite swarm. The item does not function until it has been installed into its owner and integrated into their ecosystem of other augmentations, which can be done by spending a montage action to have the installation performed.
+      { name: "Cybernetic", notOn: ["weapon", "vehicle"], excludes: ["Archaic", "Bulky"], text: `A cybernetic piece of gear is meant to be integrated directly into the body of the owner just like other cybernetic augmentations. It draws power from the owner's body and is controlled by their nanite swarm. The item does not function until it has been installed into its owner and integrated into their ecosystem of other augmentations, which can be done by spending a montage action to have the installation performed.
 
 Weapons cannot have the Cybernetic keyword (instead, take the **Weapon Mount** cybernetic augmentation), an item cannot have the Cybernetic keyword if it also has the Archaic or Bulky keywords, and vehicles cannot have the Cybernetic keyword.
 
 The Administrator has final say as to whether a piece of gear can have the Cybernetic keyword. When a crew member has a piece of cybernetic gear installed, their player works with the Administrator to decide where on the body it is installed, and what (if any) limitations or additional intrinsic conditions the item might have.` },
       { name: "Durable", text: "This item is made of sturdy materials and displays craftsmanship that speaks to its longevity. The first time this item would gain the **Damaged** negative condition in a scene, it does not gain that condition." },
-      { name: "Easily Nanoprinted", text: "This item has a relatively simple construction using common materials, allowing it to be rapidly assembled and disassembled by a nanoprinting cloud. At the end of a scene you are in, you can have the item broken down into raw materials by a nanoprinting cloud. This keyword is required for objects assembled by the Nanoprinting cybernetic augmentation. An item cannot have both the Easily Nanoprinted and Complicated keywords." },
-      { name: "Mastercraft", text: "The item bears the mark of a master craftsperson. The item has the **Crafted by a Renowned Maker x2** positive condition, which applies only to mental skill rolls when the Administrator agrees that the reputation of its maker (and someone else's ability to recognize the maker's mark) would influence the outcome you are hoping to achieve. This keyword cannot be on an item that also has the Cheap, Jury-Rigged, or Knockoff keywords." },
-      { name: "Reliable", text: "The item can be trusted to fulfill its purpose, even under less than ideal conditions. Whenever you would roll any number of challenge dice [challenge] while using this item, also add 1 advantage die [advantage] to the roll. This keyword cannot be on an item that also has the Unreliable keyword." },
+      { name: "Easily Nanoprinted", excludes: ["Complicated"], text: "This item has a relatively simple construction using common materials, allowing it to be rapidly assembled and disassembled by a nanoprinting cloud. At the end of a scene you are in, you can have the item broken down into raw materials by a nanoprinting cloud. This keyword is required for objects assembled by the Nanoprinting cybernetic augmentation. An item cannot have both the Easily Nanoprinted and Complicated keywords." },
+      { name: "Mastercraft", excludes: ["Cheap", "Jury-Rigged", "Knockoff"], text: "The item bears the mark of a master craftsperson. The item has the **Crafted by a Renowned Maker x2** positive condition, which applies only to mental skill rolls when the Administrator agrees that the reputation of its maker (and someone else's ability to recognize the maker's mark) would influence the outcome you are hoping to achieve. This keyword cannot be on an item that also has the Cheap, Jury-Rigged, or Knockoff keywords." },
+      { name: "Reliable", excludes: ["Unreliable"], text: "The item can be trusted to fulfill its purpose, even under less than ideal conditions. Whenever you would roll any number of challenge dice [challenge] while using this item, also add 1 advantage die [advantage] to the roll. This keyword cannot be on an item that also has the Unreliable keyword." },
       { name: "Secured", text: "The item has some kind of biometric lock on it (fingerprint pad, retinal scanner, etc.) that makes it so that it can only be used by an authorized shell." },
       { name: "Standardized", text: "The item is made of readily available and modular parts, making it easy to repair, modify, and upgrade. Any time you would make a roll to **Fix or Modify Something** while working on this item, you succeed no matter what you roll on the percentile dice." },
       { name: "Stealthy", text: "The item has built-in sensor baffling technology that shields it from electronic surveillance. The item cannot be detected by any electronic sensors, save for those built into Military-grade security systems." },
       { name: "Stylish", text: "The item is aesthetically pleasing or fashionable in its appearance. When not concealed, the item has the **Fashionable** positive condition." },
       { name: "Subtle", text: "The item has elements to disguise its true purpose, and it draws less attention even when used. When you would generate any heat [heat] due to taking an action using the item, reduce the amount of heat generated by 1." },
       { name: "Versatile", text: "The item has uses and capabilities beyond what is normally expected of it. Whenever you roll any number of boons [boon] on a roll while using this piece of gear, immediately roll 1 extra advantage die [advantage] and add it to the roll." },
-      { name: "Wearable", text: "The item is meant to be worn on the arm, wrist, neck, head, leg, or other accessible body part. This keyword can only be present on items that are not, by default, meant to be worn (such as clothing or bags), and vehicles cannot have this keyword." },
+      { name: "Wearable", notOn: ["vehicle"], text: "The item is meant to be worn on the arm, wrist, neck, head, leg, or other accessible body part. This keyword can only be present on items that are not, by default, meant to be worn (such as clothing or bags), and vehicles cannot have this keyword." },
     ],
     negative: [
       { name: "Archaic", text: "The item is old, from a time when technology was far less advanced, and does not interact with modern computers. The item cannot be used as a part of any action to interact with a computerized system, and you cannot gain the benefits of any cybernetic or synthetic augmentations on rolls made while using the item." },
-      { name: "Bulky", text: "The item is large, cumbersome, awkwardly-shaped, or otherwise difficult to carry and manipulate due to its size. It requires two hands to carry or must be transported in a vehicle and imposes the **Bulky** negative condition on any roll made to move the item quickly or deftly. An item cannot have both the Bulky and Compact keywords, and vehicles cannot have this keyword." },
+      { name: "Bulky", notOn: ["vehicle"], excludes: ["Compact"], text: "The item is large, cumbersome, awkwardly-shaped, or otherwise difficult to carry and manipulate due to its size. It requires two hands to carry or must be transported in a vehicle and imposes the **Bulky** negative condition on any roll made to move the item quickly or deftly. An item cannot have both the Bulky and Compact keywords, and vehicles cannot have this keyword." },
       { name: "Cheap", text: "The item is made from cheap parts in a hasty way and is prone to damage. When this item gains or worsens the **Damaged** condition, worsen the condition by one additional step." },
       { name: "Complicated", text: "The item is not very user-friendly, and its construction is bafflingly complex. This object has the **Hard to Work On x2** intrinsic negative condition, which applies to any roll to repair, upgrade, or otherwise alter the object." },
       { name: "Expensive", text: "Whenever you would acquire an item with this keyword, you must roll to **Throw Money at the Problem** (in addition to any other rolls you are required to make to acquire it during a scene). If you fail the roll, you fail to acquire it. If this keyword is on a piece of starting gear, at the end of each job you must succeed on a roll to Throw Money at the Problem or lose it as a piece of starting gear." },
       { name: "Flashy", text: "The item is visually distinctive and difficult to ignore, eliciting curiosity, excitement, or fear from bystanders. Add 1 heat [heat] to the heat pool after any scene in which this item was actively used." },
-      { name: "Fragile", text: "The item has delicate parts that sometimes break when it is not handled with care. When you take damage as a result of failing a roll to accomplish something dangerous, this object automatically breaks. Vehicles cannot have this keyword." },
+      { name: "Fragile", notOn: ["vehicle"], text: "The item has delicate parts that sometimes break when it is not handled with care. When you take damage as a result of failing a roll to accomplish something dangerous, this object automatically breaks. Vehicles cannot have this keyword." },
       { name: "Jury-Rigged", text: "This item was assembled quickly from spare parts by an individual instead of being mass-produced. At the end of any scene in which the item is used, the item becomes broken." },
       { name: "Knockoff", text: "The item seems like a model from a major manufacturer but is actually a cheaply-produced facsimile. This item has the **Not Quite Right** intrinsic negative condition." },
       { name: "Loud", text: "The item produces noise at a volume that is impossible to ignore. When this piece of gear is used, it emits a noise that can be heard by anyone up close or near to it." },
@@ -360,13 +363,13 @@ The Administrator has final say as to whether a piece of gear can have the Cyber
       { name: "Miniaturized", text: "A miniaturized weapon is smaller than its normal versions. Miniaturized weapons are treated as one-handed weapons and reduce the weapon's damage bonus by **−10**." },
       { name: "Mounted", text: "A mounted weapon is fixed in place, attached to a drone, object, vehicle, or even a character. Mounting or unmounting a weapon requires the use of an action in a conflict scene. Mounted weapons can be bulkier because they are stabilized by the thing they are mounted to, increasing the damage of the weapon by **+10**. One-handed weapons can be mounted on a character through cybernetic enhancement." },
       { name: "Nonlethal", text: "Specifically designed to incapacitate without killing. Ranged weapons fire blunted rubber bullets or beanbags, and melee weapons have padding to reduce the degree of injury they inflict. A nonlethal weapon cannot inflict wounds beyond those that would render the target unconscious." },
-      { name: "Obfuscating", text: "The weapon deals no damage but creates a radius of smoke, artificial darkness, or some other visual blocker that makes that area opaque. That area imposes the **Obfuscated x4** negative condition on anyone attempting to see into the area from the outside, or anyone inside the area attempting to see out. Only weapons with the Explosive keyword can have the Obfuscating keyword." },
+      { name: "Obfuscating", requires: ["Explosive"], text: "The weapon deals no damage but creates a radius of smoke, artificial darkness, or some other visual blocker that makes that area opaque. That area imposes the **Obfuscated x4** negative condition on anyone attempting to see into the area from the outside, or anyone inside the area attempting to see out. Only weapons with the Explosive keyword can have the Obfuscating keyword." },
       { name: "Phasing", text: "The weapon (or its projectiles) is a mesh of nanomachines that can temporarily shift their position in order to phase through solid objects. Do not add challenge dice to attack rolls with a phasing weapon due to the target being behind cover (though any challenge dice added for the target being concealed from view may still apply)." },
       { name: "Plasma", text: "Plasma weapons compress superheated gas to produce volatile energy that travels at incredible speed. When a plasma weapon damages an enemy with 0 luck, that enemy takes 1 extra wound from the attack." },
       { name: "Proximity", text: "Weapons with this keyword do not attack their targets until a character, drone, vehicle, or animal is up close to it." },
       { name: "Rail", text: "Rail weapons use a line of electromagnetic generators to propel a projectile at incredible speeds, causing the bullet to travel farther and with greater accuracy. Add 1 advantage die [advantage] on all rolls made for attacks using the weapon against targets that are far away from the wielder." },
       { name: "Shock", text: "A weapon with this keyword issues a charge of electricity in lieu of relying on kinetic impact to deal damage. Hitting a target with 0 luck using a shock weapon immediately renders the target unconscious or deactivated (but does not apply the wounded condition). On subsequent turns, if the target succeeds on a **Tough it Out** check at the start of the round, they are no longer unconscious or deactivated." },
-      { name: "Silent", text: "Weapons with this keyword make little to no noise when used, and can be used to make attacks that benefit from archetype perks that require the attacker to make no noise. The silent keyword cannot be on the same weapon as the concussive keyword." },
+      { name: "Silent", excludes: ["Concussive"], text: "Weapons with this keyword make little to no noise when used, and can be used to make attacks that benefit from archetype perks that require the attacker to make no noise. The silent keyword cannot be on the same weapon as the concussive keyword." },
       { name: "Slow", text: "Weapons with this keyword require reloading or priming between attacks, consuming an action to ready the weapon for its next attack." },
       { name: "Stationary", text: "Stationary weapons must be attached to the ground, walls, or other solid, immobile objects before they can be used to make an attack." },
     ],
@@ -389,5 +392,5 @@ The Administrator has final say as to whether a piece of gear can have the Cyber
     ["96-100", "Versatile", "Unreliable"],
   ];
 
-  root.NCD_DATABANK = { gear, armor, weapons, weaponsIntro, vehicleRules, vehicles, keywordsIntro, keywords, randomKeywordsIntro, randomKeywords };
+  root.NCD_DATABANK = { gear, armor, toolSets, weapons, weaponsIntro, vehicleRules, vehicles, keywordsIntro, keywords, randomKeywordsIntro, randomKeywords };
 })(globalThis);

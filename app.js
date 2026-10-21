@@ -286,7 +286,13 @@
       </section>`;
     const list = (names) => names.length ? names.join(", ") : "none";
 
-    $("databank-gear").innerHTML = DATABANK.gear.map(section).join("");
+    // The tool set and armor tables come from their data in databank.js.
+    const skillName = (id) => window.NCD_CHARACTERS.SKILLS.find((s) => s.id === id)?.name ?? id;
+    const toolSetTable = { head: ["Tool set", "Associated skills"], rows: DATABANK.toolSets.map((t) => [t.name, t.skills.map(skillName).join(", ")]) };
+    const armorTable = { head: ["Armor benefit", "Keywords"],
+      rows: DATABANK.armor.levels.map((k, i) => [`Armored${i ? ` x${i + 1}` : ""}`, k.join(", ") || "–"]) };
+    $("databank-gear").innerHTML = DATABANK.gear.map((s) => section({ ...s,
+      entries: s.entries.map((e) => (e.name === "Tool Sets" ? { ...e, table: toolSetTable } : e)) })).join("");
 
     $("databank-armory").innerHTML = [
       section({
@@ -297,7 +303,7 @@
           text: `**Intrinsic keywords:** ${list(w.intrinsic)}\n\n**Allowed keywords:** ${list(w.allowed)}\n\n*${w.examples}*`,
         })),
       }),
-      section({ title: "Armor", entries: [DATABANK.armor] }),
+      section({ title: "Armor", entries: [{ ...DATABANK.armor, table: armorTable }] }),
     ].join("");
 
     $("databank-garage").innerHTML = section({

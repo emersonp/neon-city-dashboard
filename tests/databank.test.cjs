@@ -2,6 +2,8 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 require("../shared.js");
+require("../dice.js");
+require("../characters.js");
 require("../format.js");
 require("../databank.js");
 
@@ -32,10 +34,39 @@ test("databank: every entry has a name and text, and only known icon tokens", ()
 });
 
 test("databank: tables are rectangular", () => {
+  // the tool set and armor tables are built in app.js from toolSets and armor.levels
   const tables = [...L.gear.flatMap((s) => s.entries), L.armor].filter((e) => e.table).map((e) => e.table);
-  assert.ok(tables.length >= 2);
   for (const t of tables) for (const r of t.rows) assert.equal(r.length, t.head.length);
   for (const r of L.randomKeywords) assert.equal(r.length, 3);
+});
+
+test("databank: keyword restrictions name real keywords and match their text", () => {
+  const all = Object.values(L.keywords).flat(), known = new Set(all.map((k) => k.name));
+  for (const k of all) {
+    for (const n of [...(k.excludes ?? []), ...(k.requires ?? [])]) {
+      assert.ok(known.has(n), `${k.name} → ${n}`);
+      assert.match(k.text, new RegExp(n, "i"), `${k.name} text mentions ${n}`);
+    }
+    for (const where of k.notOn ?? []) assert.match(k.text, where === "vehicle" ? /[Vv]ehicles cannot/ : /Weapons cannot/, k.name);
+  }
+  assert.deepEqual(all.filter((k) => k.notOn?.includes("vehicle")).map((k) => k.name).sort(), ["Bulky", "Cybernetic", "Fragile", "Wearable"]);
+  assert.deepEqual(all.filter((k) => k.notOn?.includes("weapon")).map((k) => k.name), ["Cybernetic"]);
+});
+
+test("databank: tool sets use real skill ids, armor has four levels", () => {
+  const ids = new Set(globalThis.NCD_CHARACTERS.SKILLS.map((s) => s.id));
+  assert.equal(L.toolSets.length, 7);
+  for (const t of L.toolSets) { assert.equal(t.skills.length, 3, t.name); for (const s of t.skills) assert.ok(ids.has(s), `${t.name}: ${s}`); }
+  assert.deepEqual(L.armor.levels, [[], ["Expensive"], ["Expensive", "Bulky"], ["Expensive", "Bulky", "Complicated"]]);
+});
+
+test("databank: equipment choices, and reference entries are marked", () => {
+  const entry = (n) => L.gear.flatMap((s) => s.entries).find((e) => e.name === n);
+  assert.equal(entry("Environment Suit").choice.options.length, 5);
+  assert.equal(entry("Handheld Scanner").choice.options.length, 7);
+  for (const n of ["Basic", "Advanced", "Expert", "Targeted Stimulant"]) assert.equal(entry(n).choice.skill, true, n);
+  for (const n of ["Breaking & Repairing Gear", "Common Gear", "Props", "Rules", "Hyper-Specialized Tools", "Consumable Tools", "Tool Sets"])
+    assert.equal(entry(n).reference, true, n);
 });
 
 test("databank: no keyword is listed twice in its group", () => {
