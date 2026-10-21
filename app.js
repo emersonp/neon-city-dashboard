@@ -489,6 +489,23 @@
     });
   }
 
+  // ---- masonry: the Cheat Sheet, Databank and Tables cards stack in their columns instead of lining up in rows ----
+  // The grid's rows are MASONRY_ROW tall, and each card spans enough of them for its height plus the gap, so a short card
+  // doesn't leave a hole under it. A card's span is redone whenever its size changes (a resize, or its tab being shown).
+  const MASONRY_ROW = 2;
+  for (const grid of document.querySelectorAll(".cheat-sheet")) {
+    grid.classList.add("masonry");
+    const gap = parseFloat(getComputedStyle(grid).columnGap) || 0;
+    const sized = new ResizeObserver((changes) => {
+      for (const { target } of changes) {
+        const height = target.offsetHeight; // layout pixels, like the grid's rows (unlike getBoundingClientRect under zoom)
+        // a hidden tab measures 0; keep the last span until it's shown again
+        if (height) target.style.gridRowEnd = `span ${Math.ceil((height + gap) / MASONRY_ROW)}`;
+      }
+    });
+    for (const card of grid.children) sized.observe(card);
+  }
+
   // For the Character tab (roster.js).
   window.NCD_APP = { KINDS, toast, targetField, makeRoller, postInfluence, clearResult, emptyResult };
 })();

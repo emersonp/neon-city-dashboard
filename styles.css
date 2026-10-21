@@ -132,6 +132,8 @@ html.gm [data-player] { display: none !important; }
   gap: var(--wa-space-l);
   align-items: start;
 }
+/* app.js sets each card's row span from its height (the gap is counted in the span), so cards stack in their columns */
+.cheat-sheet.masonry { grid-auto-rows: 2px; row-gap: 0; }
 .sheet-column {
   padding: var(--wa-space-l);
   border: 1px solid var(--wa-color-surface-border);
