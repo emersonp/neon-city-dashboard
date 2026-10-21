@@ -1,0 +1,175 @@
+/* Hallmark · route: custom (tuned) · genre: atmospheric · tone: dystopian, technical
+ * vibe: "rain-slick night street, sodium haze, holo interface" (Blade Runner × Mass Effect)
+ * paper: oklch(13% 0.026 255) · accent: oklch(78% 0.16 62) amber · secondary: oklch(80% 0.12 205) cyan
+ * display: Saira Condensed · body: Barlow · mono: JetBrains Mono
+ * axes: dark / display-condensed / warm
+ *
+ * Every colour and font in styles.css and atmosphere.css comes from here. Night (.wa-dark) is the main look;
+ * Day (.wa-light) is the same street under morning smog. Web Awesome's own theme variables are mapped
+ * at the bottom, so its components pick up the palette without being restyled one by one. */
+
+:root {
+  /* ---- type ---- */
+  --font-display: "Saira Condensed", "Barlow", sans-serif;
+  --font-body: "Barlow", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  /* ---- motion ---- */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in: cubic-bezier(0.55, 0, 1, 0.45);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-fast: 120ms;
+  --dur-normal: 220ms;
+
+  /* ---- the amber ramp: Web Awesome's brand scale, and the holo interface ---- */
+  --amber-95: oklch(97% 0.025 78);
+  --amber-90: oklch(93% 0.055 74);
+  --amber-80: oklch(87% 0.105 68);
+  --amber-70: oklch(82% 0.145 64);
+  --amber-60: oklch(78% 0.16 62);
+  --amber-50: oklch(67% 0.155 56);
+  --amber-40: oklch(56% 0.14 52);
+  --amber-30: oklch(46% 0.12 50);
+  --amber-20: oklch(35% 0.09 48);
+  --amber-10: oklch(25% 0.06 48);
+  --amber-05: oklch(19% 0.045 48);
+
+  /* ---- steel: blue-tinted neutrals, Web Awesome's neutral scale ---- */
+  --steel-95: oklch(95% 0.006 235);
+  --steel-90: oklch(90% 0.01 236);
+  --steel-80: oklch(81% 0.015 238);
+  --steel-70: oklch(71% 0.02 240);
+  --steel-60: oklch(62% 0.024 242);
+  --steel-50: oklch(52% 0.027 244);
+  --steel-40: oklch(42% 0.03 246);
+  --steel-30: oklch(32% 0.032 248);
+  --steel-20: oklch(24% 0.03 250);
+  --steel-10: oklch(17% 0.026 252);
+  --steel-05: oklch(12% 0.022 255);
+}
+
+/* ---- Night: the main look ---- */
+:root, .wa-dark {
+  --color-sky: oklch(10% 0.024 260);
+  --color-sky-2: oklch(17% 0.04 250);
+    --color-paper: oklch(13% 0.026 255);
+  --color-paper-2: oklch(17% 0.03 250 / 0.9);   /* panels: the haze shows faintly through */
+  --color-paper-solid: oklch(17% 0.03 250);     /* dialogs and menus */
+  --color-paper-3: oklch(10% 0.022 255 / 0.92); /* screens set into a panel: the roll result */
+  --color-rule: oklch(33% 0.04 245);
+  --color-rule-2: oklch(26% 0.035 248);
+  --color-ink: oklch(93% 0.012 230);
+  --color-ink-2: oklch(72% 0.025 235);
+  --color-accent: var(--amber-60);
+  --color-accent-text: var(--amber-70);
+  --color-accent-ink: oklch(14% 0.03 50);       /* text on an amber fill */
+  --color-holo: oklch(80% 0.12 205);            /* cyan: the second light in the street */
+  --color-holo-text: oklch(84% 0.1 205);
+  --color-focus: oklch(82% 0.19 66);
+  --color-good: oklch(84% 0.17 158);
+  --color-bad: oklch(68% 0.21 22);
+  --color-heat: oklch(70% 0.19 36);
+  --color-shade: oklch(5% 0.02 255 / 0.55);     /* inner shadows, the slot windows' shading */
+  --color-scanline: oklch(82% 0.1 205 / 0.035); /* the roll result's screen */
+  --color-bracket: oklch(78% 0.16 62 / 0.6);    /* the lit top and left edges of a stat box */
+  --color-row-hover: oklch(78% 0.16 62 / 0.07);
+
+  --glow-accent: color-mix(in oklch, var(--color-accent) 45%, transparent);
+  --glow-holo: color-mix(in oklch, var(--color-holo) 45%, transparent);
+
+  /* the air behind the page (atmosphere.css) */
+  --color-neon-warm: oklch(45% 0.12 58 / 0.4);   /* sodium light from off-page */
+  --color-neon-cool: oklch(55% 0.11 210 / 0.22);  /* a cyan sign, somewhere above */
+  --color-smoke: oklch(70% 0.03 230 / 0.09);
+  --color-rain: oklch(88% 0.03 220 / 0.07);
+
+  /* the OBS overlay's scan sweep across the camera (overlay.html; night only, there's no day on stream) */
+  --color-sweep: oklch(82% 0.12 205 / 0.07);
+  --color-sweep-core: oklch(96% 0.02 205 / 0.12);
+}
+
+/* ---- Day: the same street under morning smog ---- */
+.wa-light {
+  --color-sky: oklch(84% 0.018 240);
+  --color-sky-2: oklch(90% 0.012 235);
+  --color-paper: oklch(93% 0.01 238);
+  --color-paper-2: oklch(97% 0.006 238 / 0.92);
+  --color-paper-solid: oklch(97% 0.006 238);
+  --color-paper-3: oklch(91% 0.012 240 / 0.92);
+  --color-rule: oklch(80% 0.016 240);
+  --color-rule-2: oklch(87% 0.012 238);
+  --color-ink: oklch(20% 0.03 252);
+  --color-ink-2: oklch(44% 0.03 246);
+  --color-accent: var(--amber-50);
+  --color-accent-text: var(--amber-30);
+  --color-accent-ink: oklch(14% 0.03 50);
+  --color-holo: oklch(52% 0.1 215);
+  --color-holo-text: oklch(44% 0.09 215);
+  --color-focus: oklch(56% 0.16 52);
+  --color-good: oklch(50% 0.13 158);
+  --color-bad: oklch(52% 0.2 22);
+  --color-heat: oklch(56% 0.19 36);
+  --color-shade: oklch(20% 0.03 252 / 0.25);
+  --color-scanline: oklch(30% 0.03 250 / 0.03);
+  --color-bracket: oklch(67% 0.155 56 / 0.7);
+  --color-row-hover: oklch(67% 0.155 56 / 0.1);
+
+  --glow-accent: color-mix(in oklch, var(--color-accent) 35%, transparent);
+  --glow-holo: color-mix(in oklch, var(--color-holo) 30%, transparent);
+
+  /* the air behind the page (atmosphere.css) */
+  --color-neon-warm: oklch(88% 0.07 70 / 0.7);
+  --color-neon-cool: oklch(86% 0.04 215 / 0.5);
+  --color-smoke: oklch(60% 0.02 240 / 0.08);
+  --color-rain: oklch(40% 0.03 245 / 0.06);
+}
+
+/* ---- Web Awesome, mapped onto the tokens (unlayered, so these win over its theme layer) ---- */
+:root, .wa-dark, .wa-light {
+  --wa-font-family-body: var(--font-body);
+  --wa-font-family-heading: var(--font-display);
+  --wa-font-family-code: var(--font-mono);
+
+  --wa-color-brand-95: var(--amber-95);
+  --wa-color-brand-90: var(--amber-90);
+  --wa-color-brand-80: var(--amber-80);
+  --wa-color-brand-70: var(--amber-70);
+  --wa-color-brand-60: var(--amber-60);
+  --wa-color-brand-50: var(--amber-50);
+  --wa-color-brand-40: var(--amber-40);
+  --wa-color-brand-30: var(--amber-30);
+  --wa-color-brand-20: var(--amber-20);
+  --wa-color-brand-10: var(--amber-10);
+  --wa-color-brand-05: var(--amber-05);
+
+  --wa-color-neutral-95: var(--steel-95);
+  --wa-color-neutral-90: var(--steel-90);
+  --wa-color-neutral-80: var(--steel-80);
+  --wa-color-neutral-70: var(--steel-70);
+  --wa-color-neutral-60: var(--steel-60);
+  --wa-color-neutral-50: var(--steel-50);
+  --wa-color-neutral-40: var(--steel-40);
+  --wa-color-neutral-30: var(--steel-30);
+  --wa-color-neutral-20: var(--steel-20);
+  --wa-color-neutral-10: var(--steel-10);
+  --wa-color-neutral-05: var(--steel-05);
+
+  /* the brand colour as text (handles, links, picked cards) */
+  --wa-color-brand: var(--color-accent-text);
+  --wa-color-text-link: var(--color-accent-text);
+  --wa-color-text-normal: var(--color-ink);
+  --wa-color-text-quiet: var(--color-ink-2);
+  --wa-color-focus: var(--color-focus);
+
+  --wa-color-surface-default: var(--color-paper);
+  --wa-color-surface-raised: var(--color-paper-2);
+  --wa-color-surface-lowered: var(--color-paper-3);
+  --wa-color-surface-border: var(--color-rule);
+
+  --wa-color-brand-fill-loud: var(--color-accent);
+  --wa-color-brand-on-loud: var(--color-accent-ink);
+  --wa-color-brand-border-loud: var(--color-accent);
+
+  --wa-form-control-background-color: var(--color-paper);
+  --wa-form-control-border-color: var(--color-rule);
+}

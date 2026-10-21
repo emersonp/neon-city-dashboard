@@ -13,7 +13,8 @@ window.NCD_ICONS = (function () {
     icons,
     svg(name, cls = "") {
       const i = icons[name];
-      return `<svg class="icon ${cls}" viewBox="${i.viewBox}" aria-hidden="true">${i.body}</svg>`;
+      // icon-<name> lets the stylesheet colour one icon everywhere it appears (Influence is always cyan)
+      return `<svg class="icon icon-${name} ${cls}" viewBox="${i.viewBox}" aria-hidden="true">${i.body}</svg>`;
     },
   };
 })();

@@ -81,7 +81,9 @@ node --test tests/dice.test.cjs tests/discord.test.cjs tests/characters.test.cjs
 | File | Purpose |
 | --- | --- |
 | `index.html` | Page shell: header, theme toggle, tabs, and the dialogs |
-| `styles.css` | Light cyberpunk accents on top of the Web Awesome default theme |
+| `tokens.css` | Every colour and font: the night palette (amber interface, cyan second light), the day one, and Web Awesome's theme variables mapped onto them |
+| `atmosphere.css` | The air behind the page: two pools of neon light, smoke, and a faint still grain of rain |
+| `styles.css` | The Web Awesome components dressed as a holographic interface, using the tokens |
 | `shared.js` | Loaded first: localStorage access, the session (player, GM, open character), small helpers |
 | `app.js` | Theme, tabs, settings, the dice pools, the roller and result panel, posting to Discord, and the Databank and Tables tabs |
 | `config.js` | Shared settings for everyone: Discord emoji codes and the published address (no webhook) |
