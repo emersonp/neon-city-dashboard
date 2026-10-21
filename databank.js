@@ -5,6 +5,7 @@
 //
 // gear            sections: { title, intro?, entries: [{ name, tag?, text, table? }] }
 //                 a table is { head: [...], rows: [[...]] } of plain text
+// armor           body armor, one entry like those in gear (it goes in the Armory with the weapons)
 // weapons         the weapon categories: hands (1 or 2, null if the book doesn't say), damage bonus, intrinsic keywords,
 //                 the keywords each category allows, and examples
 // vehicleRules    the general vehicle rules (a list), vehicles: { name, size, blurb, text }
@@ -142,19 +143,6 @@ Environment suits impose the **Heavily Encumbered** negative condition on the we
     {
       title: "Other tools",
       entries: [
-        {
-          name: "Body Armor",
-          text: "Wearing body armor gives you the **Armored** intrinsic positive condition, which acts as a negative condition for enemies making physical attacks against you. Heavier varieties increase the strength of the Armored condition but add extra keywords to the armor.",
-          table: {
-            head: ["Armor benefit", "Keywords"],
-            rows: [
-              ["Armored", "–"],
-              ["Armored x2", "Expensive"],
-              ["Armored x3", "Expensive, Bulky"],
-              ["Armored x4", "Expensive, Bulky, Complicated"],
-            ],
-          },
-        },
         { name: "Bug Spray", tag: "consumable", text: "Slang for a small, handheld device that emits a short-range burst of electromagnetism capable of shorting out nanomachines. It has enough battery for a single burst, and is harmless to anything other than free-floating nanite clouds (like those used for nanoprinting); the swarms inside people's bodies are safe. In a conflict scene, activating bug spray requires an action, and the burst destroys any free-floating nanite clouds that are up close to the user." },
         {
           name: "Handheld Scanner",
@@ -174,6 +162,20 @@ Environment suits impose the **Heavily Encumbered** negative condition on the we
       ],
     },
   ];
+
+  const armor = {
+    name: "Body Armor",
+    text: "Wearing body armor gives you the **Armored** intrinsic positive condition, which acts as a negative condition for enemies making physical attacks against you. Heavier varieties increase the strength of the Armored condition but add extra keywords to the armor.",
+    table: {
+      head: ["Armor benefit", "Keywords"],
+      rows: [
+        ["Armored", "–"],
+        ["Armored x2", "Expensive"],
+        ["Armored x3", "Expensive, Bulky"],
+        ["Armored x4", "Expensive, Bulky, Complicated"],
+      ],
+    },
+  };
 
   const weapons = [
     { name: "One-handed melee", hands: 1, damage: 10, intrinsic: ["Compact", "Silent"],
@@ -387,5 +389,5 @@ The Administrator has final say as to whether a piece of gear can have the Cyber
     ["96-100", "Versatile", "Unreliable"],
   ];
 
-  root.NCD_DATABANK = { gear, weapons, weaponsIntro, vehicleRules, vehicles, keywordsIntro, keywords, randomKeywordsIntro, randomKeywords };
+  root.NCD_DATABANK = { gear, armor, weapons, weaponsIntro, vehicleRules, vehicles, keywordsIntro, keywords, randomKeywordsIntro, randomKeywords };
 })(globalThis);

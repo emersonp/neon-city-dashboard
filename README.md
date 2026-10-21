@@ -57,9 +57,10 @@ Things remembered in localStorage (all under `ncd.`): characters (with the ids o
 
 ## Databank
 
-The **Databank** tab is a reference for the rulebook's Equipment chapter, in two tabs: **Gear** (gear basics, guided
-skill software, tool kits, targeted stimulants, computer gear, biotechnology, other tools, weapons, and vehicles) and
-**Keywords** (positive and negative gear keywords, the random gear keywords table, and weapon keywords). It's all in
+The **Databank** tab is a reference for the rulebook's Equipment chapter, in four tabs: **Gear Basics** (gear
+basics, guided skill software, tool kits, targeted stimulants, computer gear, biotechnology, and other tools),
+**Armory** (weapons and body armor), **Garage** (vehicles), and **Keywords** (positive and negative gear keywords,
+the random gear keywords table, and weapon keywords). It's all in
 `databank.js`, written in the same format as ability descriptions (below). Each weapon lists the keywords it allows,
 and each weapon keyword lists the weapons that allow it, both from the `allowed` lists in `databank.js`.
 `tests/databank.test.cjs` checks the keyword tables against each other.

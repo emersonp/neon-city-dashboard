@@ -15,6 +15,7 @@ function* texts() {
     if (s.intro) yield [s.title, s.intro];
     for (const e of s.entries) yield [e.name, e.text];
   }
+  yield [L.armor.name, L.armor.text];
   yield ["weapons", L.weaponsIntro];
   yield ["vehicles", L.vehicleRules];
   for (const v of L.vehicles) yield [v.name, v.text];
@@ -31,7 +32,7 @@ test("databank: every entry has a name and text, and only known icon tokens", ()
 });
 
 test("databank: tables are rectangular", () => {
-  const tables = L.gear.flatMap((s) => s.entries).filter((e) => e.table).map((e) => e.table);
+  const tables = [...L.gear.flatMap((s) => s.entries), L.armor].filter((e) => e.table).map((e) => e.table);
   assert.ok(tables.length >= 2);
   for (const t of tables) for (const r of t.rows) assert.equal(r.length, t.head.length);
   for (const r of L.randomKeywords) assert.equal(r.length, 3);

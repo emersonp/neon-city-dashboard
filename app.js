@@ -286,8 +286,9 @@
       </section>`;
     const list = (names) => names.length ? names.join(", ") : "none";
 
-    $("databank-gear").innerHTML = [
-      ...DATABANK.gear.map(section),
+    $("databank-gear").innerHTML = DATABANK.gear.map(section).join("");
+
+    $("databank-armory").innerHTML = [
       section({
         title: "Weapons", intro: DATABANK.weaponsIntro,
         entries: DATABANK.weapons.map((w) => ({
@@ -296,8 +297,13 @@
           text: `**Intrinsic keywords:** ${list(w.intrinsic)}\n\n**Allowed keywords:** ${list(w.allowed)}\n\n*${w.examples}*`,
         })),
       }),
-      section({ title: "Vehicles", intro: DATABANK.vehicleRules, entries: DATABANK.vehicles.map((v) => ({ name: v.name, tag: v.size, text: `*${v.blurb}*\n\n${v.text}` })) }),
+      section({ title: "Armor", entries: [DATABANK.armor] }),
     ].join("");
+
+    $("databank-garage").innerHTML = section({
+      title: "Vehicles", intro: DATABANK.vehicleRules,
+      entries: DATABANK.vehicles.map((v) => ({ name: v.name, tag: v.size, text: `*${v.blurb}*\n\n${v.text}` })),
+    });
 
     // Each weapon keyword says which weapon categories allow it (and which always have it).
     const weaponsWith = (k, field) => DATABANK.weapons.filter((w) => w[field].includes(k)).map((w) => w.name);
