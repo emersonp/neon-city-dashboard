@@ -526,7 +526,7 @@
       const d = TABLES.securityDefenses[e.target.closest("[data-defense]")?.dataset.defense];
       if (d) showInfo(d.name, `${d.tag ? `<p class="ability-tag">${escapeHTML(d.tag)}</p>` : ""}${rich(d.text)}`);
       if (e.target.closest("[data-security-tiers]")) {
-        showInfo("Security Tiers", rich([...TABLES.securityTiers.map((t) => `**${t.name}:** ${t.text}`)].join("\n\n")));
+        showInfo("Security Tiers", rich(TABLES.securityTiers.map((t) => `**${t.name}:** ${t.text}`).join("\n\n")));
       }
       const button = e.target.closest("[data-roll-table]");
       if (!button) return;
