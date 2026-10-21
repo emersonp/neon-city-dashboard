@@ -5,6 +5,8 @@
 // securityTiers   the security system tiers: { name, text, defenses: [names, as the table shows them] }, and securityTiersOutro
 // securityDefenses the security systems the tiers' defenses name: { name, tag?, text }. A defense in a tier links to the
 //                 one here of the same name (any case); X-ray scanners are described but in no tier.
+// liabilities     the liability table: [range, liability]. A character picks (or rolls) one at their first End Session
+//                 or Finish Job.
 (function (root) {
   const randomKeywordsIntro = "When the crew acquires a piece of gear during a session, you can give it a positive and a negative keyword and describe what makes the item different: roll twice on this table (once for each), or just pick two that make sense. Re-roll a keyword that doesn't make sense for the item or the situation.";
   const randomKeywords = [
@@ -46,5 +48,28 @@
     { name: "X-Ray Scanners", text: "Like security cameras, the x-ray scanners associated with this objective are typically only used in situations where someone is actively monitoring their scans. When a person passes through an x-ray scanner, a video feed shows an unobstructed view of what would otherwise be concealed by armor, bags, or clothing, allowing the personnel monitoring it to sound an alarm if someone tries to smuggle something past them. While the AI in the software that runs these scanners can identify obvious threats like weapons, most checkpoints using these scanners still rely on sentient personnel to double-check the results." },
   ];
 
-  root.NCD_TABLES = { randomKeywordsIntro, randomKeywords, securityTiers, securityTiersOutro, securityDefenses };
+  const liabilities = [
+    ["01-05", "You have a spouse and children that aren’t fully aware of your illegal activities"],
+    ["06-10", "You have an addiction to alcohol, narcotics, synsenses, or some other vice"],
+    ["11-15", "You have a secret romance with someone whose associations make it dangerous"],
+    ["16-20", "Your swarm was installed when you were too young, and your mind was affected (humans) / There was a defect in your original code that became part of your consciousness when you achieved sentience (synthetics)"],
+    ["21-25", "You were a corporate agent but were burned; old corp rivals are still gunning for you"],
+    ["26-30", "You own a home or business that you are just barely hanging onto for some reason"],
+    ["31-35", "You owe large gambling debts to bookies and loan sharks that want their money"],
+    ["36-40", "You were once a police or private security officer but were forced to resign in disgrace"],
+    ["41-45", "Your parents are executives, and you grew up wealthy, only to rebel and take up crime"],
+    ["46-50", "You have a rival among the Right Kind of People who wants to see you out of the game"],
+    ["51-55", "You are looking to get out of this life of crime but keep getting pulled back in"],
+    ["56-60", "You once copied your mind into a second body, and your old duplicate is still out there"],
+    ["61-65", "You are an adrenaline addict, to the point where people believe you have a death wish"],
+    ["66-70", "You have a sibling, parent, or mentor who is ailing and depends on you for care"],
+    ["71-75", "You are young, and this is your first life; you’re fresh-faced and naïve"],
+    ["76-80", "You betrayed your old crew, and all of the Right Kind of People know about it"],
+    ["81-85", "One of your old mind backups was corrupted, and you still get glitches in your memory"],
+    ["86-90", "There’s a large price on your head, and bounty hunters frequently try to collect"],
+    ["91-95", "After something went wrong on another job, almost all backups of your ghost were corrupted; you were restored from a years-old backup and are still piecing together what happened during the years that version of you lived"],
+    ["96-100", "Your default body has a recurring physical condition as a result of a glitch in the cloning or manufacturing process that created it"],
+  ];
+
+  root.NCD_TABLES = { randomKeywordsIntro, randomKeywords, securityTiers, securityTiersOutro, securityDefenses, liabilities };
 })(globalThis);

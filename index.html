@@ -423,6 +423,11 @@
               <p class="finish-note">Ending the session. Used skills each go up by 1:</p>
               <div id="finish-bumped"></div>
             </section>
+            <!-- only for a character without a liability yet -->
+            <section class="finish-part finish-liability" id="finish-liability-part" hidden>
+              <h3>Liability</h3>
+              <div id="finish-liability" tabindex="-1"></div>
+            </section>
             <section class="finish-part">
               <h3>Improvement</h3>
               <wa-radio-group id="finish-improvement" label="Choose one">
@@ -587,6 +592,7 @@
               <wa-input name="pronouns" label="Pronouns" autocomplete="off"></wa-input>
               <wa-textarea name="physical" label="Physical Appearance" rows="3" resize="auto"></wa-textarea>
               <wa-textarea name="network" label="Network Default" rows="3" resize="auto"></wa-textarea>
+              <wa-textarea name="liability" label="Liability" rows="2" resize="auto"></wa-textarea>
             </div>
             <div id="skills-edit" class="skills editing"></div>
             <section class="gear">
@@ -784,10 +790,14 @@
     </wa-button>
   </wa-dialog>
 
-  <!-- End Session: the skills that went up -->
+  <!-- End Session: the skills that went up, and a liability to pick when the character has none (OK waits for it) -->
   <wa-dialog id="session-dialog" label="Session ended">
     <div id="session-bumped"></div>
-    <wa-button slot="footer" variant="brand" data-dialog="close">OK</wa-button>
+    <section class="session-liability" hidden>
+      <h3>Liability</h3>
+      <div id="session-liability"></div>
+    </section>
+    <wa-button slot="footer" variant="brand" id="session-ok">OK</wa-button>
   </wa-dialog>
 
   <wa-dialog id="appearance-dialog" label="Appearance" light-dismiss>

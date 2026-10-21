@@ -99,6 +99,7 @@
     // No portrait is stored as null.
     { name: "portrait", load: (c) => C.portraitFile(c, portraits) ?? "", save: (e, v) => { e.portrait = v || null; } },
     ...["pronouns", "physical", "network"].map(appearanceField),
+    textField("liability"),
   ];
 
   // ---- roster ----
@@ -378,11 +379,13 @@
   const enter = (mode) => () => { if (!settled()) return; state = mode; render(); };
 
   // ---- appearance: shown in full on the sheet, and in a dialog while running ----
+  // The liability goes under it, except in Create's review (it's picked at the first End Session or Finish Job).
   const APPEARANCE = [["pronouns", "Pronouns"], ["physical", "Physical Appearance"], ["network", "Network Default"]];
-  function renderAppearance(el) {
+  function renderAppearance(el, { liability = true } = {}) {
     const look = C.appearance(current);
-    el.innerHTML = APPEARANCE.map(([key, title]) =>
-      `<div class="sheet-field"><dt>${title}</dt><dd>${escapeHTML(look[key].trim() || "—")}</dd></div>`).join("");
+    const field = (title, value, cls = "") => `<div class="sheet-field${cls}"><dt>${title}</dt><dd>${escapeHTML(value.trim() || "—")}</dd></div>`;
+    el.innerHTML = APPEARANCE.map(([key, title]) => field(title, look[key])).join("")
+      + (liability ? field("Liability", C.liability(current), " liability") : "");
   }
   function openAppearance() {
     const dialog = $("appearance-dialog");
@@ -1055,15 +1058,40 @@
   const bumpedHTML = (ids) => ids.length
     ? `<ul class="session-bumped">${ids.map((id) => `<li>${escapeHTML(skillNameOf(id))}</li>`).join("")}</ul>`
     : `<p class="gear-empty">No skills were used.</p>`;
+  // A liability for a character without one (End Session and Finish Job): the table to pick from or roll on, in el.
+  // Returns a function giving the pick so far ("" until there is one).
+  function liabilityPicker(el) {
+    let picked = "";
+    APP.tablePicker(el, { head: ["d100", "Liability"], rows: window.NCD_TABLES.liabilities }, (row) => { picked = row[1]; });
+    return () => picked;
+  }
+
   // End Session: each used skill goes up by 1 and Used is cleared; a dialog lists them, over Display.
+  // A character without a liability picks one there too: the dialog stays open until they do, and OK saves it.
+  const sessionDialog = $("session-dialog");
+  let sessionLiability = null; // the dialog's liability picker, while it has one
   function endSession() {
     const { character, bumped } = C.endSession(current);
     if (!commit(character)) return;
     state = "display";
     render();
     $("session-bumped").innerHTML = bumpedHTML(bumped);
-    $("session-dialog").open = true;
+    const needs = C.needsLiability(current);
+    sessionDialog.querySelector(".session-liability").hidden = !needs;
+    sessionLiability = needs ? liabilityPicker($("session-liability")) : null;
+    sessionDialog.open = true;
   }
+  $("session-ok").addEventListener("click", () => {
+    if (sessionLiability) {
+      if (!sessionLiability()) { APP.toast("Pick a liability first.", "warning"); return; }
+      if (!commit(C.withLiability(current, sessionLiability()))) return;
+      sessionLiability = null;
+      render();
+    }
+    sessionDialog.open = false;
+  });
+  // Escape and the close button wait for the liability too.
+  sessionDialog.addEventListener("wa-hide", (e) => { if (e.target === sessionDialog && sessionLiability) e.preventDefault(); });
 
   // Finish Job's page: its choices stay in the controls until Confirm, which saves it all (C.finishJob) and goes to Display.
   const finishImprovement = $("finish-improvement");
@@ -1074,8 +1102,12 @@
   const finishProp = $("finish-prop");
   const finishGear = $("finish-gear");
   const radio = (group, value) => group.querySelector(`wa-radio[value="${value}"]`);
+  let finishLiability = () => "";
   function renderFinish() {
     $("finish-bumped").innerHTML = bumpedHTML(C.endSession(current).bumped);
+    const needs = C.needsLiability(current);
+    $("finish-liability-part").hidden = !needs;
+    finishLiability = needs ? liabilityPicker($("finish-liability")) : () => "";
     const untrained = C.untrainedSkills(current);
     finishSkill.innerHTML = untrained.map((id) => `<wa-option value="${id}">${escapeHTML(skillNameOf(id))}</wa-option>`).join("");
     const targets = C.cyberneticTargets(current);
@@ -1108,13 +1140,13 @@
     const v = String(finishXp.value ?? "").replace(/\D/g, "").slice(0, 3);
     if (v !== finishXp.value) finishXp.value = v;
   });
-  const FINISH_CONTROLS = { improvement: finishImprovement, skill: finishSkill, success: finishSuccess, reward: finishReward,
+  const FINISH_CONTROLS = { liability: $("finish-liability"), improvement: finishImprovement, skill: finishSkill, success: finishSuccess, reward: finishReward,
     prop: finishProp, gear: finishGear };
   function confirmFinish() {
     if (state !== "finishing") return;
     const success = finishSuccess.value;
     const choices = {
-      improvement: finishImprovement.value, skill: finishSkill.value,
+      liability: finishLiability(), improvement: finishImprovement.value, skill: finishSkill.value,
       successful: success === "yes" ? true : success === "no" ? false : null,
       xp: finishXp.value, reward: finishReward.value, prop: text(finishProp.value), gearId: finishGear.value,
     };
@@ -1387,7 +1419,7 @@
       <section class="gear"><div class="gear-head"><h3>Gear</h3></div><div class="summary-gear"></div></section>
       <div class="abilities"></div>`;
     el.prepend(head);
-    renderAppearance(el.querySelector(".appearance"));
+    renderAppearance(el.querySelector(".appearance"), { liability: false });
     renderSkillsDisplay(el.querySelector(".skills"));
     el.querySelector("section.gear").hidden = !C.gear(current).length;
     renderGear(el.querySelector(".summary-gear"), current);

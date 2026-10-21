@@ -104,7 +104,7 @@ node --test tests/dice.test.cjs tests/discord.test.cjs tests/characters.test.cjs
 | `rules.js` | Rulebook data for Create and the Databank: archetype intros and "on the job" text, skills, initiative, knows, starting gear templates; origin intros, options, Advancement text and augmentation gear; the sentences every archetype or origin section repeats (`text`) (needs `characters.js`; testable in Node) |
 | `profiles.js` | The Databank's Archetypes and Origins pages, built from `rules.js`, `abilities.js` and `advancement.js`; Create's archetype panel uses its text too (testable in Node) |
 | `databank.js` | The Databank tab's text from the rulebook's Equipment chapter: gear, tool sets, weapons, armor, vehicles, gear and weapon keywords with their restrictions (testable in Node) |
-| `tables.js` | The Tables tab's tables: random gear keywords, and security system tiers with each defense's description (testable in Node) |
+| `tables.js` | The Tables tab's tables: random gear keywords, security system tiers with each defense's description, and liabilities (testable in Node) |
 | `gear.js` | Gear rules from `databank.js`: built-in keywords, which keywords an item can take, damage and impact, labels, rules text, and Create's starting gear (testable in Node) |
 | `gear-ui.js` | Gear on the page: item rows, keyword chips, rules text, and the keyword picker the gear dialog and Create share |
 | `format.js` | Turns ability descriptions into HTML: paragraphs, bold, italic, lists, icon tokens (testable in Node) |
@@ -204,6 +204,11 @@ in Edit mid-job still counts. After that, the button says **Run**.
   XP entered and a reward (a distinctive feature, which does nothing yet; a new starting prop; or the Cybernetic keyword on
   a piece of starting gear that can take it). A failure earns 1 XP and the next job starts with 1 less Influence.
   **Confirm** saves it all, resets to starting values and gear, ends the job, and goes on to Spend XP.
+- **Liability**: a character without one (it isn't asked for in Create) must pick one at End Session or Finish Job, from
+  the liability table (`tables.js`, also on the Tables tab). Clicking a row picks it; the dice button rolls d100 and picks
+  the row it lands on, as many times as you like. End Session's dialog won't close until there's a pick, and Finish Job
+  won't confirm. It shows under the appearance and can be changed in Edit. The picker is `NCD_APP.tablePicker`, for any
+  table whose first column names a die.
 - **Spend XP** lists every benefit from the XP table with its cost (worked out as earlier purchases leave the
   character: a second perk costs more) and a **Buy** button, and what's been bought so far, each removable. Until
   it's confirmed, the character is saved as spending XP (a badge on the Roster) and only opens to this page, and the gear

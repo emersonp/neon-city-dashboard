@@ -92,7 +92,7 @@ test("gear: keep acquired gear, add a keyword to starting gear, and gain common 
 test("Spend XP after Finish Job: acquired gear is kept until it's confirmed, then XP moves to spent", () => {
   const coat = C.newProp("Coat", true), loot = { ...C.newProp("Loot"), conditions: [{ id: "d", name: "Damaged" }] };
   const onJob = C.withGear(C.startJob(thief({ gear: [coat], xpAvailable: 2 })), loot);
-  const finished = C.finishJob(onJob, { improvement: "xp", successful: true, xp: 2, reward: "feature" }).character;
+  const finished = C.finishJob(onJob, { liability: "Debts", improvement: "xp", successful: true, xp: 2, reward: "feature" }).character;
   const spending = A.beginSpending(onJob, finished);
   assert.ok(A.isSpending(spending));
   assert.equal(C.xp(spending).available, 5);

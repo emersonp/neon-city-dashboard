@@ -99,6 +99,11 @@
     return { pronouns: String(a.pronouns ?? ""), physical: String(a.physical ?? ""), network: String(a.network ?? "") };
   };
 
+  // ---- liability: free text, picked (or rolled) from tables.js's table at the first End Session or Finish Job ----
+  const liability = (character) => String(character?.liability ?? "").trim();
+  const needsLiability = (character) => !liability(character);
+  const withLiability = (character, text) => ({ ...character, liability: String(text ?? "").trim() });
+
   // ---- things the character knows something about (checkboxes on the sheet) ----
   const KNOWLEDGE = ["Citizens", "Computers", "Corporations", "Criminals", "Cybernetics", "Executives", "Genetics", "Government",
     "Medicine", "Military", "Network", "Psionics", "Robotics", "Security", "Vehicles", "Weapons"];
@@ -253,8 +258,10 @@
   const untrainedSkills = (character) => SKILLS.filter((s) => !isInitiative(s.id) && skill(character, s.id).value == null).map((s) => s.id);
   // Starting gear that could take the Cybernetic keyword (gear.js is loaded after this file, so looked up when needed).
   const cyberneticTargets = (character) => starterGear(character).filter((g) => root.NCD_GEAR.canAdd(g, CYBERNETIC));
-  // What's missing before Finish Job can be confirmed ("improvement", "skill", "success", "reward", "prop", "gear"), or null.
-  function finishMissing(character, { improvement, skill: id, successful, reward, prop, gearId } = {}) {
+  // What's missing before Finish Job can be confirmed ("liability", "improvement", "skill", "success", "reward", "prop",
+  // "gear"), or null. A liability is only asked for when the character has none.
+  function finishMissing(character, { liability: picked, improvement, skill: id, successful, reward, prop, gearId } = {}) {
+    if (needsLiability(character) && !String(picked ?? "").trim()) return "liability";
     if (!IMPROVEMENTS.includes(improvement)) return "improvement";
     if (improvement === "skill" && !untrainedSkills(character).includes(id)) return "skill";
     if (typeof successful !== "boolean") return "success";
@@ -267,8 +274,9 @@
   // Ends the session, applies the choices, and leaves the job with only the starting gear. `bumped` as endSession.
   function finishJob(character, choices) {
     if (finishMissing(character, choices)) return null;
-    const { improvement, skill: id, successful, xp: earned, reward, prop, gearId } = choices;
+    const { liability: picked, improvement, skill: id, successful, xp: earned, reward, prop, gearId } = choices;
     let { character: next, bumped } = endSession(character);
+    if (needsLiability(next)) next = withLiability(next, picked);
     if (improvement === "skill") next = withSkill(next, id, { value: MIN_VALUE });
     if (improvement === "luck") next.maxLuck = clampMaxLuck(next.maxLuck) + JOB_LUCK;
     const gained = (improvement === "xp" ? 1 : 0) + (successful ? clampXp(earned) : 1);
@@ -350,6 +358,7 @@
       xpSpent: 0,
       xpAvailable: 0,
       appearance: { pronouns: "", physical: "", network: "" },
+      liability: "",
       skills: {},
       createdAt: now,
       updatedAt: now,
@@ -516,7 +525,7 @@
     inJob, starterGear, resetToStarting, startJob, abandonJob, endSession,
     IMPROVEMENTS, REWARDS, JOB_LUCK, untrainedSkills, cyberneticTargets, finishMissing, finishJob,
     isInitiative, canBeUsed, isUsed, withUsed,
-    KNOWLEDGE, knows, xp, clampXp, appearance,
+    KNOWLEDGE, knows, xp, clampXp, appearance, liability, needsLiability, withLiability,
     gear, newGear, newProp, withGear, withoutGear,
     MAX_SEVERITY, CONDITION_SUGGESTIONS, conditions, severityLabel, withCondition, withSeverity, withoutCondition,
     abilityIds, abilities, withAbility, withoutAbility, abilityTag, findAbilities,

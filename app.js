@@ -366,6 +366,7 @@
 
   // ---- the Databank and Tables tabs ----
   // Built once from databank.js. A section with many entries spans the page and flows its entries into columns.
+  let tablePicker; // set in the block below, which has the table helpers
   {
     const DATABANK = window.NCD_DATABANK;
     const { formatDescription } = window.NCD_FORMAT;
@@ -475,7 +476,40 @@
     $("tables").innerHTML = [
       tableSection({ title: "Random gear keywords", intro: TABLES.randomKeywordsIntro, table: { head: ["d100", "Positive", "Negative"], rows: TABLES.randomKeywords } }),
       tableSection({ title: "Security system tiers", table: securityTable, after: securityTiersButton }),
+      tableSection({ title: "Liabilities", table: { head: ["d100", "Liability"], rows: TABLES.liabilities } }),
     ].join("");
+
+    // A table to pick a row from (roster.js: a character's liability), drawn into el. Clicking a row (or Enter or Space on
+    // it) picks it; the dice button rolls the table's die and picks the row it lands on, as often as you like.
+    // onPick(row) gets the picked row's cells. Drawing it again clears the pick.
+    tablePicker = (el, t, onPick) => {
+      const die = DICE.tableDie(t);
+      el.innerHTML = `<div class="table-picker"><p class="table-picker-head">Pick one, or roll for it.${die ? rollButton(0, die) : ""}</p>${table(t)}</div>`;
+      const rows = [...el.querySelectorAll("tbody tr")];
+      for (const tr of rows) Object.assign(tr, { tabIndex: 0, ariaSelected: "false" });
+      const shown = el.querySelector(".table-roll");
+      const pick = (i, total = "") => {
+        rows.forEach((tr, j) => { tr.classList.toggle("rolled", j === i); tr.ariaSelected = String(j === i); });
+        if (shown) shown.textContent = total;
+        rows[i]?.scrollIntoView({ block: "nearest" });
+        if (rows[i]) onPick(t.rows[i]);
+      };
+      el.onclick = (e) => {
+        if (e.target.closest("[data-roll-table]")) {
+          const r = DICE.rollTable(t);
+          pick(r.row, r.total);
+        } else {
+          const tr = e.target.closest("tbody tr");
+          if (tr) pick(rows.indexOf(tr));
+        }
+      };
+      el.onkeydown = (e) => {
+        const tr = e.target.closest("tbody tr");
+        if (!tr || (e.key !== "Enter" && e.key !== " ")) return;
+        e.preventDefault();
+        pick(rows.indexOf(tr));
+      };
+    };
 
     const info = $("tables-info-dialog");
     const showInfo = (label, html) => { info.label = label; $("tables-info-body").innerHTML = html; info.open = true; };
@@ -513,5 +547,5 @@
   }
 
   // For the Character tab (roster.js).
-  window.NCD_APP = { KINDS, toast, targetField, makeRoller, postInfluence, clearResult, emptyResult };
+  window.NCD_APP = { KINDS, toast, targetField, makeRoller, postInfluence, clearResult, emptyResult, tablePicker };
 })();

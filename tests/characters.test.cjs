@@ -720,10 +720,33 @@ test("jobs: End Session raises each used skill by 1 (to 95) and clears Used", ()
   assert.equal(C.untrainedSkills({}).includes("initiative-in-the-network"), false);
 });
 
+test("liability: free text, asked for by Finish Job only when there's none, and kept after", () => {
+  const C = globalThis.NCD_CHARACTERS;
+  assert.equal(C.newCharacter().liability, "");
+  assert.equal(C.liability({}), "");
+  assert.equal(C.needsLiability({ liability: "  " }), true);
+  const c = C.withLiability({ id: "c" }, "  Gambling debts ");
+  assert.equal(C.liability(c), "Gambling debts");
+  assert.equal(C.needsLiability(c), false);
+
+  const run = C.startJob({ id: "c" });
+  const rest = { improvement: "xp", successful: false };
+  assert.equal(C.finishMissing(run, rest), "liability");
+  assert.equal(C.finishMissing(run, { ...rest, liability: " " }), "liability");
+  assert.equal(C.finishMissing(run, { ...rest, liability: "A rival" }), null);
+  assert.equal(C.liability(C.finishJob(run, { ...rest, liability: "A rival" }).character), "A rival");
+  // one already there isn't asked for, or replaced
+  const has = C.withLiability(run, "Debts");
+  assert.equal(C.finishMissing(has, rest), null);
+  assert.equal(C.liability(C.finishJob(has, { ...rest, liability: "A rival" }).character), "Debts");
+  // and End Session leaves it alone
+  assert.equal(C.liability(C.endSession(has).character), "Debts");
+});
+
 test("jobs: Finish Job applies the improvement and reward, and leaves the job", () => {
   const C = globalThis.NCD_CHARACTERS;
   const coat = C.newProp("Coat", true);
-  const base = C.startJob({ id: "c", maxLuck: 100, startingInfluence: 2, xpAvailable: 1, xpSpent: 4,
+  const base = C.startJob({ id: "c", maxLuck: 100, startingInfluence: 2, xpAvailable: 1, xpSpent: 4, liability: "Debts",
     skills: { "sneak-around": { value: 60 } }, gear: [coat] });
   const run = C.withGear(C.withUsed({ ...base, currentLuck: 5, wounds: 2 }, "sneak-around", true), C.newProp("Loot"));
 

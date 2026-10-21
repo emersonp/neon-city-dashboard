@@ -223,6 +223,12 @@ html.gm [data-player] { display: none !important; }
 .table-roll { color: var(--color-accent-text); font-variant-numeric: tabular-nums; }
 .databank-table tr.rolled td { background: color-mix(in oklch, var(--color-accent) 18%, transparent); color: var(--color-ink); }
 .databank-table tr.rolled td:first-child { box-shadow: inset 3px 0 0 var(--color-accent); }
+/* A table to pick a row from (app.js tablePicker): rows are clickable, and the picked one is lit like a rolled one. */
+.table-picker-head { display: flex; align-items: center; margin: 0 0 var(--wa-space-xs); color: var(--wa-color-text-quiet); }
+.table-picker .databank-table { font-size: var(--wa-font-size-s); line-height: 1.45; }
+.table-picker tbody tr { cursor: pointer; }
+.table-picker tbody tr:hover:not(.rolled) td { background: color-mix(in oklch, var(--color-accent) 7%, transparent); }
+.table-picker tbody tr:focus-visible { outline: 2px solid var(--color-accent); outline-offset: -2px; }
 #tables-info-body .ability-text > p { margin-block: 0 var(--wa-space-s); }
 
 /* ---- roller ---- */
@@ -525,6 +531,7 @@ wa-tab[hidden], wa-radio[hidden] { display: none; }
 .appearance dd { margin: 0; white-space: pre-line; overflow-wrap: anywhere; }
 .appearance.stacked { grid-template-columns: minmax(0, 1fr); margin: 0; }
 .appearance-edit { margin: 0; align-items: start; }
+.appearance :is(.liability, [name="liability"]) { grid-column: 1 / -1; }
 @media (max-width: 800px) { .appearance { grid-template-columns: minmax(0, 1fr); } }
 .stat-icon { margin-left: auto; display: inline-flex; }
 .stat-icon .icon { width: 2rem; height: 2rem; --ink: var(--wa-color-brand); }
@@ -546,6 +553,10 @@ wa-tab[hidden], wa-radio[hidden] { display: none; }
 .finish-part [hidden] { display: none; }
 .finish-note { margin: 0; color: var(--wa-color-text-quiet); }
 .session-bumped { margin: 0; padding-inline-start: var(--wa-space-l); }
+.finish-part.finish-liability { max-width: 48rem; }
+.session-liability { margin-top: var(--wa-space-l); }
+.session-liability h3 { margin: 0 0 var(--wa-space-xs); }
+#session-dialog:has(.session-liability:not([hidden])) { --width: min(48rem, 100vw - 2rem); }
 
 /* ---- Spend XP: XP left at the top, what's bought, then a row per benefit: text, picks, cost, Buy ---- */
 .character-spend { display: flex; flex-direction: column; gap: var(--wa-space-l); }

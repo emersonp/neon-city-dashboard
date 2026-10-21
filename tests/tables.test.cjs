@@ -46,6 +46,24 @@ test("tables: the random gear keywords table covers 1-100 with the gear keywords
   assert.deepEqual(new Set(T.randomKeywords.map((r) => r[2])), new Set(negative));
 });
 
+test("tables: the liability table covers 1-100, and a roll always lands on a row", () => {
+  const D = globalThis.NCD_DICE;
+  let next = 1;
+  for (const [range, text] of T.liabilities) {
+    const [lo, hi] = range.split("-").map(Number);
+    assert.equal(lo, next, range);
+    next = hi + 1;
+    assert.ok(text.trim(), range);
+  }
+  assert.equal(next, 101);
+  const table = { head: ["d100", "Liability"], rows: T.liabilities };
+  for (let n = 0; n < 100; n++) {
+    const tens = Math.floor(n / 10), ones = n % 10; // every tens/ones pair, 00 + 0 being 100
+    const rolls = [tens, ones];
+    assert.ok(D.rollTable(table, () => rolls.shift()).row >= 0, String(n));
+  }
+});
+
 test("tables: every described security defense but X-ray scanners is named in a tier, so the table links to it", () => {
   const named = T.securityTiers.flatMap((t) => t.defenses).map((n) => n.toLowerCase());
   for (const d of T.securityDefenses) {
