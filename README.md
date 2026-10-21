@@ -28,7 +28,7 @@ Press <kbd>R</kbd> on the Dice tab to roll.
 ## Tests
 
 ```
-node --test tests/dice.test.cjs tests/discord.test.cjs tests/characters.test.cjs tests/format.test.cjs tests/abilities.test.cjs tests/rules.test.cjs tests/databank.test.cjs
+node --test tests/dice.test.cjs tests/discord.test.cjs tests/characters.test.cjs tests/format.test.cjs tests/abilities.test.cjs tests/rules.test.cjs tests/databank.test.cjs tests/gear.test.cjs
 ```
 
 ## What's here
@@ -41,19 +41,21 @@ node --test tests/dice.test.cjs tests/discord.test.cjs tests/characters.test.cjs
 | `app.js` | Theme, tabs, settings, the dice pools, the roller and result panel, and posting to Discord |
 | `config.js` | Shared settings for everyone: Discord emoji codes and the published address (no webhook) |
 | `dice.js` | Dice rules (no page code, so it's testable in Node) |
-| `characters.js` | Archetypes, origins, random handles and names, gear and conditions, saving characters (needs `dice.js`; testable in Node) |
+| `characters.js` | Archetypes, origins, random handles and names, gear items and conditions, Create's choices, saving characters (needs `dice.js`; testable in Node) |
 | `roster.js` | Roster tab and the Character tab, including the condition chips and dialogs |
 | `create.js` | Create mode: a new character built step by step from `rules.js` (step header, Back/Next/Finish, Discard, each step's controls) |
 | `abilities.js` | The perk and augmentation catalog; edit it to add abilities |
-| `rules.js` | Rulebook data for Create: archetype skills, initiative, knows, gear; origin options (needs `characters.js`; testable in Node) |
-| `databank.js` | The Databank tab's text from the rulebook's Equipment chapter: gear, weapons, vehicles, and gear and weapon keywords (testable in Node) |
+| `rules.js` | Rulebook data for Create: archetype skills, initiative, knows, starting gear templates; origin options and augmentation gear (needs `characters.js`; testable in Node) |
+| `databank.js` | The Databank tab's text from the rulebook's Equipment chapter: gear, tool sets, weapons, armor, vehicles, and gear and weapon keywords with their restrictions (testable in Node) |
+| `gear.js` | Gear rules from `databank.js`: built-in keywords, which keywords an item can take, damage and impact, labels, rules text, and Create's starting gear (testable in Node) |
+| `gear-ui.js` | Gear on the page: item rows, keyword chips, rules text, and the keyword picker the gear dialog and Create share |
 | `format.js` | Turns ability descriptions into HTML: paragraphs, bold, italic, lists, icon tokens (testable in Node) |
 | `docs/character-sheet.md` | Markdown version of the paper character sheet |
 | `discord.js` | Builds the Discord message and posts it to the webhook |
 | `emoji/` | Boon and Drawback PNGs to upload as Discord server emoji |
 | `icons.js`, `icons/` | Game icons (advantage die, challenge die, boon, drawback, heat, influence) |
 
-Things remembered in localStorage (all under `ncd.`): characters (with the ids of their perks and augmentations, and the conditions on them and their gear), the open character, player name, GM toggle, webhook, theme, the last tab, the target number, and the last roll.
+Things remembered in localStorage (all under `ncd.`): characters (with the ids of their perks and augmentations, their gear with its type and keywords, and the conditions on them and their gear), the open character, player name, GM toggle, webhook, theme, the last tab, the target number, and the last roll.
 
 ## Databank
 
@@ -64,6 +66,44 @@ the random gear keywords table, and weapon keywords). It's all in
 `databank.js`, written in the same format as ability descriptions (below). Each weapon lists the keywords it allows,
 and each weapon keyword lists the weapons that allow it, both from the `allowed` lists in `databank.js`.
 `tests/databank.test.cjs` checks the keyword tables against each other.
+
+## Gear
+
+A character's gear is a list of items. Each has a **name**, a **quantity** (shown as `×3` when above 1), a **type**, the
+**keywords** added to it, and conditions (below). Everything about the types comes from `databank.js`, through `gear.js`:
+
+| Type | What's picked | Shown as |
+| --- | --- | --- |
+| Weapon | a category from the Armory | `Pistol · 1h · +20` (hands and damage work out from the category and Jagged, Mounted, Miniaturized) |
+| Kit | a tool set, its quality, optionally a skill it's hyper-specialized for, and whether it's consumable | `Kit · Paramedic's Kit · Standard · +20 impact` |
+| Equipment | any other entry in Gear Basics (skill software, stimulants, computer gear, biotechnology, other tools), plus a skill or option when the entry needs one | `Equipment · Computer gear` |
+| Armor | Armored x1 to x4; each level's keywords come with it | `Armor · Armored x2` |
+| Vehicle | a vehicle from the Garage | `Vehicle · Muscle Car · Medium ground vehicle` |
+| Prop | nothing more (characters saved before gear types have only props, and still do) | `prop` |
+
+Under each item are its keywords as chips: built-in ones (a weapon category's intrinsic keywords, armor's, and ones an
+ability grants) in *italics*, negative ones with a dashed red outline. Clicking an item's name opens its rules: the
+databank text for what it is, then each of its keywords.
+
+**Adding and changing gear:** **Run** adds gear (saved right away, never Starter). **Edit** adds, changes, and removes
+it, and sets Starter. The gear dialog picks the type, then that type's fields, then keywords: weapon keywords (weapons
+only, from the category's allowed list) and gear keywords, each with its rules text on hover. Changing an item's type or
+category drops keywords it can no longer have; that's also how to turn an old prop into a real item.
+
+**Keyword rules** (in `databank.js` as `notOn`, `excludes`, and `requires` on each keyword, from the keyword's own text):
+Cybernetic can't be on weapons or vehicles; Bulky, Fragile, and Wearable can't be on vehicles; pairs like Bulky and
+Compact or Silent and Concussive can't share an item; Obfuscating needs Explosive. Built-in keywords count, so a
+one-handed melee weapon (always Silent) can't be Concussive. On a weapon, Compact is the weapon keyword and follows the
+category's allowed list. Keywords an ability grants against these rules (Butcher's Gauntlet's Mounted) are kept as
+**fixed** and never checked or removed.
+
+**Create** builds the starting gear from the templates in `rules.js` (`archetypes[*].gear` and `augmentationGear`): each
+book line and the items it gives, with a picker for each "of your choice" (a category, a vehicle, or keywords: any the
+item can have, weapon or gear, positive or negative). Weapon Mount picks a starting weapon and its keyword on the
+Origin step. Next waits until every pick is made.
+
+To add equipment, a tool set, or a keyword restriction, edit `databank.js`; `tests/databank.test.cjs` checks the
+restrictions against the keyword text, and `tests/rules.test.cjs` checks the starting gear templates against the databank.
 
 ## Conditions
 
