@@ -38,7 +38,7 @@
           <wa-checkbox size="small" data-keyword="${escapeHTML(k.name)}" ${k.checked ? "checked" : ""} ${locked || full || !k.allowed ? "disabled" : ""}>${
             k.builtIn ? `<i>${escapeHTML(k.name)}</i>` : escapeHTML(k.name)}</wa-checkbox>
           <wa-button id="${id}" size="small" appearance="plain" class="keyword-info"><wa-icon name="circle-info" label="What ${escapeHTML(k.name)} does"></wa-icon></wa-button>
-          <wa-tooltip for="${id}" trigger="hover focus"><div class="keyword-tip">${rich(k.text)}</div></wa-tooltip>
+          <wa-tooltip for="${id}" trigger="hover focus"><div class="keyword-tip ability-text">${rich(k.text)}</div></wa-tooltip>
         </span>`;
     };
     const group = (title, list) => (list.length ? `<fieldset class="keyword-group"><legend>${title}</legend>
