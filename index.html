@@ -67,7 +67,40 @@
             <p class="result-empty">No rolls yet</p>
           </section>
 
-          <div class="dice-extra"></div>
+          <div class="dice-extra">
+            <!-- Administrator only: Heat, Group Influence and Day on the OBS overlay (admin.js) -->
+            <wa-card class="admin-panel" id="admin-panel" hidden>
+              <div slot="header" class="card-header"><h2>Overlay</h2></div>
+              <p class="obs-status" id="obs-status"></p>
+              <div class="stat" data-overlay-stat="heat">
+                <span class="sheet-label">Heat</span>
+                <div class="stepper luck-steps">
+                  <wa-button size="s" appearance="outlined" data-step="-1">−1</wa-button>
+                  <span data-step-value>0</span>
+                  <wa-button size="s" appearance="outlined" data-step="1">+1</wa-button>
+                  <span class="stat-icon" data-icon="heat"></span>
+                </div>
+              </div>
+              <div class="stat" data-overlay-stat="influence">
+                <span class="sheet-label">Group Influence</span>
+                <div class="stepper luck-steps">
+                  <wa-button size="s" appearance="outlined" data-step="-1">−1</wa-button>
+                  <span data-step-value>0</span>
+                  <wa-button size="s" appearance="outlined" data-step="1">+1</wa-button>
+                  <span class="stat-icon" data-icon="influence"></span>
+                </div>
+              </div>
+              <div class="stat" data-overlay-stat="day">
+                <span class="sheet-label">Day</span>
+                <div class="stepper luck-steps">
+                  <wa-button size="s" appearance="outlined" data-step="-1">−1</wa-button>
+                  <span data-step-value>0</span>
+                  <wa-button size="s" appearance="outlined" data-step="1">+1</wa-button>
+                </div>
+              </div>
+              <wa-button id="clear-overlay" appearance="outlined" size="s">Clear the roll from the overlay</wa-button>
+            </wa-card>
+          </div>
         </div>
       </wa-tab-panel>
 
@@ -550,6 +583,9 @@
   <script src="config.js"></script>
   <script src="portraits/portraits.js"></script>
   <script src="icons.js"></script>
+  <!-- obs-config.js is gitignored: only a local copy set up for OBS has it (the 404 elsewhere is expected) -->
+  <script src="obs-config.js"></script>
+  <script src="obs-link.js"></script>
   <script src="format.js"></script>
   <script src="dice.js"></script>
   <script src="discord.js"></script>
@@ -558,6 +594,7 @@
   <script src="rules.js"></script>
   <script src="databank.js"></script>
   <script src="gear.js"></script>
+  <script src="admin.js"></script>
   <script src="app.js"></script>
   <script src="gear-ui.js"></script>
   <script src="create.js"></script>

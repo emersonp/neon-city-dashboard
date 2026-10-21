@@ -54,8 +54,13 @@
   SESSION.gm = store.get("gm") === "1";
   playerInput.value = SESSION.playerName;
   if (SESSION.gm) gmSwitch.setAttribute("checked", "");
+  window.NCD_ADMIN.setGm(SESSION.gm);
   playerInput.addEventListener("input", () => { SESSION.playerName = playerInput.value; store.set("playerName", playerInput.value); });
-  gmSwitch.addEventListener("change", () => { SESSION.gm = gmSwitch.checked; store.set("gm", gmSwitch.checked ? "1" : "0"); });
+  gmSwitch.addEventListener("change", () => {
+    SESSION.gm = gmSwitch.checked;
+    store.set("gm", gmSwitch.checked ? "1" : "0");
+    window.NCD_ADMIN.setGm(SESSION.gm);
+  });
   const webhookInput = $("webhook");
   webhookInput.value = store.get("webhook", "");
   webhookInput.placeholder = "https://discord.com/api/webhooks/…";
@@ -205,6 +210,7 @@
   }
 
   // A roll button's whole job: roll, reset the pools, spin, show the result, then post it. One roll at a time.
+  // The Administrator's rolls also play on the OBS overlay (admin.js), starting with the spin here.
   // `scroll` brings the result into view (the skill dialog, where on phones it's below the fold).
   // `onRoll` runs once the result shows; `skill` names the skill for the message, if any.
   function makeRoller({ button, readTarget, pools, result, resetPools, scroll = false, onRoll = () => {}, skill = () => undefined }) {
@@ -217,6 +223,7 @@
       try {
         const r = DICE.roll({ target: readTarget(), advantage: pools.adv.value, challenge: pools.chal.value });
         resetPools();
+        window.NCD_ADMIN.sendRoll(r);
         result.hidden = false;
         const spinning = spin(result);
         reveal();

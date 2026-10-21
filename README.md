@@ -12,6 +12,20 @@ Built with [Web Awesome](https://webawesome.com) (free, from its CDN). No build 
 Anyone who has the webhook URL can post to that channel, so share it with your players privately. It's never in the repo,
 so the site is safe to host on GitHub Pages.
 
+## OBS overlay (local only)
+
+`overlay.html` is a stream overlay (Heat, Group Influence, Day, and the latest roll), from neon-city-overlay.
+The Administrator's copy of the dashboard drives it through OBS's WebSocket server, so it only works on the streaming computer.
+
+1. In OBS (28+): **Tools > WebSocket Server Settings**, turn on the server, and note the port and password from **Show Connect Info**.
+2. Copy `obs-config.example.js` to `obs-config.js` and fill them in. `obs-config.js` is gitignored, so the password stays on this computer.
+3. Add `overlay.html` to OBS as a **Browser** source (Local file, 1920×1080).
+4. Open the dashboard from this folder and turn on **Administrator (GM)** in Settings.
+
+The Dice tab then shows an **Overlay** panel on the right with Heat, Group Influence and Day controls, and every roll
+plays on the overlay as well as in the dashboard and on Discord. The overlay keeps the values; the panel shows what it reports.
+Without `obs-config.js` (on GitHub Pages, for example) the panel says it isn't set up, and everything else works as usual.
+
 ## Dice rules
 
 Same as neon-city-overlay:
@@ -54,6 +68,10 @@ node --test tests/dice.test.cjs tests/discord.test.cjs tests/characters.test.cjs
 | `discord.js` | Builds the Discord message and posts it to the webhook |
 | `emoji/` | Boon and Drawback PNGs to upload as Discord server emoji |
 | `icons.js`, `icons/` | Game icons (advantage die, challenge die, boon, drawback, heat, influence) |
+| `overlay.html` | The OBS overlay: Heat, Group Influence, Day and the latest roll, driven by the Dice tab |
+| `admin.js` | The Administrator's Overlay panel on the Dice tab; sends rolls and stat changes to the overlay |
+| `obs-link.js` | Minimal OBS WebSocket client the dashboard and the overlay share |
+| `obs-config.example.js` | Template for `obs-config.js` (gitignored): OBS host, port, password and which side the overlay sits on |
 
 Things remembered in localStorage (all under `ncd.`): characters (with the ids of their perks and augmentations, their gear with its type and keywords, and the conditions on them and their gear), the open character, player name, GM toggle, webhook, theme, the last tab, the target number, and the last roll.
 

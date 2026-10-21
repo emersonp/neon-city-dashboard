@@ -96,6 +96,14 @@ wa-tab::part(tab) {
 }
 @media (max-width: 640px) { .dice-layout { grid-template-columns: minmax(0, 1fr); } }
 
+/* ---- the Administrator's overlay panel (admin.js) ---- */
+.admin-panel[hidden] { display: none; }
+.admin-panel::part(body) { display: flex; flex-direction: column; gap: var(--wa-space-m); }
+.admin-panel .stepper [data-step-value] { flex: 1; }
+.obs-status { margin: 0; font-size: var(--wa-font-size-s); color: var(--ncd-bad); }
+.obs-status.ok { color: var(--ncd-good); }
+.obs-status:empty { display: none; }
+
 /* ---- cheat sheet: up to 4 columns ---- */
 .cheat-sheet {
   display: grid;
