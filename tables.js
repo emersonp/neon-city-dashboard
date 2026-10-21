@@ -36,7 +36,7 @@
     { name: "Corporate-Grade", defenses: ["Biometric sensors", "Laser tripwires", "Pressure sensors"], text: "Real money is being spent on security of this tier, which is used to guard corporate secrets and high-value assets. Corporate headquarters, private security guard dispatch offices, R&D laboratories, high-tech manufactories, and some of the homes of more junior executives usually have security of this tier." },
     { name: "Military-Grade", defenses: ["Tremor detectors", "Thermal sensors", "Ultrasonic receptors"], text: "A combination of cutting-edge technology and paranoia is the hallmark of this security tier, which is usually found in locations where dark secrets, weapons of mass destruction, or priceless items are kept. Military outposts, secret research facilities, and the homes of senior executives have security of this tier." },
   ];
-  const alarmHeatIntro = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.";
+  const alarmHeatIntro = "If players ignore obstacles, you can add [challenge][challenge] to rolls to accomplish the scene's main goal. If appropriate, add [heat][heat] instead. Obstacles that involve witnesses or obstacles that can raise alarms have more immediate repercussions.";
   const alarmHeat = [
     ["Monitored", 1],
     ["Consumer-Grade", 2],
