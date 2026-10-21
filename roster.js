@@ -480,7 +480,8 @@
   let removing = null;
   function openRemoveGear(item) {
     removing = item;
-    $("gear-remove-text").textContent = `Remove ${item.description}? This can't be undone.`;
+    $("gear-remove-item").innerHTML = `<span class="gear-remove-name">${escapeHTML(item.description)}${item.quantity > 1 ? ` ×${item.quantity}` : ""}</span>
+      <span class="gear-kind">${escapeHTML(G.label(item))}</span>`;
     removeDialog.open = true;
   }
   $("gear-remove-confirm").addEventListener("click", () => {

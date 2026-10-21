@@ -507,8 +507,9 @@
 
   <!-- Run: confirms removing a gear item (Edit has Save for that) -->
   <wa-dialog id="gear-remove-dialog" label="Remove gear">
-    <p id="gear-remove-text"></p>
-    <wa-button slot="footer" appearance="outlined" data-dialog="close">Keep</wa-button>
+    <div class="gear-remove-item" id="gear-remove-item"></div>
+    <p>This can't be undone.</p>
+    <wa-button slot="footer" variant="neutral" data-dialog="close">Keep</wa-button>
     <wa-button slot="footer" id="gear-remove-confirm" variant="danger">
       <wa-icon slot="start" name="trash"></wa-icon>
       Remove
@@ -518,7 +519,7 @@
   <!-- Create: confirms Discard, which deletes the character being created -->
   <wa-dialog id="discard-dialog" label="Discard character">
     <p id="discard-text"></p>
-    <wa-button slot="footer" appearance="outlined" data-dialog="close">Keep</wa-button>
+    <wa-button slot="footer" variant="neutral" data-dialog="close">Keep</wa-button>
     <wa-button slot="footer" id="discard-confirm" variant="danger">
       <wa-icon slot="start" name="trash"></wa-icon>
       Discard
