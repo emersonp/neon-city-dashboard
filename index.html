@@ -43,6 +43,7 @@
       <wa-tab panel="roster">Roster</wa-tab>
       <wa-tab panel="character" id="character-tab" hidden>Character</wa-tab>
       <wa-tab panel="cheat-sheet">Cheat Sheet</wa-tab>
+      <wa-tab panel="lore">Lore</wa-tab>
       <wa-tab panel="settings">Settings</wa-tab>
 
       <wa-tab-panel name="dice">
@@ -126,6 +127,16 @@
             </ul>
           </section>
         </div>
+      </wa-tab-panel>
+
+      <wa-tab-panel name="lore">
+        <!-- Filled from lore.js by app.js -->
+        <wa-tab-group id="lore-tabs" class="lore-tabs">
+          <wa-tab panel="lore-gear">Gear</wa-tab>
+          <wa-tab panel="lore-keywords">Keywords</wa-tab>
+          <wa-tab-panel name="lore-gear"><div class="cheat-sheet lore" id="lore-gear"></div></wa-tab-panel>
+          <wa-tab-panel name="lore-keywords"><div class="cheat-sheet lore" id="lore-keywords"></div></wa-tab-panel>
+        </wa-tab-group>
       </wa-tab-panel>
 
       <wa-tab-panel name="roster">
@@ -511,6 +522,7 @@
   <script src="abilities.js"></script>
   <script src="characters.js"></script>
   <script src="rules.js"></script>
+  <script src="lore.js"></script>
   <script src="app.js"></script>
   <script src="create.js"></script>
   <script src="roster.js"></script>

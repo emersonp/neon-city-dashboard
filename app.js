@@ -1,4 +1,4 @@
-// Page wiring: theme toggle, tabs, settings, the dice roller, and posting to Discord.
+// Page wiring: theme toggle, tabs, settings, the dice roller, posting to Discord, and the Lore tab.
 (function () {
   const DICE = window.NCD_DICE;
   const C = window.NCD_CHARACTERS;
@@ -74,6 +74,7 @@
     tabs.active = forced ? "settings" : store.get("tab", "dice");
   });
   tabs.addEventListener("wa-tab-show", (e) => {
+    if (e.target !== tabs) return; // the Lore tab's own Gear/Keywords tabs bubble up here too
     if (forced && e.detail.name === "settings") return;
     forced = false;
     store.set("tab", e.detail.name);
@@ -258,6 +259,59 @@
     e.preventDefault();
     rollAndPost();
   });
+
+  // ---- the Lore tab ----
+  // Built once from lore.js. A section with many entries spans the page and flows its entries into columns.
+  {
+    const LORE = window.NCD_LORE;
+    const { formatDescription } = window.NCD_FORMAT;
+    const { escapeHTML } = window.NCD_UTIL;
+    const ICON_COLOR = { "advantage-die": "adv", boon: "adv", "challenge-die": "chal", drawback: "chal" };
+    const rich = (s) => `<div class="ability-text">${formatDescription(s, (name) => icon(name, ICON_COLOR[name] ?? ""))}</div>`;
+    const table = (t) => `<div class="lore-table-wrap"><table class="lore-table">
+      <thead><tr>${t.head.map((h) => `<th>${escapeHTML(h)}</th>`).join("")}</tr></thead>
+      <tbody>${t.rows.map((r) => `<tr>${r.map((c) => `<td>${escapeHTML(c)}</td>`).join("")}</tr>`).join("")}</tbody>
+    </table></div>`;
+    const entry = (e) => `<article class="lore-entry">
+      <h3>${escapeHTML(e.name)}${e.tag ? ` <span class="lore-tag">${escapeHTML(e.tag)}</span>` : ""}</h3>
+      ${e.text ? rich(e.text) : ""}${e.table ? table(e.table) : ""}
+    </article>`;
+    const section = ({ title, kind = "", intro, entries = [], table: t }) => `
+      <section class="sheet-column lore-section${entries.length > 6 ? " wide" : ""}">
+        <h2 class="${kind}">${escapeHTML(title)}</h2>
+        ${intro ? rich(intro) : ""}${t ? table(t) : ""}
+        ${entries.length ? `<div class="lore-entries">${entries.map(entry).join("")}</div>` : ""}
+      </section>`;
+    const list = (names) => names.length ? names.join(", ") : "none";
+
+    $("lore-gear").innerHTML = [
+      ...LORE.gear.map(section),
+      section({
+        title: "Weapons", intro: LORE.weaponsIntro,
+        entries: LORE.weapons.map((w) => ({
+          name: w.name,
+          tag: [w.hands && `${w.hands}H`, `+${w.damage} damage`].filter(Boolean).join(" · "),
+          text: `**Intrinsic keywords:** ${list(w.intrinsic)}\n\n**Allowed keywords:** ${list(w.allowed)}\n\n*${w.examples}*`,
+        })),
+      }),
+      section({ title: "Vehicles", intro: LORE.vehicleRules, entries: LORE.vehicles.map((v) => ({ name: v.name, tag: v.size, text: `*${v.blurb}*\n\n${v.text}` })) }),
+    ].join("");
+
+    // Each weapon keyword says which weapon categories allow it (and which always have it).
+    const weaponsWith = (k, field) => LORE.weapons.filter((w) => w[field].includes(k)).map((w) => w.name);
+    $("lore-keywords").innerHTML = [
+      section({ title: "Positive gear keywords", kind: "boon", intro: LORE.keywordsIntro, entries: LORE.keywords.positive }),
+      section({ title: "Negative gear keywords", kind: "drawback", entries: LORE.keywords.negative }),
+      section({ title: "Random gear keywords", intro: LORE.randomKeywordsIntro, table: { head: ["d100", "Positive", "Negative"], rows: LORE.randomKeywords } }),
+      section({
+        title: "Weapon keywords", intro: "Only weapons can have these keywords, and each weapon category allows only some of them.",
+        entries: LORE.keywords.weapon.map((k) => {
+          const always = weaponsWith(k.name, "intrinsic");
+          return { ...k, text: `${k.text}\n\n**Allowed on:** ${list(weaponsWith(k.name, "allowed"))}${always.length ? `\n\n**Always on:** ${always.join(", ")}` : ""}` };
+        }),
+      }),
+    ].join("");
+  }
 
   // For the Character tab (roster.js).
   window.NCD_APP = { KINDS, toast, targetField, makeRoller, postInfluence };
