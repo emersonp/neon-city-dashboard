@@ -73,7 +73,7 @@ jump about and whatever goes under it stays put.
 ## Tests
 
 ```
-node --test tests/dice.test.cjs tests/discord.test.cjs tests/characters.test.cjs tests/format.test.cjs tests/abilities.test.cjs tests/rules.test.cjs tests/databank.test.cjs tests/tables.test.cjs tests/gear.test.cjs tests/overlay-rules.test.cjs
+node --test tests/dice.test.cjs tests/discord.test.cjs tests/characters.test.cjs tests/format.test.cjs tests/abilities.test.cjs tests/rules.test.cjs tests/databank.test.cjs tests/tables.test.cjs tests/gear.test.cjs tests/overlay-rules.test.cjs tests/advancement.test.cjs tests/profiles.test.cjs
 ```
 
 ## What's here
@@ -92,7 +92,8 @@ node --test tests/dice.test.cjs tests/discord.test.cjs tests/characters.test.cjs
 | `roster.js` | Roster tab and the Character tab, including the condition chips and dialogs |
 | `create.js` | Create mode: a new character built step by step from `rules.js` (step header, the archetype and origin picked so far, Back/Next/Finish, Discard, each step's controls) |
 | `abilities.js` | The perk and augmentation catalog; edit it to add abilities |
-| `rules.js` | Rulebook data for Create: archetype intros and "on the job" text, skills, initiative, knows, starting gear templates; origin options and augmentation gear (needs `characters.js`; testable in Node) |
+| `rules.js` | Rulebook data for Create and the Databank: archetype intros and "on the job" text, skills, initiative, knows, starting gear templates; origin intros, options, Advancement text and augmentation gear; the sentences every archetype or origin section repeats (`text`) (needs `characters.js`; testable in Node) |
+| `profiles.js` | The Databank's Archetypes and Origins pages, built from `rules.js`, `abilities.js` and `advancement.js`; Create's archetype panel uses its text too (testable in Node) |
 | `databank.js` | The Databank tab's text from the rulebook's Equipment chapter: gear, tool sets, weapons, armor, vehicles, gear and weapon keywords with their restrictions (testable in Node) |
 | `tables.js` | The Tables tab's tables: random gear keywords, and security system tiers with each defense's description (testable in Node) |
 | `gear.js` | Gear rules from `databank.js`: built-in keywords, which keywords an item can take, damage and impact, labels, rules text, and Create's starting gear (testable in Node) |
@@ -114,7 +115,14 @@ Things remembered in localStorage (all under `ncd.`): characters (with the ids o
 
 ## Databank
 
-The **Databank** tab is a reference for the rulebook's Equipment chapter, in four tabs: **Gear Basics** (gear
+The **Databank** tab's **Archetypes** and **Origins** tabs have a tab for each archetype and origin, with everything
+the book's section has: its opening paragraph, and for an archetype, what it does on the job, Things You Know About,
+initiative, starting skills, starting gear, perks, and its augmentations from each origin; for an origin, the creation
+steps and options, Advancement with that origin's XP table, its character perks, and its augmentations by archetype and
+in full. `profiles.js` builds them from the data Create and Spend XP use, so nothing is written twice: fix a typo in
+`rules.js` or `abilities.js` and it's fixed everywhere. The sentences each section repeats are in `rules.js`'s `text`.
+
+The rest is a reference for the rulebook's Equipment chapter, in four tabs: **Gear Basics** (gear
 basics, guided skill software, tool kits, targeted stimulants, computer gear, biotechnology, and other tools),
 **Armory** (weapons and body armor), **Garage** (vehicles), and **Keywords** (positive and negative gear keywords,
 and weapon keywords). It's all in
@@ -148,7 +156,9 @@ its type line, a short description in the book's words (`descriptionText` in `ge
 keywords, each folded away under its own name.
 
 **Adding and changing gear:** **Run** and **Edit** both add, change, and remove gear. Run saves right away and doesn't
-set Starter (new gear isn't Starter; changed gear keeps its own); Edit also sets Starter, and saves on Save. Removing an item in Run asks first. A name is optional: new gear's name box fills in from
+set Starting gear (new gear isn't; changed gear keeps its own); Edit has a Starting toggle on each item (and in the gear
+dialog), and saves on Save. Create's gear, and gear bought or kept with Spend XP, is starting gear. Outside Edit, starting
+gear is tagged **Starting** in its row, and its pop-up says so. Removing an item in Run asks first. A name is optional: new gear's name box fills in from
 what the item is ("Improvised Hacker's Deck", "Rail Pistol", "Environment Suit (Underwater)", "Body Armor x2") and
 follows your picks until you type your own, and a blank name saves as that. The gear dialog picks the type, then that type's fields, then keywords: weapon keywords (weapons
 only, from the category's allowed list) and gear keywords, each with its rules text on hover. Changing an item's type or
@@ -174,7 +184,7 @@ restrictions against the keyword text, and `tests/rules.test.cjs` checks the sta
 A character who isn't on a job has **Start Job** where **Run** usually is. Starting a job resets them to their starting
 values (`resetToStarting` in `characters.js`): Luck to max, Influence to starting (1 less if their last job failed), no
 wounds, no Used, only intrinsic conditions on them and their gear, and only their starting gear. The starting gear is
-saved with the job (`character.job`), so gear lost or changed in Run comes back at the end; marking or unmarking Starter
+saved with the job (`character.job`), so gear lost or changed in Run comes back at the end; marking or unmarking Starting
 in Edit mid-job still counts. After that, the button says **Run**.
 
 - **End Session** (Run, top and bottom): each skill marked Used goes up by 1 (to 95 at most), Used is cleared, and a

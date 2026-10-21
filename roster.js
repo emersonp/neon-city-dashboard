@@ -440,7 +440,8 @@
     const changeable = editable || running;
     el.innerHTML = items.length
       ? `<ul class="gear-list">${items.map((g) => `<li data-gear="${escapeHTML(g.id)}">
-          ${GEAR_UI.rowHTML(g)}
+          ${GEAR_UI.rowHTML(g, { starter: !editable })}
+          ${editable ? `<wa-switch size="small" class="gear-starter-toggle" data-gear-starter ${g.starter ? "checked" : ""}>Starting</wa-switch>` : ""}
           ${running ? rollButtonHTML(g) : ""}
           ${changeable ? `<wa-button size="s" appearance="plain" data-gear-action="condition" title="Add a condition">
             <wa-icon slot="start" name="plus"></wa-icon>condition</wa-button>` : ""}
@@ -462,7 +463,7 @@
       const item = id != null && C.gear(state === "editing" ? draft : current).find((g) => String(g.id) === id);
       if (!item) return;
       gearInfo.label = item.description;
-      $("gear-info-body").innerHTML = `<p class="ability-tag">${escapeHTML(G.label(item))}</p>${GEAR_UI.rulesHTML(item)}`;
+      $("gear-info-body").innerHTML = `${GEAR_UI.tagHTML(item)}${GEAR_UI.rulesHTML(item)}`;
       gearInfo.open = true;
     });
   }
@@ -641,6 +642,13 @@
       } else openRemoveGear(item);
     });
   }
+  // Edit: each row's Starting toggle marks the item as starting gear (or not) in the draft.
+  $("gear-edit").addEventListener("change", (e) => {
+    const toggle = e.target.closest("[data-gear-starter]");
+    const id = toggle?.closest("[data-gear]")?.dataset.gear;
+    const item = id != null && state === "editing" && C.gear(draft).find((g) => String(g.id) === id);
+    if (item) draft = C.withGear(draft, { ...item, starter: toggle.checked });
+  });
   // Removing while running asks first, since it saves right away.
   const removeDialog = $("gear-remove-dialog");
   let removing = null;

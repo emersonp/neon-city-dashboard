@@ -648,6 +648,10 @@ wa-tab[hidden], wa-radio[hidden] { display: none; }
 }
 .gear-text { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .gear-kind, .gear-empty { color: var(--wa-color-text-quiet); }
+/* starting gear: a small tag after the kind; Edit has a toggle in its place */
+.gear-starter { margin-inline-start: 0.25em; font-family: var(--font-display); font-size: var(--wa-font-size-2xs); letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--color-holo-text); white-space: nowrap; }
+.gear-starter-toggle { flex: none; font-size: var(--wa-font-size-xs); }
 .gear-empty { margin: 0; }
 .gear-form { display: flex; flex-direction: column; gap: var(--wa-space-l); }
 #gear-dialog { --width: min(46rem, 100vw); }
@@ -740,9 +744,9 @@ button.condition:hover, button.condition:focus-visible { background: color-mix(i
 .ability-summary, .ability-tag { color: var(--wa-color-text-quiet); font-size: var(--wa-font-size-s); }
 .ability-tag { margin-top: 0; }
 .ability-lead { font-style: italic; }
-.ability-text .icon { width: 1.2em; height: 1.2em; vertical-align: -0.25em; --ink: var(--wa-color-brand); }
-.ability-text .icon.adv { --ink: var(--color-good); }
-.ability-text .icon.chal { --ink: var(--color-bad); }
+:is(.ability-text, .databank-table) .icon { width: 1.2em; height: 1.2em; vertical-align: -0.25em; --ink: var(--wa-color-brand); }
+:is(.ability-text, .databank-table) .icon.adv { --ink: var(--color-good); }
+:is(.ability-text, .databank-table) .icon.chal { --ink: var(--color-bad); }
 .ability-text ul { padding-inline-start: 1.5em; }
 /* The ability dialog: title, tag, lead and rules text sit close together */
 #ability-dialog::part(body) { padding-top: 0; }

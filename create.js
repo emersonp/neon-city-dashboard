@@ -49,14 +49,15 @@
   // Changing it clears the knowledge, perk, gear, and augmentation picks made for the old one.
   const hasPicks = (cr) => cr.knows.length > 0 || cr.perk != null || Object.keys(cr.gear ?? {}).length > 0
     || Object.keys(cr.gearPicks ?? {}).length > 0 || cr.augmentations.length > 0;
+  // The text comes from profiles.js, as the Databank's Archetypes tab has it.
   function archetypeDetail(name) {
-    const arch = C.ruleFor(rules().archetypes, name);
+    const arch = C.ruleFor(rules().archetypes, name), P = root.NCD_PROFILES, format = root.NCD_FORMAT.formatDescription;
     if (!arch) return "";
     return `<section class="create-archetype-detail" aria-label="${esc(name)}">
         <h3 class="create-detail-name">${esc(name)}</h3>
-        <p>${esc(arch.intro)}</p>
-        <h4>What Does the ${esc(name)} Do on the Job?</h4>
-        ${arch.job.map((b) => `<p>${esc(b.lead)}</p><ul>${b.items.map((item) => `<li>${esc(item)}</li>`).join("")}</ul>`).join("")}
+        ${format(arch.intro)}
+        <h4>${esc(P.jobTitle(name))}</h4>
+        ${format(P.jobText(arch))}
       </section>`;
   }
   function renderArchetype(body, character) {

@@ -369,10 +369,11 @@
     const { escapeHTML } = window.NCD_UTIL;
     const ICON_COLOR = { "advantage-die": "adv", boon: "adv", "challenge-die": "chal", drawback: "chal" };
     const rich = (s) => `<div class="ability-text">${formatDescription(s, (name) => icon(name, ICON_COLOR[name] ?? ""))}</div>`;
-    // A table's cells are plain text, unless it has its own cell(value, column) giving HTML.
+    // A table's cells are plain text, unless it has its own cell(value, column) giving HTML, or `format` (format.js text).
+    const formatCell = (c) => formatDescription(c, (name) => icon(name, ICON_COLOR[name] ?? "")).replace(/^<p>|<\/p>$/g, "");
     const table = (t) => `<div class="databank-table-wrap"><table class="databank-table">
       <thead><tr>${t.head.map((h) => `<th>${escapeHTML(h)}</th>`).join("")}</tr></thead>
-      <tbody>${t.rows.map((r) => `<tr>${r.map((c, j) => `<td>${t.cell ? t.cell(c, j) : escapeHTML(c)}</td>`).join("")}</tr>`).join("")}</tbody>
+      <tbody>${t.rows.map((r) => `<tr>${r.map((c, j) => `<td>${t.cell ? t.cell(c, j) : t.format ? formatCell(c) : escapeHTML(c)}</td>`).join("")}</tr>`).join("")}</tbody>
     </table></div>`;
     const entry = (e) => `<article class="databank-entry">
       <h3>${escapeHTML(e.name)}${e.tag ? ` <span class="databank-tag">${escapeHTML(e.tag)}</span>` : ""}</h3>
@@ -382,12 +383,12 @@
     const rollButton = (n, die) => `<span class="table-roller"><span class="table-roll" aria-live="polite"></span>
         <wa-button appearance="plain" size="s" data-roll-table="${n}" title="Roll d${die}">
         <wa-icon name="dice" label="Roll d${die}"></wa-icon></wa-button></span>`;
-    // `after` is HTML under the table (the Tables tab's buttons). A card is the full width with `wide`, or many entries.
-    // `double` makes it two columns wide where the page has room for two.
-    const section = ({ title, kind = "", intro, entries = [], table: t, roll, after = "", wide = entries.length > 6, double = false }) => `
+    // `outro` is text under the table; `after` is HTML under that (the Tables tab's buttons). A card is the full width
+    // with `wide`, or many entries. `double` makes it two columns wide where the page has room for two.
+    const section = ({ title, kind = "", intro, entries = [], table: t, outro, roll, after = "", wide = entries.length > 6, double = false }) => `
       <section class="sheet-column databank-section${wide ? " wide" : double ? " double" : ""}">
         <h2 class="${kind}${roll != null ? " rollable" : ""}">${escapeHTML(title)}${roll != null ? rollButton(roll, DICE.tableDie(t)) : ""}</h2>
-        ${intro ? rich(intro) : ""}${t ? table(t) : ""}${after}
+        ${intro ? rich(intro) : ""}${t ? table(t) : ""}${outro ? rich(outro) : ""}${after}
         ${entries.length ? `<div class="databank-entries">${entries.map(entry).join("")}</div>` : ""}
       </section>`;
     const list = (names) => names.length ? names.join(", ") : "none";
@@ -434,6 +435,17 @@
     // One XP table for every origin (advancement.js), with the costs that differ by origin noted.
     const ADVANCEMENT = window.NCD_ADVANCEMENT;
     $("databank-xp").innerHTML = section({ title: "Advancement XP expenditures", intro: ADVANCEMENT.TABLE_INTRO, table: ADVANCEMENT.TABLE, wide: true });
+
+    // Archetypes and Origins: a tab for each, with its page from profiles.js.
+    const PROFILES = window.NCD_PROFILES, C = window.NCD_CHARACTERS;
+    const slug = (name) => name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+    const profileTabs = (prefix, names, page) => `<wa-tab-group class="databank-tabs databank-profile-tabs">
+        ${names.map((name) => `<wa-tab panel="${prefix}-${slug(name)}">${escapeHTML(name)}</wa-tab>`).join("")}
+        ${names.map((name) => `<wa-tab-panel name="${prefix}-${slug(name)}"><div class="cheat-sheet databank">${
+          page(name).map(section).join("")}</div></wa-tab-panel>`).join("")}
+      </wa-tab-group>`;
+    $("databank-archetypes").innerHTML = profileTabs("archetype", C.ARCHETYPES, PROFILES.archetype);
+    $("databank-origins").innerHTML = profileTabs("origin", C.ORIGINS, PROFILES.origin);
 
     // ---- the Tables tab: tables to roll on or look up (tables.js), in the Databank's style ----
     const TABLES = window.NCD_TABLES;

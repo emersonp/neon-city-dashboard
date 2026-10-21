@@ -198,13 +198,18 @@
       </wa-tab-panel>
 
       <wa-tab-panel name="databank">
-        <!-- Filled from databank.js by app.js -->
+        <!-- Filled from databank.js and profiles.js by app.js -->
         <wa-tab-group id="databank-tabs" class="databank-tabs">
+          <wa-tab panel="databank-archetypes">Archetypes</wa-tab>
+          <wa-tab panel="databank-origins">Origins</wa-tab>
           <wa-tab panel="databank-gear">Gear Basics</wa-tab>
           <wa-tab panel="databank-armory">Armory</wa-tab>
           <wa-tab panel="databank-garage">Garage</wa-tab>
           <wa-tab panel="databank-keywords">Gear Keywords</wa-tab>
           <wa-tab panel="databank-xp">XP</wa-tab>
+          <!-- a tab for each archetype and origin, from profiles.js -->
+          <wa-tab-panel name="databank-archetypes"><div id="databank-archetypes"></div></wa-tab-panel>
+          <wa-tab-panel name="databank-origins"><div id="databank-origins"></div></wa-tab-panel>
           <wa-tab-panel name="databank-gear"><div class="cheat-sheet databank" id="databank-gear"></div></wa-tab-panel>
           <wa-tab-panel name="databank-armory"><div class="cheat-sheet databank" id="databank-armory"></div></wa-tab-panel>
           <wa-tab-panel name="databank-garage"><div class="cheat-sheet databank" id="databank-garage"></div></wa-tab-panel>
@@ -593,7 +598,7 @@
   </wa-dialog>
 
   <!-- New gear (Run and Edit) and changing gear (Edit): its type, name, quantity, the type's fields, and keywords.
-       roster.js fills in the type's fields and the keyword picker. Starter is shown only in Edit. -->
+       roster.js fills in the type's fields and the keyword picker. Starting gear is shown only in Edit. -->
   <wa-dialog id="gear-dialog" label="New gear" light-dismiss>
     <div class="gear-form">
       <!-- roster.js adds the types: radios written here would have their values wiped by Firefox restoring form state on reload -->
@@ -604,7 +609,7 @@
       </div>
       <div id="gear-fields" class="gear-fields"></div>
       <div id="gear-keywords"></div>
-      <wa-switch id="gear-starter">Starter</wa-switch>
+      <wa-switch id="gear-starter">Starting gear</wa-switch>
     </div>
     <wa-button slot="footer" id="gear-save" variant="brand">
       <wa-icon slot="start" name="floppy-disk"></wa-icon>
@@ -780,6 +785,7 @@
   <script src="tables.js"></script>
   <script src="gear.js"></script>
   <script src="advancement.js"></script>
+  <script src="profiles.js"></script>
   <script src="overlay-rules.js"></script>
   <script src="admin.js"></script>
   <script src="admin-overlay.js"></script>

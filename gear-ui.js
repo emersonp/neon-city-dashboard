@@ -1,4 +1,4 @@
-// Gear on the page: an item's row (name, its label, keyword chips), its rules text for the gear dialog, and the keyword
+// Gear on the page: an item's row (name, its label, Starting, keyword chips), its rules text for the gear dialog, and the keyword
 // picker the gear dialog and Create share. Needs gear.js, format.js and icons.js.
 (function () {
   const G = window.NCD_GEAR;
@@ -20,7 +20,11 @@
   }
   const nameHTML = (item) => `<button type="button" class="ability-name" data-gear-info="${escapeHTML(item.id)}">${escapeHTML(item.description)}${
     item.quantity > 1 ? ` <span class="gear-quantity">×${item.quantity}</span>` : ""}</button>`;
-  const rowHTML = (item) => `<span class="gear-text">${nameHTML(item)} <span class="gear-kind">[${escapeHTML(G.label(item))}]</span></span>`;
+  // `starter: false` leaves out the Starting tag (Edit has its own toggle for it).
+  const rowHTML = (item, { starter = true } = {}) => `<span class="gear-text">${nameHTML(item)} <span class="gear-kind">[${escapeHTML(G.label(item))}]</span>${
+    starter && item.starter ? ` <span class="gear-starter">Starting</span>` : ""}</span>`;
+  // The pop-up's line above the rules: what kind of item it is, and whether it's starting gear.
+  const tagHTML = (item) => `<p class="ability-tag">${escapeHTML(G.label(item))}${item.starter ? " · Starting gear" : ""}</p>`;
   // The pop-up: what the item is, then each keyword folded away under its own name.
   function rulesHTML(item) {
     const description = G.descriptionText(item);
@@ -53,5 +57,5 @@
       group("Gear keywords", indexed.filter(([k]) => k.group === "gear"))}</div>`;
   }
 
-  window.NCD_GEAR_UI = { keywordChipsHTML, nameHTML, rowHTML, rulesHTML, keywordPickerHTML };
+  window.NCD_GEAR_UI = { keywordChipsHTML, nameHTML, rowHTML, tagHTML, rulesHTML, keywordPickerHTML };
 })();

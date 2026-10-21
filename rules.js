@@ -6,13 +6,16 @@
 //                   initiative {world, network} (50 is stored as null); skills {skillId: {value, adv, chal}}
 //                   (value null is the book's "-"); knows {count, from}; gear: the starting gear lines, each
 //                   {text, items} or {choose: [{text, items}]}, where items are templates (below).
-// origins[name]     pitch; augmentations (granted automatically); options (the two optional choices), each with:
+// origins[name]     pitch; intro (the opening paragraph); xpTable (its Advancement table's number); advancement (the
+//                   Advancement paragraph's last sentence); perksIntro (Synthetic: its character perks' intro);
+//                   augmentations (granted automatically); options (the two optional choices), each with:
 //   placements      intrinsic dice the player puts on skills: {key, kind: "adv" | "chal", count, category: "mental" | "physical",
 //                   differentFrom?: key of an earlier placement that must go on a different skill}
 //   extraAugmentation  true: pick a second starting augmentation      bumps {count, category}: +5% on that many different skills
 //   luck            extra starting luck                               perk: id of the perk it grants
 // augmentationGear  ability id -> the templates of the starting gear that augmentation adds. Weapon Mount only modifies an
 //                   existing weapon, so it has none (gear.js handles it).
+// text              the sentences every archetype or origin section repeats, so a fix to one is a fix to all.
 // A template is { kind, name, quantity?, category? | categories?, keywords?, fixed?, pick?, set?, quality?, vehicle? | vehicles? }:
 //   name is the item's starting name; keywords are the ones the book gives (removable later); fixed are granted against the
 //   usual rules; pick is how many more keywords the player chooses; categories / vehicles are what the player chooses from.
@@ -440,9 +443,16 @@
     },
   };
 
+  // Each origin's last Advancement sentence: which origins' body augmentations it can add.
+  const HUMAN_ADVANCEMENT = "As a human, you will be able to add body augmentations to your default body from the Cybernetic, Gene-Spliced, and Psionic origins during advancement.";
+  const SYNTHETIC_ADVANCEMENT = "As a synthetic intelligence inhabiting an artificial body, you will be able to add body augmentations to your default body from the Cybernetic and Synthetic origins during advancement.";
+
   const origins = {
     Cybernetic: {
       pitch: "Humans that make extensive use of computerized implants and other blends of technological hardware and biological host.",
+      intro: "You are a biological human whose body has been enhanced with cybernetic implants, blending machinery and organics to upgrade your capabilities. Cybernetic enhancement is the most common form of body augmentation, and is unremarkable in larger society; even wealthy elites frequently have visible cybernetics.",
+      xpTable: "3-2",
+      advancement: HUMAN_ADVANCEMENT,
       augmentations: [],
       options: [
         { id: "chop-shop", name: "Chop Shop Cybernetics",
@@ -455,6 +465,9 @@
     },
     "Gene-Spliced": {
       pitch: "People whose genetic makeup has been altered and enhanced to produce something more than human.",
+      intro: "Your body has been altered by biological engineering, splicing in artificial augmentations to your DNA derived from scientific research and replacing organs with vat-grown substitutes. These augmentations may have come from gene therapy, or from genetic engineering during your body's gestation. While you are still essentially human, your body has been upgraded through enough changes to your DNA and after-market organic grafts that your appearance may be truly striking.",
+      xpTable: "3-3",
+      advancement: HUMAN_ADVANCEMENT,
       augmentations: [],
       options: [
         { id: "artificial-lycanthropy", name: "Artificial Lycanthropy",
@@ -467,6 +480,9 @@
     },
     Psionic: {
       pitch: "Individuals whose minds have been awakened to a higher level of awareness, granting them psionic powers.",
+      intro: "Your mind has been opened to a higher level of perception, granting you access to unique abilities that come from within you. Nothing about your appearance gives an outward indication that you possess supernatural mental powers.",
+      xpTable: "3-4",
+      advancement: HUMAN_ADVANCEMENT,
       augmentations: [],
       options: [
         { id: "born-this-way", name: "Born this Way",
@@ -479,6 +495,10 @@
     },
     Synthetic: {
       pitch: "Sentient artificial intelligences inhabiting robotic bodies.",
+      intro: "You are a synthetic intelligence that inhabits robotic bodies. You started out as an advanced self-enhancing program and, through a combination of machine learning and fortuitous data exposure, achieved true sentience and were recognized as a person under the Turing Accords. Your artificial body mimics human functionality and appearance, and though up close no one would mistake you for human you largely blend in with a crowd.",
+      xpTable: "3-5",
+      advancement: SYNTHETIC_ADVANCEMENT,
+      perksIntro: "The following character perks are unique to synthetic characters that choose options during character creation to obtain them.",
       augmentations: ["synthetic-body"],
       options: [
         { id: "network-native", name: "Network Native",
@@ -500,5 +520,24 @@
     "transfigurable-weapon": [weapon("Transfigurable pistol", "Pistol", { keywords: ["Mounted"], pick: 2 })],
   };
 
-  root.NCD_RULES = { archetypes, origins, augmentationGear };
+  // The book's sentences that every archetype or origin section repeats, written once (format.js format).
+  const NUMBER_WORDS = ["zero", "one", "two", "three", "four", "five"];
+  const text = {
+    knowsFrom: (count, list) => `Choose ${NUMBER_WORDS[count] ?? count} from the following list: ${list.join(", ")}`,
+    knowsAny: (count) => `Choose **any ${count}** Things You Know About.`,
+    initiative: "Set your starting initiative to the following values:",
+    skills: "Mark the following starting values for your skills:",
+    bumps: (count) => `Then choose **any ${count} skills** and increase them each by 5%.`,
+    gear: "Add the following items to your character's equipment, and mark each of them as Starting Gear:",
+    perks: (archetype) => `The following perks are ${archetype.toLowerCase()} archetype perks. When you first create your crew member, choose 1 of these perks to add to the character.`,
+    creating: "When you first create a new member of the crew, follow these steps:",
+    grantedAugmentation: (name) => `Add the ${name} augmentation to your default body`,
+    chooseAugmentation: "Choose 1 of the starting body augmentations for your archetype and add it to your default body",
+    options: "Additionally, you can optionally choose one of the following two choices (you can also elect not to take either option):",
+    advancement: (table) => `At the end of each job, you will have the opportunity to spend XP to improve your character. The XP cost of various improvements is described on ${table}.`,
+    xpTable: (number, origin) => `Table ${number}: ${origin} Character Advancement XP Expenditures`,
+    augmentations: (origin) => `The following perks are ${origin.toLowerCase()} body augmentations.`,
+  };
+
+  root.NCD_RULES = { archetypes, origins, augmentationGear, text };
 })(globalThis);

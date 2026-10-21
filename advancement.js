@@ -19,7 +19,9 @@
   };
   const originCost = (key, origin) => ORIGIN_COST[key][origin] ?? ORIGIN_COST[key].default;
   // For the table: "2 (Cybernetic: 3)", or with `plus` "2 + the number of … (Synthetic: 1 + that number)".
-  const originCostText = (key, plus = "") => {
+  // With an origin, just that origin's cost: "3", or "1 + the number of …".
+  const originCostText = (key, plus = "", origin = null) => {
+    if (origin) return `${originCost(key, origin)}${plus ? ` + ${plus}` : ""}`;
     const { default: base, ...others } = ORIGIN_COST[key];
     const notes = Object.entries(others).map(([origin, n]) => `${origin}: ${n}${plus ? " + that number" : ""}`);
     return `${base}${plus ? ` + ${plus}` : ""}${notes.length ? ` (${notes.join("; ")})` : ""}`;
@@ -36,6 +38,7 @@
 
   // Everything that can be bought, in the book's order. Each benefit has:
   //   text     the table's Benefit column; costText its XP Cost column; short (below) its name on Spend XP
+  //   originCost  { key, plus } for a cost that differs by origin (ORIGIN_COST), so one origin's table can show its own
   //   pick     what the player picks: "ability", "skill", "gear" (an acquired item), "keyword" ({ gear, keyword }),
   //            "item" (new gear), or none
   //   options(state, catalog)       what can be picked: [{ value, label, group? }] (for "keyword", the starting gear)
@@ -44,14 +47,14 @@
   // A state is { character, acquired }: acquired is the gear picked up on the job that hasn't been made starting gear.
   const withCharacter = (state, character) => ({ ...state, character });
   const initiative = (id, key, name) => ({
-    id, text: `Increase your ${name} chance of success by 5%`, costText: originCostText(key),
+    id, text: `Increase your ${name} chance of success by 5%`, costText: originCostText(key), originCost: { key },
     cost: ({ character }) => originCost(key, character.origin),
     available: ({ character }) => C.shownValue(C.skill(character, id).value) < MAX_INITIATIVE,
     apply: (state) => withCharacter(state, C.withSkill(state.character, id,
       { value: Math.min(MAX_INITIATIVE, C.shownValue(C.skill(state.character, id).value) + C.STEP) })),
   });
-  const ability = (id, text, costText, cost, test) => ({
-    id, text, costText, pick: "ability",
+  const ability = (id, text, costText, cost, test, originCostOf = null) => ({
+    id, text, costText, ...(originCostOf ? { originCost: originCostOf } : {}), pick: "ability",
     options: ({ character }, catalog) => notOwned(character, catalog, (a) => test(a, character)).map(abilityOption),
     cost: ({ character }, value, catalog) => cost(character, catalog),
     apply: (state, value) => withCharacter(state, C.withAbility(state.character, value)),
@@ -75,15 +78,18 @@
     ability("augmentation-own", "Gain an augmentation of your origin associated with your archetype",
       originCostText("augmentationOwn", AUGMENTATIONS_YOU_HAVE),
       (c, cat) => originCost("augmentationOwn", c.origin) + augmentations(c, cat),
-      (a, c) => a.type === "augmentation" && a.origin === c.origin && (a.archetype == null || ownArchetype(a, c))),
+      (a, c) => a.type === "augmentation" && a.origin === c.origin && (a.archetype == null || ownArchetype(a, c)),
+      { key: "augmentationOwn", plus: AUGMENTATIONS_YOU_HAVE }),
     ability("augmentation-other", "Gain an augmentation of your origin associated with another archetype",
       originCostText("augmentationOther", AUGMENTATIONS_YOU_HAVE),
       (c, cat) => originCost("augmentationOther", c.origin) + augmentations(c, cat),
-      (a, c) => a.type === "augmentation" && a.origin === c.origin && a.archetype != null && !ownArchetype(a, c)),
+      (a, c) => a.type === "augmentation" && a.origin === c.origin && a.archetype != null && !ownArchetype(a, c),
+      { key: "augmentationOther", plus: AUGMENTATIONS_YOU_HAVE }),
     ability("augmentation-body", "Gain a body augmentation from another origin (humans: Cybernetic, Gene-Spliced or Psionic; synthetics: Cybernetic)",
       originCostText("augmentationBody", AUGMENTATIONS_YOU_HAVE),
       (c, cat) => originCost("augmentationBody", c.origin) + augmentations(c, cat),
-      (a, c) => a.type === "augmentation" && a.origin !== c.origin && augmentationOrigins(c.origin).includes(a.origin)),
+      (a, c) => a.type === "augmentation" && a.origin !== c.origin && augmentationOrigins(c.origin).includes(a.origin),
+      { key: "augmentationBody", plus: AUGMENTATIONS_YOU_HAVE }),
     {
       id: "luck", text: "Increase your maximum luck by 5", costText: "1", cost: () => 1,
       apply: (state) => withCharacter(state, { ...state.character, maxLuck: C.luck(state.character).max + 5 }),
@@ -190,14 +196,16 @@
     return { character: next, purchases: result.purchases, spent: result.spent, remaining: result.remaining };
   }
 
-  // The Databank's XP table.
-  const TABLE = { head: ["Benefit", "XP cost"], rows: BENEFITS.map((b) => [b.text, b.costText]) };
+  // The Databank's XP table: every origin's (with the costs that differ noted), or with an origin, just that origin's.
+  const tableFor = (origin = null) => ({ head: ["Benefit", "XP cost"], rows: BENEFITS.map((b) => [b.text,
+    origin && b.originCost ? originCostText(b.originCost.key, b.originCost.plus, origin) : b.costText]) });
+  const TABLE = tableFor();
   const TABLE_INTRO = "At the end of each job, after Finish Job, you can spend XP to improve your character. Costs that differ by "
     + "origin are noted in brackets. Humans (Cybernetic, Gene-Spliced and Psionic) can add body augmentations from any of those three "
     + "origins; synthetics can add them from the Synthetic and Cybernetic origins.";
 
   root.NCD_ADVANCEMENT = {
     HUMAN, ORIGIN_COST, augmentationOrigins, originCost, BENEFITS, BENEFIT, canBuy, applyPurchases,
-    isSpending, acquiredGear, beginSpending, finishSpending, TABLE, TABLE_INTRO,
+    isSpending, acquiredGear, beginSpending, finishSpending, TABLE, TABLE_INTRO, tableFor,
   };
 })(globalThis);
