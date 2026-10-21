@@ -764,3 +764,12 @@ html:not(.bevel) .portrait-frame::after { content: ""; position: absolute; inset
 html:not(.bevel) .roll-button::part(base), html:not(.bevel) .portrait { box-shadow: none; }
 html:not(.bevel) .roll-button { filter: drop-shadow(0 0 10px var(--ncd-glow)); }
 html:not(.bevel).wa-dark .portrait-frame { filter: drop-shadow(0 0 6px color-mix(in srgb, var(--ncd-cyan) 25%, transparent)); }
+
+/* ---- Create: starting gear, each book line and the items it gives with their picks ---- */
+.create-gear li { display: block; padding: var(--wa-space-s) 0; }
+.create-gear-text { margin: 0 0 var(--wa-space-2xs); font-style: italic; color: var(--wa-color-text-quiet); }
+.create-gear-item { display: flex; flex-direction: column; gap: var(--wa-space-xs); margin-top: var(--wa-space-xs); }
+.create-gear-item wa-select { max-width: 20rem; }
+.create-gear-name { font-weight: 600; }
+.create-gear-keywords { display: flex; flex-direction: column; gap: var(--wa-space-xs); }
+.create-gear-mount { display: flex; flex-direction: column; gap: var(--wa-space-s); margin-top: var(--wa-space-m); }

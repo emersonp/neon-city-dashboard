@@ -46,7 +46,8 @@
     : list.includes(value) || list.length >= max ? list : [...list, value]);
 
   // Archetype: one card each. Changing it clears the knowledge, perk, gear, and augmentation picks made for the old one.
-  const hasPicks = (cr) => cr.knows.length > 0 || cr.perk != null || Object.keys(cr.gear ?? {}).length > 0 || cr.augmentations.length > 0;
+  const hasPicks = (cr) => cr.knows.length > 0 || cr.perk != null || Object.keys(cr.gear ?? {}).length > 0
+    || Object.keys(cr.gearPicks ?? {}).length > 0 || cr.augmentations.length > 0;
   function renderArchetype(body, character) {
     const picked = character.creation.archetype;
     body.innerHTML = `<div class="create-cards" role="group" aria-label="Archetype">${C.ARCHETYPES.map((name) =>
@@ -96,13 +97,75 @@
     });
   }
 
+  // ---- starting gear (gear.js): each item a book line gives, with a picker for whatever is left to choose ----
+  // Picks are saved in creation.gearPicks by item id; "weapon-mount" holds Weapon Mount's target and keyword.
+  const G = () => root.NCD_GEAR;
+  const GEAR_UI = () => root.NCD_GEAR_UI;
+  const MOUNT = "weapon-mount";
+  const itemLine = (item) => `<span class="gear-text"><span class="create-gear-name">${esc(item.description)}${
+    item.quantity > 1 ? ` <span class="gear-quantity">×${item.quantity}</span>` : ""}</span> <span class="gear-kind">[${esc(G().label(item))}]</span></span>`;
+  // Keywords that count toward a pick: the ones not ticked yet, and the ones this pick ticked (not the book's or Weapon Mount's).
+  const pickableFor = (item, picked) => G().keywordChoices(item).filter((k) => !k.checked || picked.includes(k.name)).map((k) => k.name);
+  function keywordPick(attr, id, item, picked, count) {
+    const done = G().keywordChoices(item).filter((k) => k.checked && picked.includes(k.name)).length;
+    return `<div class="create-gear-keywords" ${attr}="${esc(id)}">
+        <span class="sheet-label">${count === 1 ? "1 keyword" : `${count} keywords`} of your choice <span class="create-hint">${done} / ${count}</span></span>
+        ${GEAR_UI().keywordPickerHTML(item, { limit: count, pickable: pickableFor(item, picked) })}
+      </div>`;
+  }
+  function slotHTML(slot, picks) {
+    const t = slot.template, pick = picks[slot.id] ?? {}, item = slot.item;
+    const choose = (field, label, list) => `<wa-select data-slot="${esc(slot.id)}" data-slot-field="${field}" label="${label}" placeholder="Choose…"
+        ${list.indexOf(item[field]) >= 0 ? `value="${list.indexOf(item[field])}"` : ""}>${list.map((name, i) => `<wa-option value="${i}">${esc(name)}</wa-option>`).join("")}</wa-select>`;
+    return `<div class="create-gear-item">
+        ${itemLine(item)}${GEAR_UI().keywordChipsHTML(item)}
+        ${t.categories ? choose("category", "Category", t.categories) : ""}
+        ${t.vehicles ? choose("vehicle", "Vehicle", t.vehicles) : ""}
+        ${t.pick ? keywordPick("data-slot-keywords", slot.id, item, Array.isArray(pick.keywords) ? pick.keywords : [], t.pick) : ""}
+      </div>`;
+  }
+  // Saves a change to the gear picks: a category or vehicle, a keyword ticked or unticked, or Weapon Mount's target.
+  function wireGearPicks(body) {
+    body.addEventListener("change", (e) => {
+      const cr = ctx.current().creation, picks = cr.gearPicks ?? {};
+      const select = e.target.closest("[data-slot-field]");
+      const box = e.target.closest("[data-keyword]");
+      if (select) {
+        const id = select.dataset.slot, field = select.dataset.slotField;
+        const slot = G().starterSlots(cr, rules()).find((s) => s.id === id);
+        const list = field === "category" ? slot?.template.categories : slot?.template.vehicles;
+        if (!list) return;
+        // keywords the new category can't have are dropped, so they don't hold a place in the pick
+        const next = { ...picks, [id]: { ...picks[id], [field]: list[select.value] } };
+        const item = G().starterSlots({ ...cr, gearPicks: next }, rules()).find((x) => x.id === id).item;
+        next[id].keywords = (next[id].keywords ?? []).filter((k) => item.keywords.includes(k));
+        ctx.choose({ gearPicks: next }, `[data-slot="${id}"][data-slot-field="${field}"]`);
+      } else if (box?.closest("[data-slot-keywords]")) {
+        const id = box.closest("[data-slot-keywords]").dataset.slotKeywords;
+        const item = G().starterSlots(cr, rules()).find((x) => x.id === id)?.item;
+        const was = (picks[id]?.keywords ?? []).filter((k) => item?.keywords.includes(k));
+        const keywords = box.checked ? [...was, box.dataset.keyword] : was.filter((k) => k !== box.dataset.keyword);
+        ctx.choose({ gearPicks: { ...picks, [id]: { ...picks[id], keywords } } }, `[data-slot-keywords="${id}"] [data-keyword="${box.dataset.keyword}"]`);
+      } else if (box?.closest("[data-mount-keywords]")) {
+        const was = picks[MOUNT]?.keywords ?? [];
+        const keywords = box.checked ? [box.dataset.keyword] : was.filter((k) => k !== box.dataset.keyword);
+        ctx.choose({ gearPicks: { ...picks, [MOUNT]: { ...picks[MOUNT], keywords } } }, `[data-mount-keywords] [data-keyword="${box.dataset.keyword}"]`);
+      } else if (e.target.closest("[data-mount-target]")) {
+        const group = e.target.closest("[data-mount-target]");
+        if (group.value) ctx.choose({ gearPicks: { ...picks, [MOUNT]: { target: group.value, keywords: [] } } }, `[data-mount-target] wa-radio[value="${group.value}"]`);
+      }
+    });
+  }
+
   // Perk & Gear: the archetype's five perks (the picked one shows its rules text), then the starting gear,
-  // fixed lines as written and each "choose one" line as radio buttons.
+  // each line's book text with the item(s) it gives and their picks, and each "choose one" line as radio buttons.
   function renderPerk(body, character) {
     const cr = character.creation, arch = C.ruleFor(rules().archetypes, cr.archetype);
     if (!arch) { needsArchetype(body); return; }
     // several "choose one" lines each get their own label, so screen readers can tell them apart
-    const choices = arch.gear.filter((line) => typeof line !== "string").length;
+    const choices = arch.gear.filter((line) => line.choose).length;
+    const slots = G().starterSlots(cr, rules()), picks = cr.gearPicks ?? {};
+    const slotsOf = (i) => slots.filter((s) => s.id.startsWith(`create-gear-${i}-`)).map((s) => slotHTML(s, picks)).join("");
     let nth = 0;
     const perks = C.findAbilities(catalog().filter((a) => a.type === "perk" && a.archetype === cr.archetype))[0]?.items ?? [];
     body.innerHTML = `<section class="create-perks">
@@ -115,15 +178,17 @@
       </section>
       <section class="gear">
         <h3 class="create-heading">Starting Gear</h3>
-        <ul class="gear-list create-gear">${arch.gear.map((line, i) => typeof line === "string"
-          ? `<li><span class="gear-text">${esc(line)}</span></li>`
+        <ul class="gear-list create-gear">${arch.gear.map((line, i) => !line.choose
+          // a prop is its own line's text, so it isn't shown twice
+          ? `<li>${line.items.every((t) => t.kind === "prop") ? "" : `<p class="create-gear-text">${esc(line.text)}</p>`}${slotsOf(i)}</li>`
           : `<li><wa-radio-group label="Choose one${choices > 1 ? ` (${++nth} of ${choices})` : ""}" data-gear="${i}" ${cr.gear?.[i] != null ? `value="${cr.gear[i]}"` : ""}>${
-              line.choose.map((option, n) => `<wa-radio value="${n}">${esc(option)}</wa-radio>`).join("")}</wa-radio-group></li>`).join("")}</ul>
+              line.choose.map((option, n) => `<wa-radio value="${n}">${esc(option.text)}</wa-radio>`).join("")}</wa-radio-group>${slotsOf(i)}</li>`).join("")}</ul>
       </section>`;
     body.addEventListener("click", (e) => {
       const perk = e.target.closest("[data-perk]")?.dataset.perk;
       if (perk) ctx.choose({ perk }, `[data-perk="${perk}"]`);
     });
+    wireGearPicks(body);
     body.addEventListener("change", (e) => {
       const group = e.target.closest("[data-gear]");
       if (!group || group.value === "" || group.value == null) return;
@@ -205,11 +270,40 @@
       <section class="create-augs">
         <h3 class="create-heading">Augmentation <span class="create-hint">${max > 1 ? `Choose ${max} different` : "Choose 1"}</span></h3>
         <div class="create-cards create-perk-cards" role="group" aria-label="Starting augmentation">${augs}</div>
-      </section>`;
+      </section>
+      ${augmentationGearHTML(cr)}`;
     wireOrigin(body);
   }
 
+  // The starting gear augmentations give (with their picks), and Weapon Mount's target and keyword.
+  function augmentationGearHTML(cr) {
+    const slots = G().starterSlots(cr, rules()), picks = cr.gearPicks ?? {};
+    const own = slots.filter((s) => s.step === "origin");
+    const all = [...(C.ruleFor(rules().origins, cr.origin)?.augmentations ?? []), ...cr.augmentations];
+    let mount = "";
+    if (all.includes(MOUNT)) {
+      const targets = G().weaponMountTargets(cr, rules()), pick = picks[MOUNT] ?? {};
+      const target = targets.includes(pick.target) ? slots.find((s) => s.id === pick.target) : null;
+      mount = `<div class="create-gear-mount">
+          <p class="create-gear-text">${esc(abilityName(MOUNT))}: one starting weapon gains Mounted and 1 keyword of your choice</p>
+          ${targets.length ? `<wa-radio-group label="Weapon" data-mount-target ${target ? `value="${esc(target.id)}"` : ""}>${targets.map((id) => {
+            const s = slots.find((x) => x.id === id);
+            return `<wa-radio value="${esc(id)}">${esc(s.item.description)} <span class="gear-kind">[${esc(G().label(s.item))}]</span></wa-radio>`;
+          }).join("")}</wa-radio-group>` : `<p class="create-placeholder">None of your starting weapons can be mounted.</p>`}
+          ${target ? keywordPick("data-mount-keywords", MOUNT, target.item, Array.isArray(pick.keywords) ? pick.keywords : [], 1) : ""}
+        </div>`;
+    }
+    if (!own.length && !mount) return "";
+    const from = (id) => abilityName(id.replace(/^create-aug-/, "").replace(/-\d+$/, ""));
+    return `<section class="gear create-gear-augs">
+        <h3 class="create-heading">Starting Gear from Augmentations</h3>
+        ${own.length ? `<ul class="gear-list create-gear">${own.map((s) => `<li><p class="create-gear-text">From ${esc(from(s.id))}</p>${slotHTML(s, picks)}</li>`).join("")}</ul>` : ""}
+        ${mount}
+      </section>`;
+  }
+
   function wireOrigin(body) {
+    wireGearPicks(body);
     body.addEventListener("click", (e) => {
       const pick = e.target.closest("[data-origin], [data-aug]");
       if (!pick || pick.disabled) return;
