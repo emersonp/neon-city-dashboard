@@ -37,8 +37,8 @@ window.NCD_PORTRAITS = [
   "033.png",
   "034.png",
   "035.png",
+  "036.png",
+  "037.png",
   "038.png",
   "039.png",
-  "040.png",
-  "041.png",
 ];
