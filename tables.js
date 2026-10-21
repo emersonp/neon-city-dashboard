@@ -3,6 +3,7 @@
 //
 // randomKeywords  the random gear keywords table: [range, positive, negative]
 // securityTiers   the security system tiers: { name, text, defenses: [names, as the table shows them] }, and securityTiersOutro
+// alarmHeat       the heat an obstacle's alarm adds to the heat pool, by security tier: [tier, heat], and alarmHeatIntro
 // securityDefenses the security systems the tiers' defenses name: { name, tag?, text }. A defense in a tier links to the
 //                 one here of the same name (any case); X-ray scanners are described but in no tier.
 // liabilities     the liability table: [range, liability]. A character picks (or rolls) one at their first End Session
@@ -36,6 +37,14 @@
     { name: "Military-Grade", defenses: ["Tremor detectors", "Thermal sensors", "Ultrasonic receptors"], text: "A combination of cutting-edge technology and paranoia is the hallmark of this security tier, which is usually found in locations where dark secrets, weapons of mass destruction, or priceless items are kept. Military outposts, secret research facilities, and the homes of senior executives have security of this tier." },
   ];
   const securityTiersOutro = "Administrators can find objectives modeled after these security systems for use as obstacles, under “Security Systems” on page 218.";
+  const alarmHeatIntro = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.";
+  const alarmHeat = [
+    ["Monitored", 1],
+    ["Consumer-Grade", 2],
+    ["Government-Grade", 4],
+    ["Corporate-Grade", 6],
+    ["Military-Grade", 10],
+  ];
   const securityDefenses = [
     { name: "Biometric Sensors", text: "While “biometric” sensors technically encompasses both fingerprint and retinal scanners, this objective represents advanced biometric sensors that use a combination of infrared and x-rays to identify a person based on their musculature, unique skeletal markers, and other indicators that lie beneath the skin. These sensors are sometimes preferred over fingerprint or retinal scanners because they do not require the subject to actively participate in the scanning process, which can be done secretly by cleverly-hidden sensors." },
     { name: "Fingerprint Readers", text: "Similar in both function and drawbacks to retinal scanners, fingerprint readers require the person attempting to pass to place one or more fingers on a tactile reader, which then identifies the person passing through based on their unique fingerprints. Fingerprints are almost impossible to replicate, resulting in at least a confident identification of the shell." },
@@ -114,5 +123,5 @@
     ["99-100", "A patch of exposed metal or circuitry on an otherwise flesh-covered surface"],
   ];
 
-  root.NCD_TABLES = { randomKeywordsIntro, randomKeywords, securityTiers, securityTiersOutro, securityDefenses, liabilities, distinctiveTraits };
+  root.NCD_TABLES = { randomKeywordsIntro, randomKeywords, securityTiers, securityTiersOutro, alarmHeatIntro, alarmHeat, securityDefenses, liabilities, distinctiveTraits };
 })(globalThis);

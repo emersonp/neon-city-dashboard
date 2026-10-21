@@ -18,6 +18,7 @@ function* texts() {
   yield ["random keywords", T.randomKeywordsIntro];
   for (const t of T.securityTiers) yield [t.name, t.text];
   yield ["security tiers", T.securityTiersOutro];
+  yield ["alarm heat", T.alarmHeatIntro];
   for (const d of T.securityDefenses) yield [d.name, d.text];
 }
 
@@ -87,4 +88,9 @@ test("tables: every described security defense but X-ray scanners is named in a 
     if (d.name === "X-Ray Scanners") continue;
     assert.ok(named.includes(d.name.toLowerCase()), d.name);
   }
+});
+
+test("tables: the alarm heat table names each security tier but Unprotected, in order", () => {
+  assert.deepEqual(T.alarmHeat.map(([tier]) => tier), T.securityTiers.slice(1).map((t) => t.name));
+  for (const [tier, heat] of T.alarmHeat) assert.ok(Number.isInteger(heat) && heat > 0, tier);
 });
