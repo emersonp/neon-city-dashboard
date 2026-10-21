@@ -502,8 +502,8 @@
       const sev = C.severityLabel(x.severity);
       const inner = `${name}${sev ? ` <span class="condition-severity">${sev}</span>` : ""}`;
       return clickable
-        ? `<button type="button" class="condition" data-condition="${escapeHTML(x.id)}" data-gear-of="${escapeHTML(gearId ?? "")}">${inner}</button>`
-        : `<span class="condition">${inner}</span>`;
+        ? `<button type="button" class="condition" data-severity="${x.severity}" data-condition="${escapeHTML(x.id)}" data-gear-of="${escapeHTML(gearId ?? "")}">${inner}</button>`
+        : `<span class="condition" data-severity="${x.severity}">${inner}</span>`;
     }).join("")}</div>`;
   }
   function renderConditions(el, holder, options = {}) {

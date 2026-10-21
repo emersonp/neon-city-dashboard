@@ -487,25 +487,36 @@ wa-tab[hidden] { display: none; }
 
 /* ---- conditions: pill chips; intrinsic names in italics; clickable in Run and Edit ---- */
 .condition-list { display: flex; flex-wrap: wrap; gap: var(--wa-space-2xs); }
+/* Conditions: magenta pills, tinted and glowing more as severity rises (data-severity 1-4); the severity is a solid badge */
 .condition {
+  --cond: var(--ncd-magenta);
+  --cond-fill: 14%;
+  --cond-glow: 0px;
   display: inline-flex;
-  align-items: baseline;
-  gap: 0.35em;
+  align-items: center;
+  gap: 0.4em;
   padding: 0.1em 0.75em;
-  border: 1px solid var(--wa-color-brand);
+  border: 1px solid var(--cond);
   border-radius: 999px;
-  background: transparent;
+  background: color-mix(in srgb, var(--cond) var(--cond-fill), transparent);
   color: inherit;
   font: inherit;
+  font-weight: 600;
   line-height: 1.5;
   overflow-wrap: anywhere;
 }
+.condition[data-severity="2"] { --cond-fill: 22%; }
+.condition[data-severity="3"] { --cond-fill: 30%; }
+.condition[data-severity="4"] { --cond-fill: 40%; border-width: 2px; }
+.wa-dark .condition { --cond-glow: 6px; box-shadow: 0 0 var(--cond-glow) color-mix(in srgb, var(--cond) 45%, transparent); }
+.wa-dark .condition[data-severity="3"] { --cond-glow: 10px; }
+.wa-dark .condition[data-severity="4"] { --cond-glow: 14px; }
 /* Web Awesome styles native buttons as form controls; a chip button looks like the plain chip */
 button.condition { display: inline-flex; height: auto; min-height: 0; cursor: pointer; }
-button.condition:hover, button.condition:focus-visible { background: color-mix(in srgb, var(--wa-color-brand) 15%, transparent); }
-.condition-severity { font-weight: 600; color: var(--wa-color-brand); }
+button.condition:hover, button.condition:focus-visible { background: color-mix(in srgb, var(--cond) calc(var(--cond-fill) + 12%), transparent); }
+.condition-severity { padding: 0 0.45em; border-radius: 999px; background: var(--cond); color: var(--wa-color-surface-default);
+  font-size: 0.8em; font-weight: 700; line-height: 1.5; }
 .gear-list li .condition-list { flex-basis: 100%; }
-/* gear keywords: quieter chips than conditions; negative ones dashed red */
 /* gear keywords: a quiet line of small caps (conditions are the outlined pills); negative ones red, built-in ones italic */
 .gear-keywords { flex-basis: 100%; display: flex; flex-wrap: wrap; align-items: baseline; font-size: var(--wa-font-size-xs);
   letter-spacing: 0.12em; text-transform: uppercase; color: var(--wa-color-text-quiet); cursor: default; user-select: none; }
