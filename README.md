@@ -169,6 +169,24 @@ Origin step. Next waits until every pick is made.
 To add equipment, a tool set, or a keyword restriction, edit `databank.js`; `tests/databank.test.cjs` checks the
 restrictions against the keyword text, and `tests/rules.test.cjs` checks the starting gear templates against the databank.
 
+## Jobs and sessions
+
+A character who isn't on a job has **Start Job** where **Run** usually is. Starting a job resets them to their starting
+values (`resetToStarting` in `characters.js`): Luck to max, Influence to starting (1 less if their last job failed), no
+wounds, no Used, only intrinsic conditions on them and their gear, and only their starting gear. The starting gear is
+saved with the job (`character.job`), so gear lost or changed in Run comes back at the end; marking or unmarking Starter
+in Edit mid-job still counts. After that, the button says **Run**.
+
+- **End Session** (Run, top and bottom): each skill marked Used goes up by 1 (to 95 at most), Used is cleared, and a
+  dialog lists the skills that went up before going back to Detail.
+- **Finish Job** (Run, bottom only) opens a page that ends the session, lists the skills that went up, and asks for an
+  improvement (an untrained skill to 55%, +10 maximum luck, or 1 XP) and whether the job succeeded. A success earns the
+  XP entered and a reward (a distinctive feature, which does nothing yet; a new starting prop; or the Cybernetic keyword on
+  a piece of starting gear that can take it). A failure earns 1 XP and the next job starts with 1 less Influence.
+  **Confirm** saves it all, resets to starting values and gear, and ends the job.
+- **Abandon Job** (Roster, for a character on a job) asks first, then ends the job without finishing it: starting
+  values and gear, with no XP or improvement.
+
 ## Conditions
 
 A character and each piece of their gear can have conditions. Each one has a name, a severity of 1 to 4, and an

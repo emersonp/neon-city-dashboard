@@ -382,6 +382,8 @@ wa-tab[hidden] { display: none; }
 /* the copy of the mode's buttons at the top of the card */
 .character-actions.top { justify-content: flex-end; margin-bottom: var(--wa-space-l); }
 .character-actions.top[hidden] { display: none; }
+/* bottom-only buttons (Finish Job, Close...) sit together at the right */
+.character-actions > :not([data-bottom-only]) + [data-bottom-only] { margin-inline-start: auto; }
 /* sheet head: identity (left) and stat boxes (right), like the paper sheet */
 .sheet-head {
   display: grid;
@@ -495,6 +497,16 @@ wa-tab[hidden] { display: none; }
 .character-form { display: flex; flex-direction: column; gap: var(--wa-space-l); }
 .character-form[hidden] { display: none; }
 .character-form > wa-button[type="submit"] { align-self: flex-start; }
+
+/* ---- Finish Job: one section per choice, the fields each choice needs under it ---- */
+.character-finish { display: flex; flex-direction: column; gap: var(--wa-space-l); }
+.character-finish[hidden] { display: none; }
+.character-finish h2 { margin: 0; }
+.finish-part { display: flex; flex-direction: column; gap: var(--wa-space-s); max-width: 36rem; }
+.finish-part h3 { margin: 0; }
+.finish-part [hidden] { display: none; }
+.finish-note { margin: 0; color: var(--wa-color-text-quiet); }
+.session-bumped { margin: 0; padding-inline-start: var(--wa-space-l); }
 
 /* ---- create: step header, one step's controls, then Discard | Back, Next / Finish ---- */
 .create { display: flex; flex-direction: column; gap: var(--wa-space-l); }
@@ -834,6 +846,7 @@ wa-radio-group::part(form-control-input) { flex-wrap: wrap; gap: var(--wa-space-
 }
 
 /* ---- cut corners: everything square, then the top-left and bottom-right corners cut ----
+   (radios only as buttons: a plain radio's circle would lose its corners)
    Chrome cuts them natively with corner-shape, so borders and glows follow the cut (html.bevel).
    Firefox and Safari clip the corners off instead, and a thin gradient line redraws the border along each cut. */
 :root { --wa-border-radius-scale: 0; }
@@ -849,13 +862,13 @@ wa-card, .result, .sheet-column, wa-dialog::part(dialog) { --cut: 18px; }
 wa-dialog::part(dialog) { background-color: var(--color-paper-solid); }
 wa-dialog::part(header) { font-family: var(--font-display); text-transform: uppercase; letter-spacing: 0.1em; }
 .stat, .portrait, .portrait-frame::after { --cut: 10px; }
-wa-button::part(base), wa-input::part(base), wa-textarea::part(base), wa-select::part(combobox), wa-select::part(listbox), wa-radio, .wound { --cut: 7px; }
+wa-button::part(base), wa-input::part(base), wa-textarea::part(base), wa-select::part(combobox), wa-select::part(listbox), wa-radio[appearance="button"], .wound { --cut: 7px; }
 
 /* the border colour to redraw along each cut (transparent where there's no border) */
 wa-card, .result, .sheet-column, .stat { --edge: var(--wa-color-surface-border); }
 .stat { --edge-tl: var(--color-bracket); }
 .portrait-frame::after { --edge: color-mix(in srgb, var(--color-holo) 50%, transparent); }
-wa-input::part(base), wa-textarea::part(base), wa-select::part(combobox), wa-select::part(listbox), wa-radio { --edge: var(--wa-form-control-border-color); }
+wa-input::part(base), wa-textarea::part(base), wa-select::part(combobox), wa-select::part(listbox), wa-radio[appearance="button"] { --edge: var(--wa-form-control-border-color); }
 wa-button::part(base), wa-dialog::part(dialog) { --edge: transparent; }
 wa-button[appearance~="outlined"]::part(base) { --edge: var(--wa-color-border-loud); }
 .pool wa-radio:state(checked) { --edge: var(--c); }
@@ -864,14 +877,14 @@ wa-button[appearance~="outlined"]::part(base) { --edge: var(--wa-color-border-lo
 
 .portrait-frame { display: block; position: relative; }
 
-html.bevel :is(wa-card, .result, .sheet-column, .stat, .portrait, .wound, wa-radio),
+html.bevel :is(wa-card, .result, .sheet-column, .stat, .portrait, .wound, wa-radio[appearance="button"]),
 html.bevel wa-dialog::part(dialog), html.bevel wa-button::part(base), html.bevel wa-input::part(base), html.bevel wa-textarea::part(base),
 html.bevel wa-select::part(combobox), html.bevel wa-select::part(listbox) {
   border-radius: var(--cut) 0;
   corner-shape: bevel;
 }
 
-html:not(.bevel) :is(wa-card, .result, .sheet-column, .stat, .portrait, .wound, wa-radio),
+html:not(.bevel) :is(wa-card, .result, .sheet-column, .stat, .portrait, .wound, wa-radio[appearance="button"]),
 html:not(.bevel) wa-dialog::part(dialog), html:not(.bevel) wa-button::part(base), html:not(.bevel) wa-input::part(base),
 html:not(.bevel) wa-textarea::part(base), html:not(.bevel) wa-select::part(combobox), html:not(.bevel) wa-select::part(listbox) {
   /* The straight sides sit 1px outside the box: on a half-pixel position Firefox rounds the 1px border outward,
@@ -882,7 +895,7 @@ html:not(.bevel) wa-textarea::part(base), html:not(.bevel) wa-select::part(combo
     -1px calc(100% + 1px), -1px calc(var(--cut) + 1px));
 }
 /* the diagonal border lines: a corner-sized gradient at top left and bottom right, sitting just inside the cut */
-html:not(.bevel) :is(wa-card, .result, .sheet-column, .stat, .wound, wa-radio),
+html:not(.bevel) :is(wa-card, .result, .sheet-column, .stat, .wound, wa-radio[appearance="button"]),
 html:not(.bevel) wa-button::part(base), html:not(.bevel) wa-input::part(base), html:not(.bevel) wa-textarea::part(base),
 html:not(.bevel) wa-select::part(combobox), html:not(.bevel) wa-select::part(listbox), html:not(.bevel) .portrait-frame::after {
   --tl: var(--edge-tl, var(--edge, transparent));

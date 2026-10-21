@@ -298,9 +298,15 @@
                 <wa-icon slot="start" name="pen"></wa-icon>
                 Edit
               </wa-button>
+              <!-- "Start Job" until they're on a job (roster.js sets the label) -->
               <wa-button data-sheet-action="run" variant="brand">
                 <wa-icon slot="start" name="play"></wa-icon>
-                Run
+                <span data-run-label>Run</span>
+              </wa-button>
+              <!-- bottom only: copyActions leaves data-bottom-only buttons out of the top bar -->
+              <wa-button data-sheet-action="close" appearance="outlined" data-bottom-only>
+                <wa-icon slot="start" name="xmark"></wa-icon>
+                Close
               </wa-button>
             </div>
           </div>
@@ -337,6 +343,66 @@
               <wa-button data-sheet-action="stop" appearance="outlined">
                 <wa-icon slot="start" name="stop"></wa-icon>
                 Stop
+              </wa-button>
+              <wa-button data-sheet-action="end-session" variant="brand">
+                <wa-icon slot="start" name="moon"></wa-icon>
+                End Session
+              </wa-button>
+              <wa-button data-sheet-action="finish-job" variant="success" appearance="outlined" data-bottom-only>
+                <wa-icon slot="start" name="flag-checkered"></wa-icon>
+                Finish Job
+              </wa-button>
+              <!-- bottom only: copyActions leaves data-bottom-only buttons out of the top bar -->
+              <wa-button data-sheet-action="close" appearance="outlined" data-bottom-only>
+                <wa-icon slot="start" name="xmark"></wa-icon>
+                Close
+              </wa-button>
+            </div>
+          </div>
+
+          <!-- Finish Job: the session's skill bumps, an improvement, how the job went, then Confirm (roster.js) -->
+          <div id="character-finish" class="character-finish" hidden>
+            <h2>Finish Job</h2>
+            <section class="finish-part">
+              <h3>Session</h3>
+              <p class="finish-note">Ending the session. Used skills each go up by 1:</p>
+              <div id="finish-bumped"></div>
+            </section>
+            <section class="finish-part">
+              <h3>Improvement</h3>
+              <wa-radio-group id="finish-improvement" label="Choose one">
+                <wa-radio value="skill">Set an untrained skill to 55%</wa-radio>
+                <wa-radio value="luck">Increase maximum luck by 10</wa-radio>
+                <wa-radio value="xp">Gain 1 XP</wa-radio>
+              </wa-radio-group>
+              <wa-select id="finish-skill" label="Skill" placeholder="Choose…" hidden></wa-select>
+            </section>
+            <section class="finish-part">
+              <h3>The job</h3>
+              <wa-radio-group id="finish-success" label="Was the job successful?" orientation="horizontal">
+                <wa-radio appearance="button" value="yes">Yes</wa-radio>
+                <wa-radio appearance="button" value="no">No</wa-radio>
+              </wa-radio-group>
+              <wa-input id="finish-xp" inputmode="numeric" label="XP earned" autocomplete="off" hidden></wa-input>
+              <p class="finish-note" id="finish-failed-note" hidden>The next job starts with 1 less Influence.</p>
+              <div id="finish-reward-part" hidden>
+                <wa-radio-group id="finish-reward" label="Choose one">
+                  <wa-radio value="feature">Gain a distinctive feature</wa-radio>
+                  <wa-radio value="prop">Create a new prop as starting gear</wa-radio>
+                  <wa-radio value="cybernetic">Add the Cybernetic keyword to a piece of starting gear</wa-radio>
+                </wa-radio-group>
+                <wa-input id="finish-prop" label="Prop" autocomplete="off" hidden></wa-input>
+                <wa-select id="finish-gear" label="Starting gear" placeholder="Choose…" hidden></wa-select>
+              </div>
+            </section>
+            <div class="character-actions">
+              <wa-button data-sheet-action="run" appearance="outlined">
+                <wa-icon slot="start" name="arrow-left"></wa-icon>
+                Back
+              </wa-button>
+              <wa-button data-sheet-action="confirm-finish" variant="brand" data-bottom-only>
+                <wa-icon slot="start" name="check"></wa-icon>
+                Confirm
               </wa-button>
             </div>
           </div>
@@ -471,6 +537,11 @@
                 <wa-icon slot="start" name="floppy-disk"></wa-icon>
                 Save
               </wa-button>
+              <!-- bottom only, like Close: back to Display without saving -->
+              <wa-button type="button" data-sheet-action="discard-edit" appearance="outlined" variant="danger" data-bottom-only>
+                <wa-icon slot="start" name="rotate-left"></wa-icon>
+                Discard
+              </wa-button>
             </div>
           </form>
 
@@ -602,6 +673,33 @@
       <wa-icon slot="start" name="trash"></wa-icon>
       Discard
     </wa-button>
+  </wa-dialog>
+
+  <!-- Roster: confirms deleting a character; Delete turns on once the handle is typed -->
+  <wa-dialog id="delete-dialog" label="Delete character">
+    <p id="delete-text"></p>
+    <wa-input id="delete-handle" autocomplete="off"></wa-input>
+    <wa-button slot="footer" variant="neutral" data-dialog="close">Keep</wa-button>
+    <wa-button slot="footer" id="delete-confirm" variant="danger" disabled>
+      <wa-icon slot="start" name="trash"></wa-icon>
+      Delete
+    </wa-button>
+  </wa-dialog>
+
+  <!-- Roster: confirms Abandon Job, which ends the job without finishing it -->
+  <wa-dialog id="abandon-dialog" label="Abandon job">
+    <p id="abandon-text"></p>
+    <wa-button slot="footer" variant="neutral" data-dialog="close">Keep going</wa-button>
+    <wa-button slot="footer" id="abandon-confirm" variant="danger">
+      <wa-icon slot="start" name="person-running"></wa-icon>
+      Abandon Job
+    </wa-button>
+  </wa-dialog>
+
+  <!-- End Session: the skills that went up -->
+  <wa-dialog id="session-dialog" label="Session ended">
+    <div id="session-bumped"></div>
+    <wa-button slot="footer" variant="brand" data-dialog="close">OK</wa-button>
   </wa-dialog>
 
   <wa-dialog id="appearance-dialog" label="Appearance" light-dismiss>

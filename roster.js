@@ -1,5 +1,6 @@
 // Roster tab (the saved characters) and the Character tab, which appears once a character is opened.
-// A character in the Character tab is in one of four states: display, editing, running, or creating.
+// A character in the Character tab is in one of five states: display, editing, running, finishing (Finish Job's page),
+// or creating. Run starts a job (C.startJob) if they aren't on one.
 // Skill changes made while editing live in `draft` until Save. A character still being created (C.isCreating) is only
 // ever shown in Create (create.js), never Edit or Run.
 (function () {
@@ -24,6 +25,7 @@
   const running = $("character-running");
   const fields = $("character-fields");
   const create = $("character-create");
+  const finish = $("character-finish");
   const currentLuck = $("current-luck");
   const currentInfluence = $("current-influence");
   const woundsFields = $("wounds-fields");
@@ -39,7 +41,7 @@
   const field = (name) => form.querySelector(`[name="${name}"]`);
 
   let current = null;     // the character in the Character tab
-  let state = "display";  // "display" | "editing" | "running" | "creating"
+  let state = "display";  // "display" | "editing" | "running" | "finishing" | "creating"
   let draft = null;       // while editing: a copy holding skill, wound, gear, and ability changes until Save
 
   // A character still in creation stays out of SESSION, so Dice-tab rolls don't post as it; Finish sets it.
@@ -104,10 +106,15 @@
           <td><a href="#" data-open="${escapeHTML(c.id)}">${escapeHTML(C.label(c))}</a></td>
           <td>${C.isCreating(c) ? `<wa-badge variant="warning" appearance="outlined">In creation</wa-badge>` : escapeHTML(c.archetype)}</td>
           <td>${C.isCreating(c) ? "" : escapeHTML(c.origin)}</td>
-          <td class="actions">${C.isCreating(c) ? "" : `
+          <td class="actions">${!C.inJob(c) ? "" : `
+            <wa-button size="s" appearance="outlined" variant="danger" data-abandon="${escapeHTML(c.id)}">
+              <wa-icon slot="start" name="person-running"></wa-icon>Abandon Job
+            </wa-button>`}${C.isCreating(c) ? "" : `
             <wa-button size="s" appearance="outlined" data-export="${escapeHTML(c.id)}">
               <wa-icon slot="start" name="file-export"></wa-icon>Export JSON
             </wa-button>`}
+            <wa-button size="s" appearance="plain" variant="danger" data-delete="${escapeHTML(c.id)}" title="Delete">
+              <wa-icon name="trash" label="Delete"></wa-icon></wa-button>
           </td>
         </tr>`).join("")
       : `<tr><td colspan="4" class="empty">No characters yet</td></tr>`;
@@ -125,6 +132,8 @@
   rows.addEventListener("click", (e) => {
     const open = e.target.closest("[data-open]");
     const exp = e.target.closest("[data-export]");
+    const del = e.target.closest("[data-delete]");
+    const abandon = e.target.closest("[data-abandon]");
     const find = (id) => C.load(storage).find((c) => c.id === id);
     if (open) {
       e.preventDefault();
@@ -133,7 +142,72 @@
     } else if (exp) {
       const c = find(exp.dataset.export);
       if (c) download(C.toExport(c));
+    } else if (del) {
+      const c = find(del.dataset.delete);
+      if (c) openDelete(c);
+    } else if (abandon) {
+      const c = find(abandon.dataset.abandon);
+      if (c) openAbandon(c);
     }
+  });
+
+  // Abandon Job ends the job without finishing it: back to starting values and gear, with no XP or improvement.
+  const abandonDialog = $("abandon-dialog");
+  let abandoning = null;
+  function openAbandon(character) {
+    abandoning = character;
+    $("abandon-text").textContent = `End ${C.label(character)}'s job without finishing it? They go back to their starting `
+      + "values and starting gear, with no XP or improvement.";
+    abandonDialog.open = true;
+  }
+  $("abandon-confirm").addEventListener("click", () => {
+    const next = abandoning && C.abandonJob(C.load(storage).find((c) => c.id === abandoning.id) ?? abandoning);
+    abandoning = null;
+    abandonDialog.open = false;
+    if (!next) return;
+    if (current?.id === next.id) {
+      if (!commit(next)) return;
+      if (state !== "creating") state = "display";
+      render();
+    } else {
+      try {
+        C.save(storage, next);
+      } catch (err) {
+        console.error(err);
+        APP.toast("Couldn't save the character.", "danger");
+        return;
+      }
+    }
+    renderRoster();
+  });
+
+  // Delete asks for the character's handle (C.label: "Character" when there's none) before it turns on.
+  const deleteDialog = $("delete-dialog");
+  const deleteHandle = $("delete-handle");
+  const deleteConfirm = $("delete-confirm");
+  let deleting = null;
+  const handleTyped = () => deleting && deleteHandle.value.trim() === C.label(deleting);
+  function openDelete(character) {
+    deleting = character;
+    $("delete-text").textContent = `Type ${C.label(character)} to delete them. This can't be undone.`;
+    deleteHandle.value = "";
+    deleteConfirm.disabled = true;
+    deleteDialog.open = true;
+  }
+  deleteHandle.addEventListener("input", () => { deleteConfirm.disabled = !handleTyped(); });
+  deleteConfirm.addEventListener("click", () => {
+    if (!handleTyped()) return;
+    try {
+      C.remove(storage, deleting.id);
+    } catch (err) {
+      console.error(err);
+      APP.toast("Couldn't delete the character.", "danger");
+      return;
+    }
+    deleteDialog.open = false;
+    if (current?.id === deleting.id) closeCharacter();
+    deleting = null;
+    renderRoster();
   });
 
   // Saved right away, so it's on the Roster while it's being created.
@@ -157,12 +231,22 @@
     if (activate) customElements.whenDefined("wa-tab-group").then(() => { tabs.active = "character"; });
   }
 
+  // Hides the Character tab and goes back to the Roster.
+  function closeCharacter() {
+    store.set("openCharacter", null);
+    setCurrent(null);
+    state = "display";
+    tab.hidden = true;
+    customElements.whenDefined("wa-tab-group").then(() => { tabs.active = "roster"; });
+  }
+
   function render() {
     display.hidden = state !== "display";
     form.hidden = state !== "editing";
     running.hidden = state !== "running";
+    finish.hidden = state !== "finishing";
     create.hidden = state !== "creating";
-    fields.hidden = state === "editing" || state === "creating";
+    fields.hidden = state === "editing" || state === "creating" || state === "finishing";
     fields.dataset.state = state;
     if (state === "creating") {
       window.NCD_CREATE.render(create, current, createHooks);
@@ -183,9 +267,12 @@
       renderConditions($("conditions-edit"), draft, { clickable: true });
       renderGear($("gear-edit"), draft, { editable: true });
       renderAbilitiesEdit();
+    } else if (state === "finishing") {
+      renderFinish();
     } else {
       renderFields();
       if (state === "display") {
+        display.querySelector("[data-run-label]").textContent = C.inJob(current) ? "Run" : "Start Job";
         renderAppearance($("appearance-display"));
         $("conditions-display-section").hidden = !C.conditions(current).length;
         renderConditions($("conditions-display"), current);
@@ -297,15 +384,30 @@
 
   // ---- action bars ----
   // Each mode's bar sits at the bottom of its section (Display, Running, Edit's form) and is copied to the top of the
-  // card, so a new button only goes in the bottom bar. Buttons say what they do with data-sheet-action; Save is a
-  // submit button tied to the form with form=, so its copy outside the form still submits.
-  const SHEET_ACTIONS = { edit: enter("editing"), run: enter("running"), stop: () => { state = "display"; render(); }, appearance: openAppearance };
+  // card (except data-bottom-only buttons, like Close), so a new button only goes in the bottom bar. Buttons say what
+  // they do with data-sheet-action; Save is a submit button tied to the form with form=, so its copy outside the form
+  // still submits.
+  // Stop and Discard both go back to Display; Discard drops Edit's changes (the draft and form) unsaved.
+  const toDisplay = () => { state = "display"; render(); };
+  // Run, from Display (Start Job until they're on a job) or Finish Job's Back.
+  function run() {
+    if (C.isCreating(current)) return;
+    if (!C.inJob(current)) {
+      if (!commit(C.startJob(current))) return;
+      renderRoster();
+    }
+    state = "running";
+    render();
+  }
+  const SHEET_ACTIONS = { edit: enter("editing"), run, stop: toDisplay, "discard-edit": toDisplay,
+    appearance: openAppearance, close: closeCharacter, "end-session": endSession, "finish-job": enter("finishing"),
+    "confirm-finish": confirmFinish };
   $("character-card").addEventListener("click", (e) => SHEET_ACTIONS[e.target.closest("[data-sheet-action]")?.dataset.sheetAction]?.());
   function copyActions() {
     const topActions = $("character-actions-top");
-    const bar = [display, running, form].find((section) => !section.hidden)?.querySelector(":scope > .character-actions");
+    const bar = [display, running, finish, form].find((section) => !section.hidden)?.querySelector(":scope > .character-actions");
     topActions.hidden = !bar;
-    topActions.replaceChildren(...(bar ? [...bar.children].map((button) => button.cloneNode(true)) : []));
+    topActions.replaceChildren(...(bar ? [...bar.querySelectorAll(":scope > :not([data-bottom-only])")].map((button) => button.cloneNode(true)) : []));
   }
 
   // ---- gear: each item shown as "name ×N [label]" with its keyword chips (gear-ui.js); its name opens its rules ----
@@ -784,7 +886,7 @@
         `<span class="${kind}">${icon(APP.KINDS[kind].die)}</span>`.repeat(st[kind])).join("")}</span>`
     : "";
 
-  // Display: only skills with a value or intrinsic dice, then "Anything else" at 50%.
+  // Display: only skills with a value or intrinsic dice (and both initiatives, always), then "Anything else" at 50%.
   // When running, each skill name is a link that opens the roll dialog.
   const ANYTHING_ELSE = "anything-else";
   const skillName = (id, name, links) => links
@@ -795,7 +897,7 @@
       const title = GROUPS[type];
       const items = C.SKILLS.filter((sk) => sk.type === type)
         .map((sk) => [sk, C.skill(current, sk.id)])
-        .filter(([, st]) => C.isNotable(st));
+        .filter(([, st]) => type === "initiative" || C.isNotable(st));
       if (!items.length) return "";
       return `<section class="skill-group"><h3>${title}</h3><ul>${items.map(([sk, st]) => `<li>
           ${skillName(sk.id, sk.name, links)}${diceIcons(st)}
@@ -805,7 +907,7 @@
             : `<span class="used"></span>`}
         </li>`).join("")}</ul></section>`;
     });
-    // Untrained skills and "Anything else" can't be marked used; an empty slot keeps the values lined up.
+    // Untrained skills, the initiatives, and "Anything else" can't be marked used; an empty slot keeps the values lined up.
     el.innerHTML = groups + `<ul class="anything-else"><li>
         ${skillName(ANYTHING_ELSE, "Anything else", links)}<span class="skill-value untrained">${C.UNTRAINED}%</span>
         ${links ? `<span class="used"></span>` : ""}</li></ul>`;
@@ -916,6 +1018,86 @@
     const box = e.target.closest("[data-used]");
     if (box) setUsed(box.dataset.used, box.checked);
   });
+
+  // ---- sessions and jobs ----
+  // The skills that went up, by name (not their new values).
+  const bumpedHTML = (ids) => ids.length
+    ? `<ul class="session-bumped">${ids.map((id) => `<li>${escapeHTML(skillNameOf(id))}</li>`).join("")}</ul>`
+    : `<p class="gear-empty">No skills were used.</p>`;
+  // End Session: each used skill goes up by 1 and Used is cleared; a dialog lists them, over Display.
+  function endSession() {
+    const { character, bumped } = C.endSession(current);
+    if (!commit(character)) return;
+    state = "display";
+    render();
+    $("session-bumped").innerHTML = bumpedHTML(bumped);
+    $("session-dialog").open = true;
+  }
+
+  // Finish Job's page: its choices stay in the controls until Confirm, which saves it all (C.finishJob) and goes to Display.
+  const finishImprovement = $("finish-improvement");
+  const finishSkill = $("finish-skill");
+  const finishSuccess = $("finish-success");
+  const finishXp = $("finish-xp");
+  const finishReward = $("finish-reward");
+  const finishProp = $("finish-prop");
+  const finishGear = $("finish-gear");
+  const radio = (group, value) => group.querySelector(`wa-radio[value="${value}"]`);
+  function renderFinish() {
+    $("finish-bumped").innerHTML = bumpedHTML(C.endSession(current).bumped);
+    const untrained = C.untrainedSkills(current);
+    finishSkill.innerHTML = untrained.map((id) => `<wa-option value="${id}">${escapeHTML(skillNameOf(id))}</wa-option>`).join("");
+    const targets = C.cyberneticTargets(current);
+    finishGear.innerHTML = targets.map((g) => `<wa-option value="${escapeHTML(g.id)}">${escapeHTML(g.description)}</wa-option>`).join("");
+    radio(finishImprovement, "skill").disabled = !untrained.length;
+    radio(finishReward, "cybernetic").disabled = !targets.length;
+    for (const control of [finishImprovement, finishSkill, finishSuccess, finishReward, finishGear]) control.value = "";
+    finishXp.value = "0";
+    finishProp.value = "";
+    showFinish();
+  }
+  // Shows the fields the choices so far need. A failed job earns 1 XP, shown in the locked XP box.
+  function showFinish() {
+    const success = finishSuccess.value;
+    finishSkill.hidden = finishImprovement.value !== "skill";
+    finishXp.hidden = !success;
+    finishXp.disabled = success === "no";
+    $("finish-failed-note").hidden = success !== "no";
+    $("finish-reward-part").hidden = success !== "yes";
+    finishProp.hidden = finishReward.value !== "prop";
+    finishGear.hidden = finishReward.value !== "cybernetic";
+  }
+  for (const control of [finishImprovement, finishReward]) control.addEventListener("change", showFinish);
+  finishSuccess.addEventListener("change", () => {
+    finishXp.value = finishSuccess.value === "no" ? "1" : "0";
+    showFinish();
+  });
+  // XP: digits only.
+  finishXp.addEventListener("input", () => {
+    const v = String(finishXp.value ?? "").replace(/\D/g, "").slice(0, 3);
+    if (v !== finishXp.value) finishXp.value = v;
+  });
+  const FINISH_CONTROLS = { improvement: finishImprovement, skill: finishSkill, success: finishSuccess, reward: finishReward,
+    prop: finishProp, gear: finishGear };
+  function confirmFinish() {
+    if (state !== "finishing") return;
+    const success = finishSuccess.value;
+    const choices = {
+      improvement: finishImprovement.value, skill: finishSkill.value,
+      successful: success === "yes" ? true : success === "no" ? false : null,
+      xp: finishXp.value, reward: finishReward.value, prop: text(finishProp.value), gearId: finishGear.value,
+    };
+    const missing = C.finishMissing(current, choices);
+    if (missing) {
+      FINISH_CONTROLS[missing].focus();
+      APP.toast("Make every choice before confirming.", "warning");
+      return;
+    }
+    if (!commit(C.finishJob(current, choices).character)) return;
+    state = "display";
+    render();
+    renderRoster();
+  }
 
   // `skill` is one of the item's (G.rollOf) skills.
   function openGearRoll(item, skill) {
@@ -1065,11 +1247,7 @@
         APP.toast("Couldn't discard the character.", "danger");
         return;
       }
-      store.set("openCharacter", null);
-      setCurrent(null);
-      state = "display";
-      tab.hidden = true;
-      customElements.whenDefined("wa-tab-group").then(() => { tabs.active = "roster"; });
+      closeCharacter();
       renderRoster();
     },
     pickPortrait,

@@ -340,10 +340,10 @@ test("appearance fields default to empty text", () => {
   assert.equal(C.appearance({ appearance: { pronouns: "they/them" } }).pronouns, "they/them");
 });
 
-test("initiatives are rolled like skills", () => {
+test("initiatives are rolled like skills, but never marked used", () => {
   const c = C.withSkill({}, "initiative-in-the-world", { value: 60 });
   assert.equal(C.skill(c, "initiative-in-the-world").value, 60);
-  assert.ok(C.canBeUsed(c, "initiative-in-the-world"));
+  assert.equal(C.canBeUsed(c, "initiative-in-the-world"), false);
 });
 
 // ---- Create mode ----
@@ -662,4 +662,100 @@ test("create gear: changing origin or augmentations clears their gear picks, not
     assert.deepEqual(Object.keys(c.creation.gearPicks), ["create-gear-0-0-0"], JSON.stringify(change));
   }
   assert.equal(Object.keys(C.withCreation(start, { perk: "x" }, R, CAT).creation.gearPicks).length, 3);
+});
+
+test("jobs: Start Job resets to starting values and saves the starting gear", () => {
+  const C = globalThis.NCD_CHARACTERS;
+  const sword = { ...C.newProp("Sword", true), conditions: [{ id: "d", name: "Damaged" }, { id: "s", name: "Sharp", intrinsic: true }] };
+  const loot = C.newProp("Loot");
+  const c = { id: "c", maxLuck: 90, currentLuck: 10, startingInfluence: 3, currentInfluence: 0, wounds: 3,
+    used: { "sneak-around": true }, gear: [sword, loot],
+    conditions: [{ id: "e", name: "Exhausted" }, { id: "o", name: "One-eyed", intrinsic: true }] };
+  assert.equal(C.inJob(c), false);
+  const s = C.startJob(c);
+  assert.equal(C.inJob(s), true);
+  assert.equal(s.currentLuck, 90);
+  assert.equal(s.currentInfluence, 3);
+  assert.equal(s.wounds, 0);
+  assert.deepEqual(s.used, {});
+  assert.deepEqual(C.conditions(s).map((x) => x.name), ["One-eyed"]);
+  assert.deepEqual(C.gear(s).map((g) => [g.description, C.conditions(g).map((x) => x.name)]), [["Sword", ["Sharp"]]]);
+  // a failed last job starts the next with 1 less Influence (never below 0)
+  assert.equal(C.startJob({ ...c, lastJobSuccessful: false }).currentInfluence, 2);
+  assert.equal(C.startJob({ ...c, startingInfluence: 0, lastJobSuccessful: false }).currentInfluence, 0);
+});
+
+test("jobs: starting gear lost or changed on the job comes back; Edit's Starter changes count", () => {
+  const C = globalThis.NCD_CHARACTERS;
+  const sword = C.newProp("Sword", true), deck = C.newProp("Deck", true);
+  let s = C.startJob({ id: "c", gear: [sword, deck] });
+  s = C.withoutGear(s, sword.id);
+  s = C.withGear(s, { ...C.gear(s)[0], quantity: 0, description: "Broken deck" });
+  s = C.withGear(s, C.newProp("Loot"));
+  const vest = C.newProp("Vest", true); // marked Starter in Edit, mid-job
+  s = C.withGear(s, vest);
+  assert.deepEqual(C.starterGear(s).map((g) => g.description), ["Sword", "Deck", "Vest"]);
+  const a = C.abandonJob(s);
+  assert.equal(C.inJob(a), false);
+  assert.deepEqual(C.gear(a).map((g) => g.description), ["Sword", "Deck", "Vest"]);
+  // unmarked in Edit, mid-job: no longer starting gear
+  s = C.withGear(s, { ...C.gear(s).find((g) => g.description === "Broken deck"), starter: false });
+  assert.deepEqual(C.starterGear(s).map((g) => g.description), ["Sword", "Vest"]);
+});
+
+test("jobs: End Session raises each used skill by 1 (to 95) and clears Used", () => {
+  const C = globalThis.NCD_CHARACTERS;
+  let c = { id: "c", skills: { "sneak-around": { value: 60 }, "shoot-someone": { value: 95 }, "lie-to-someone": { value: 70 } },
+    used: { "sneak-around": true, "shoot-someone": true } };
+  const { character, bumped } = C.endSession(c);
+  assert.deepEqual(bumped, ["sneak-around"]);
+  assert.equal(C.skill(character, "sneak-around").value, 61);
+  assert.equal(C.skill(character, "shoot-someone").value, 95);
+  assert.equal(C.skill(character, "lie-to-someone").value, 70);
+  assert.deepEqual(character.used, {});
+  // the initiatives are never used, so never go up, and aren't offered as untrained skills
+  const init = { skills: { "initiative-in-the-world": { value: 60 } }, used: { "initiative-in-the-world": true } };
+  assert.equal(C.canBeUsed(init, "initiative-in-the-world"), false);
+  assert.deepEqual(C.endSession(init).bumped, []);
+  assert.equal(C.untrainedSkills({}).includes("initiative-in-the-network"), false);
+});
+
+test("jobs: Finish Job applies the improvement and reward, and leaves the job", () => {
+  const C = globalThis.NCD_CHARACTERS;
+  const coat = C.newProp("Coat", true);
+  const base = C.startJob({ id: "c", maxLuck: 100, startingInfluence: 2, xpAvailable: 1, xpSpent: 4,
+    skills: { "sneak-around": { value: 60 } }, gear: [coat] });
+  const run = C.withGear(C.withUsed({ ...base, currentLuck: 5, wounds: 2 }, "sneak-around", true), C.newProp("Loot"));
+
+  assert.equal(C.finishMissing(run, {}), "improvement");
+  assert.equal(C.finishMissing(run, { improvement: "skill", skill: "sneak-around" }), "skill");
+  assert.equal(C.finishMissing(run, { improvement: "luck" }), "success");
+  assert.equal(C.finishMissing(run, { improvement: "luck", successful: true }), "reward");
+  assert.equal(C.finishMissing(run, { improvement: "luck", successful: true, reward: "prop", prop: " " }), "prop");
+  assert.equal(C.finishMissing(run, { improvement: "luck", successful: true, reward: "cybernetic", gearId: "nope" }), "gear");
+  assert.equal(C.finishMissing(run, { improvement: "luck", successful: false }), null);
+  assert.equal(C.finishJob(run, {}), null);
+
+  let { character: f, bumped } = C.finishJob(run, { improvement: "skill", skill: "goad-someone", successful: true, xp: 3, reward: "prop", prop: "Lucky coin" });
+  assert.deepEqual(bumped, ["sneak-around"]);
+  assert.equal(C.inJob(f), false);
+  assert.equal(C.skill(f, "sneak-around").value, 61);
+  assert.equal(C.skill(f, "goad-someone").value, 55);
+  assert.equal(C.xp(f).available, 4);
+  assert.equal(f.currentLuck, 100);
+  assert.equal(f.wounds, 0);
+  assert.equal(f.lastJobSuccessful, true);
+  assert.deepEqual(C.gear(f).map((g) => [g.description, g.starter]), [["Coat", true], ["Lucky coin", true]]);
+
+  ({ character: f } = C.finishJob(run, { improvement: "luck", successful: true, xp: 0, reward: "cybernetic", gearId: coat.id }));
+  assert.equal(C.luck(f).max, 110);
+  assert.equal(f.currentLuck, 110);
+  assert.deepEqual(C.gear(f)[0].keywords, ["Cybernetic"]);
+
+  // failed: 1 XP whatever's entered, and the next job starts with 1 less Influence
+  ({ character: f } = C.finishJob(run, { improvement: "xp", successful: false, xp: 9 }));
+  assert.equal(C.xp(f).available, 3);
+  assert.equal(f.lastJobSuccessful, false);
+  assert.equal(f.currentInfluence, 2);
+  assert.equal(C.startJob(f).currentInfluence, 1);
 });

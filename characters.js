@@ -182,8 +182,9 @@
   }
 
   // ---- used skills: marked while running (by hand, or by rolling the skill) ----
-  // Only trained skills (a value above 50) can be used; dice alone don't count.
-  const canBeUsed = (character, id) => skill(character, id).value != null;
+  // Only trained skills (a value above 50) can be used; dice alone don't count. The initiatives are never used.
+  const isInitiative = (id) => SKILLS.find((s) => s.id === id)?.type === "initiative";
+  const canBeUsed = (character, id) => !isInitiative(id) && skill(character, id).value != null;
   const isUsed = (character, id) => Boolean(character?.used?.[id]);
   function withUsed(character, id, used) {
     const next = { ...(character?.used ?? {}) };
@@ -195,6 +196,90 @@
   const MAX_WOUNDS = 4;
   const wounds = (character) => clampInt(character?.wounds, { max: MAX_WOUNDS });
   const clickWound = (current, n) => (n === current ? n - 1 : n);
+
+  // ---- jobs: Start Job, sessions, and Finish Job (or Abandon Job) ----
+  // character.job is set while they're on a job; it holds the starting gear as it was at Start Job, so gear lost or
+  // changed in Run comes back at the end. lastJobSuccessful false means the next job starts with 1 less Influence.
+  const inJob = (character) => character?.job != null && typeof character.job === "object";
+  // Outside a job: the gear marked Starter. On a job: the gear saved at Start Job, minus items Edit has since unmarked,
+  // plus items Edit has since marked.
+  function starterGear(character) {
+    const now = gear(character);
+    if (!inJob(character)) return now.filter((g) => g.starter);
+    const saved = gear({ gear: character.job.starterGear }).filter((g) => !now.some((n) => n.id === g.id && !n.starter));
+    return [...saved, ...now.filter((n) => n.starter && !saved.some((g) => g.id === n.id))];
+  }
+  const intrinsicOnly = (holder) => ({ ...holder, conditions: conditions(holder).filter((x) => x.intrinsic) });
+  // Luck to max, Influence to starting (less any penalty), no wounds, no Used, only intrinsic conditions, and only the
+  // starting gear. Start Job, Finish Job and Abandon Job all use it.
+  function resetToStarting(character, { influencePenalty = 0, starters = starterGear(character) } = {}) {
+    const { starting } = influence(character);
+    return {
+      ...intrinsicOnly(character),
+      currentLuck: luck(character).max,
+      currentInfluence: Math.max(0, starting - influencePenalty),
+      wounds: 0,
+      used: {},
+      gear: starters.map(intrinsicOnly),
+    };
+  }
+  function startJob(character) {
+    const fresh = resetToStarting(character, { influencePenalty: character?.lastJobSuccessful === false ? 1 : 0 });
+    return { ...fresh, job: { starterGear: gear(fresh) } };
+  }
+  const withoutJob = ({ job, ...character }) => character;
+  const abandonJob = (character) => withoutJob(resetToStarting(character));
+  // Each used skill goes up by 1 (to 95 at most), and Used is cleared. `bumped` is the ids that went up, in sheet order.
+  function endSession(character) {
+    let next = { ...character, used: {} };
+    const bumped = [];
+    for (const { id } of SKILLS) {
+      const { value } = skill(character, id);
+      if (!isUsed(character, id) || !canBeUsed(character, id) || value >= MAX_VALUE) continue;
+      next = withSkill(next, id, { value: value + 1 });
+      bumped.push(id);
+    }
+    return { character: next, bumped };
+  }
+
+  // Finish Job's choices. Improvement: an untrained skill to 55%, +10 maximum luck, or 1 XP.
+  // A successful job earns the XP entered and a reward: a distinctive feature (nothing yet), a new starting prop, or
+  // the Cybernetic keyword on a piece of starting gear. A failed one earns 1 XP, and the next job starts with 1 less Influence.
+  const IMPROVEMENTS = ["skill", "luck", "xp"];
+  const REWARDS = ["feature", "prop", "cybernetic"];
+  const JOB_LUCK = 10;
+  const CYBERNETIC = "Cybernetic";
+  // Untrained mental and physical skills (the initiatives aren't skills you improve this way).
+  const untrainedSkills = (character) => SKILLS.filter((s) => !isInitiative(s.id) && skill(character, s.id).value == null).map((s) => s.id);
+  // Starting gear that could take the Cybernetic keyword (gear.js is loaded after this file, so looked up when needed).
+  const cyberneticTargets = (character) => starterGear(character).filter((g) => root.NCD_GEAR.canAdd(g, CYBERNETIC));
+  // What's missing before Finish Job can be confirmed ("improvement", "skill", "success", "reward", "prop", "gear"), or null.
+  function finishMissing(character, { improvement, skill: id, successful, reward, prop, gearId } = {}) {
+    if (!IMPROVEMENTS.includes(improvement)) return "improvement";
+    if (improvement === "skill" && !untrainedSkills(character).includes(id)) return "skill";
+    if (typeof successful !== "boolean") return "success";
+    if (!successful) return null;
+    if (!REWARDS.includes(reward)) return "reward";
+    if (reward === "prop" && !String(prop ?? "").trim()) return "prop";
+    if (reward === "cybernetic" && !cyberneticTargets(character).some((g) => String(g.id) === String(gearId))) return "gear";
+    return null;
+  }
+  // Ends the session, applies the choices, and leaves the job with only the starting gear. `bumped` as endSession.
+  function finishJob(character, choices) {
+    if (finishMissing(character, choices)) return null;
+    const { improvement, skill: id, successful, xp: earned, reward, prop, gearId } = choices;
+    let { character: next, bumped } = endSession(character);
+    if (improvement === "skill") next = withSkill(next, id, { value: MIN_VALUE });
+    if (improvement === "luck") next.maxLuck = clampMaxLuck(next.maxLuck) + JOB_LUCK;
+    const gained = (improvement === "xp" ? 1 : 0) + (successful ? clampXp(earned) : 1);
+    next.xpAvailable = xp(next).available + gained;
+    let starters = starterGear(next);
+    if (successful && reward === "prop") starters = [...starters, newProp(prop, true)];
+    if (successful && reward === "cybernetic") starters = starters.map((g) => (String(g.id) === String(gearId)
+      ? root.NCD_GEAR.legalize({ ...g, keywords: [...g.keywords, CYBERNETIC] }) : g));
+    next.lastJobSuccessful = successful;
+    return { character: withoutJob(resetToStarting(next, { starters })), bumped };
+  }
 
   const pick = (list, rng = Math.random) => list[Math.floor(rng() * list.length)];
 
@@ -428,6 +513,8 @@
     DEFAULT_LUCK, luck, clampMaxLuck, clampCurrentLuck,
     DEFAULT_INFLUENCE, influence, clampInfluence,
     MAX_WOUNDS, wounds, clickWound,
+    inJob, starterGear, resetToStarting, startJob, abandonJob, endSession,
+    IMPROVEMENTS, REWARDS, JOB_LUCK, untrainedSkills, cyberneticTargets, finishMissing, finishJob,
     canBeUsed, isUsed, withUsed,
     KNOWLEDGE, knows, xp, clampXp, appearance,
     gear, newGear, newProp, withGear, withoutGear,
