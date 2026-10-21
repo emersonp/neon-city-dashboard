@@ -71,7 +71,9 @@
   let forced = false; // a forced trip to Settings isn't remembered as the last tab
   customElements.whenDefined("wa-tab-group").then(() => {
     forced = needsSetup();
-    tabs.active = forced ? "settings" : store.get("tab", "dice");
+    // a remembered tab that no longer exists (renamed or removed) falls back to Dice
+    const last = store.get("tab", "dice");
+    tabs.active = forced ? "settings" : tabs.querySelector(`:scope > wa-tab[panel="${CSS.escape(last)}"]`) ? last : "dice";
   });
   tabs.addEventListener("wa-tab-show", (e) => {
     if (e.target !== tabs) return; // the Databank tab's own Gear/Keywords tabs bubble up here too
@@ -261,51 +263,51 @@
   });
 
   // ---- the Databank tab ----
-  // Built once from lore.js. A section with many entries spans the page and flows its entries into columns.
+  // Built once from databank.js. A section with many entries spans the page and flows its entries into columns.
   {
-    const LORE = window.NCD_LORE;
+    const DATABANK = window.NCD_DATABANK;
     const { formatDescription } = window.NCD_FORMAT;
     const { escapeHTML } = window.NCD_UTIL;
     const ICON_COLOR = { "advantage-die": "adv", boon: "adv", "challenge-die": "chal", drawback: "chal" };
     const rich = (s) => `<div class="ability-text">${formatDescription(s, (name) => icon(name, ICON_COLOR[name] ?? ""))}</div>`;
-    const table = (t) => `<div class="lore-table-wrap"><table class="lore-table">
+    const table = (t) => `<div class="databank-table-wrap"><table class="databank-table">
       <thead><tr>${t.head.map((h) => `<th>${escapeHTML(h)}</th>`).join("")}</tr></thead>
       <tbody>${t.rows.map((r) => `<tr>${r.map((c) => `<td>${escapeHTML(c)}</td>`).join("")}</tr>`).join("")}</tbody>
     </table></div>`;
-    const entry = (e) => `<article class="lore-entry">
-      <h3>${escapeHTML(e.name)}${e.tag ? ` <span class="lore-tag">${escapeHTML(e.tag)}</span>` : ""}</h3>
+    const entry = (e) => `<article class="databank-entry">
+      <h3>${escapeHTML(e.name)}${e.tag ? ` <span class="databank-tag">${escapeHTML(e.tag)}</span>` : ""}</h3>
       ${e.text ? rich(e.text) : ""}${e.table ? table(e.table) : ""}
     </article>`;
     const section = ({ title, kind = "", intro, entries = [], table: t }) => `
-      <section class="sheet-column lore-section${entries.length > 6 ? " wide" : ""}">
+      <section class="sheet-column databank-section${entries.length > 6 ? " wide" : ""}">
         <h2 class="${kind}">${escapeHTML(title)}</h2>
         ${intro ? rich(intro) : ""}${t ? table(t) : ""}
-        ${entries.length ? `<div class="lore-entries">${entries.map(entry).join("")}</div>` : ""}
+        ${entries.length ? `<div class="databank-entries">${entries.map(entry).join("")}</div>` : ""}
       </section>`;
     const list = (names) => names.length ? names.join(", ") : "none";
 
-    $("lore-gear").innerHTML = [
-      ...LORE.gear.map(section),
+    $("databank-gear").innerHTML = [
+      ...DATABANK.gear.map(section),
       section({
-        title: "Weapons", intro: LORE.weaponsIntro,
-        entries: LORE.weapons.map((w) => ({
+        title: "Weapons", intro: DATABANK.weaponsIntro,
+        entries: DATABANK.weapons.map((w) => ({
           name: w.name,
           tag: [w.hands && `${w.hands}H`, `+${w.damage} damage`].filter(Boolean).join(" · "),
           text: `**Intrinsic keywords:** ${list(w.intrinsic)}\n\n**Allowed keywords:** ${list(w.allowed)}\n\n*${w.examples}*`,
         })),
       }),
-      section({ title: "Vehicles", intro: LORE.vehicleRules, entries: LORE.vehicles.map((v) => ({ name: v.name, tag: v.size, text: `*${v.blurb}*\n\n${v.text}` })) }),
+      section({ title: "Vehicles", intro: DATABANK.vehicleRules, entries: DATABANK.vehicles.map((v) => ({ name: v.name, tag: v.size, text: `*${v.blurb}*\n\n${v.text}` })) }),
     ].join("");
 
     // Each weapon keyword says which weapon categories allow it (and which always have it).
-    const weaponsWith = (k, field) => LORE.weapons.filter((w) => w[field].includes(k)).map((w) => w.name);
-    $("lore-keywords").innerHTML = [
-      section({ title: "Positive gear keywords", kind: "boon", intro: LORE.keywordsIntro, entries: LORE.keywords.positive }),
-      section({ title: "Negative gear keywords", kind: "drawback", entries: LORE.keywords.negative }),
-      section({ title: "Random gear keywords", intro: LORE.randomKeywordsIntro, table: { head: ["d100", "Positive", "Negative"], rows: LORE.randomKeywords } }),
+    const weaponsWith = (k, field) => DATABANK.weapons.filter((w) => w[field].includes(k)).map((w) => w.name);
+    $("databank-keywords").innerHTML = [
+      section({ title: "Positive gear keywords", kind: "boon", intro: DATABANK.keywordsIntro, entries: DATABANK.keywords.positive }),
+      section({ title: "Negative gear keywords", kind: "drawback", entries: DATABANK.keywords.negative }),
+      section({ title: "Random gear keywords", intro: DATABANK.randomKeywordsIntro, table: { head: ["d100", "Positive", "Negative"], rows: DATABANK.randomKeywords } }),
       section({
         title: "Weapon keywords", intro: "Only weapons can have these keywords, and each weapon category allows only some of them.",
-        entries: LORE.keywords.weapon.map((k) => {
+        entries: DATABANK.keywords.weapon.map((k) => {
           const always = weaponsWith(k.name, "intrinsic");
           return { ...k, text: `${k.text}\n\n**Allowed on:** ${list(weaponsWith(k.name, "allowed"))}${always.length ? `\n\n**Always on:** ${always.join(", ")}` : ""}` };
         }),

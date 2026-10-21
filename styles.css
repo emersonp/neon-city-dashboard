@@ -118,22 +118,22 @@ wa-tab::part(tab) {
 .sheet-column li::marker { content: "▶  "; font-size: 0.7em; color: var(--wa-color-brand); }
 .inline-icon .icon { width: 1em; height: 1em; vertical-align: -0.12em; --ink: var(--ncd-bad); }
 
-/* ---- lore: the cheat sheet's columns; a section with many entries spans the page and flows them into columns ---- */
-.lore-tabs > wa-tab-panel::part(base) { padding-inline: 0; }
-.lore .lore-section.wide { grid-column: 1 / -1; }
-.lore-section h2.boon { color: var(--ncd-good); }
-.lore-section h2.drawback { color: var(--ncd-bad); }
-.lore-section .ability-text, .lore-table { font-size: var(--wa-font-size-s); line-height: 1.45; }
-.lore-section .ability-text :is(p, ul) { margin-block: 0 var(--wa-space-s); }
-.lore-entries { columns: 19rem; column-gap: var(--wa-space-xl); }
-.lore-entry { break-inside: avoid; padding-top: var(--wa-space-s); }
-.lore-entry h3 { margin-top: 0; color: var(--wa-color-brand); }
-.lore-tag { margin-left: var(--wa-space-2xs); color: var(--wa-color-text-quiet); font-weight: normal; letter-spacing: 0.04em; text-transform: none; }
-.lore-table-wrap { overflow-x: auto; margin-bottom: var(--wa-space-s); }
-.lore-table { border-collapse: collapse; width: 100%; }
-.lore-table :is(th, td) { padding: var(--wa-space-2xs) var(--wa-space-s); border-bottom: 1px solid var(--ncd-rule); text-align: left; vertical-align: top; }
-.lore-table td:first-child { white-space: nowrap; }
-.lore-table th { font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; font-size: var(--wa-font-size-xs); }
+/* ---- databank: the cheat sheet's columns; a section with many entries spans the page and flows them into columns ---- */
+.databank-tabs > wa-tab-panel::part(base) { padding-inline: 0; }
+.databank .databank-section.wide { grid-column: 1 / -1; }
+.databank-section h2.boon { color: var(--ncd-good); }
+.databank-section h2.drawback { color: var(--ncd-bad); }
+.databank-section .ability-text, .databank-table { font-size: var(--wa-font-size-s); line-height: 1.45; }
+.databank-section .ability-text :is(p, ul) { margin-block: 0 var(--wa-space-s); }
+.databank-entries { columns: 19rem; column-gap: var(--wa-space-xl); }
+.databank-entry { break-inside: avoid; padding-top: var(--wa-space-s); }
+.databank-entry h3 { margin-top: 0; color: var(--wa-color-brand); }
+.databank-tag { margin-left: var(--wa-space-2xs); color: var(--wa-color-text-quiet); font-weight: normal; letter-spacing: 0.04em; text-transform: none; }
+.databank-table-wrap { overflow-x: auto; margin-bottom: var(--wa-space-s); }
+.databank-table { border-collapse: collapse; width: 100%; }
+.databank-table :is(th, td) { padding: var(--wa-space-2xs) var(--wa-space-s); border-bottom: 1px solid var(--ncd-rule); text-align: left; vertical-align: top; }
+.databank-table td:first-child { white-space: nowrap; }
+.databank-table th { font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; font-size: var(--wa-font-size-xs); }
 
 /* ---- roller ---- */
 .roller::part(body) { display: flex; flex-direction: column; gap: var(--wa-space-l); }

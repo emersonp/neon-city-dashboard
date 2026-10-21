@@ -387,5 +387,5 @@ The Administrator has final say as to whether a piece of gear can have the Cyber
     ["96-100", "Versatile", "Unreliable"],
   ];
 
-  root.NCD_LORE = { gear, weapons, weaponsIntro, vehicleRules, vehicles, keywordsIntro, keywords, randomKeywordsIntro, randomKeywords };
+  root.NCD_DATABANK = { gear, weapons, weaponsIntro, vehicleRules, vehicles, keywordsIntro, keywords, randomKeywordsIntro, randomKeywords };
 })(globalThis);

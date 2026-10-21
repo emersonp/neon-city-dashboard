@@ -28,7 +28,7 @@ Press <kbd>R</kbd> on the Dice tab to roll.
 ## Tests
 
 ```
-node --test tests/dice.test.cjs tests/discord.test.cjs tests/characters.test.cjs tests/format.test.cjs tests/abilities.test.cjs tests/rules.test.cjs tests/lore.test.cjs
+node --test tests/dice.test.cjs tests/discord.test.cjs tests/characters.test.cjs tests/format.test.cjs tests/abilities.test.cjs tests/rules.test.cjs tests/databank.test.cjs
 ```
 
 ## What's here
@@ -46,7 +46,7 @@ node --test tests/dice.test.cjs tests/discord.test.cjs tests/characters.test.cjs
 | `create.js` | Create mode: a new character built step by step from `rules.js` (step header, Back/Next/Finish, Discard, each step's controls) |
 | `abilities.js` | The perk and augmentation catalog; edit it to add abilities |
 | `rules.js` | Rulebook data for Create: archetype skills, initiative, knows, gear; origin options (needs `characters.js`; testable in Node) |
-| `lore.js` | The Databank tab's text from the rulebook's Equipment chapter: gear, weapons, vehicles, and gear and weapon keywords (testable in Node) |
+| `databank.js` | The Databank tab's text from the rulebook's Equipment chapter: gear, weapons, vehicles, and gear and weapon keywords (testable in Node) |
 | `format.js` | Turns ability descriptions into HTML: paragraphs, bold, italic, lists, icon tokens (testable in Node) |
 | `docs/character-sheet.md` | Markdown version of the paper character sheet |
 | `discord.js` | Builds the Discord message and posts it to the webhook |
@@ -60,9 +60,9 @@ Things remembered in localStorage (all under `ncd.`): characters (with the ids o
 The **Databank** tab is a reference for the rulebook's Equipment chapter, in two tabs: **Gear** (gear basics, guided
 skill software, tool kits, targeted stimulants, computer gear, biotechnology, other tools, weapons, and vehicles) and
 **Keywords** (positive and negative gear keywords, the random gear keywords table, and weapon keywords). It's all in
-`lore.js`, written in the same format as ability descriptions (below). Each weapon lists the keywords it allows,
-and each weapon keyword lists the weapons that allow it, both from the `allowed` lists in `lore.js`.
-`tests/lore.test.cjs` checks the keyword tables against each other.
+`databank.js`, written in the same format as ability descriptions (below). Each weapon lists the keywords it allows,
+and each weapon keyword lists the weapons that allow it, both from the `allowed` lists in `databank.js`.
+`tests/databank.test.cjs` checks the keyword tables against each other.
 
 ## Conditions
 
