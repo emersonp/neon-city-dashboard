@@ -1054,22 +1054,24 @@
   const rollPools = { adv: $("skill-adv"), chal: $("skill-chal") };
   const rollResult = $("skill-result");
   const rollImpact = $("skill-impact");
-  let rollSkill = null; // { id, name, adv, chal }
+  let rollSkill = null; // { id, name, adv, chal, attack }
 
   const resetRollPools = () => {
     rollPools.adv.value = String(rollSkill.adv);
     rollPools.chal.value = String(rollSkill.chal);
   };
-  // From gear (openGearRoll): extra Advantage dice on top of the skill's own, and an impact to start with.
-  function openRollDialog(id, { adv = 0, impact = null } = {}) {
+  // From gear (openGearRoll): extra Advantage dice on top of the skill's own, an impact to start with, and for a
+  // weapon, its attack ("melee" or "ranged").
+  function openRollDialog(id, { adv = 0, impact = null, attack = null } = {}) {
     const sk = C.SKILLS.find((s) => s.id === id);
     const st = sk ? C.skill(current, id) : { value: null, adv: 0, chal: 0 };
-    rollSkill = { id, name: sk ? sk.name : "Anything else", adv: DICE.clampPool(st.adv + adv), chal: st.chal };
+    rollSkill = { id, name: sk ? sk.name : "Anything else", adv: DICE.clampPool(st.adv + adv), chal: st.chal, attack };
     rollDialog.label = `Roll ${rollSkill.name}`;
     rollTarget.value = String(C.shownValue(st.value));
     rollImpact.value = impact ? String(impact) : "";
     resetRollPools();
     APP.emptyResult(rollResult);
+    offerPush(null);
     rollDialog.open = true;
   }
 
@@ -1358,6 +1360,39 @@
     openRollDialog(link.dataset.roll);
   });
 
+  // Pushing your luck (DICE.pushCost): after a failed check, a player (never the Administrator) can spend Luck to make
+  // it succeed, while they have the Luck and there's room for the challenge dice. Not on an attack, unless an
+  // augmentation allows that kind; Will to Succeed makes each 10 Luck count for 20, and Transmute Probability adds
+  // advantage dice. A pushed attack's impact counts the Luck spent instead of the total.
+  const PUSH_ATTACKS = { melee: "corrective-measures", ranged: "targeting-correction" };
+  const pushButton = $("skill-push");
+  let pushing = null; // { roll, impact }: the roll that can be pushed, and the impact it was rolled with
+  const hasAbility = (id) => C.abilityIds(current).includes(id);
+  function pushCost() {
+    if (!pushing || SESSION.gm || state !== "running") return null;
+    if (rollSkill.attack && !hasAbility(PUSH_ATTACKS[rollSkill.attack])) return null;
+    return DICE.pushCost(pushing.roll, { luck: C.luck(current).current, step: hasAbility("will-to-succeed") ? 20 : 10 });
+  }
+  // Offers the push for this roll (null: none), if it can be pushed.
+  function offerPush(r, impact = null) {
+    pushing = r && { roll: r, impact };
+    const cost = pushCost();
+    pushButton.hidden = !cost;
+    if (cost) $("skill-push-label").textContent = `Push your luck: ${cost.luck} Luck, +${cost.dice} challenge ${cost.dice > 1 ? "dice" : "die"}`;
+  }
+  pushButton.addEventListener("click", () => {
+    const cost = pushCost();
+    if (!cost) return;
+    const before = pushing.roll;
+    if (!commit({ ...current, currentLuck: C.luck(current).current - cost.luck })) return;
+    const r = DICE.push(before, cost, { advantage: hasAbility("transmute-probability"), impact: pushing.impact, attack: Boolean(rollSkill.attack) });
+    offerPush(null);
+    renderFields();
+    APP.showResult(r, true, rollResult, { adv: before.adv.length, chal: before.chal.length });
+    APP.postRoll(r, rollSkill.name, C.isInitiative(rollSkill.id) ? { handle: text(current.handle) } : null);
+  });
+
+  let rolledImpact = null; // the impact the roll in progress was made with, for pushing it
   const rollSkillAndPost = APP.makeRoller({
     button: $("skill-roll"),
     readTarget: APP.targetField(rollTarget),
@@ -1365,10 +1400,13 @@
     result: rollResult,
     resetPools: resetRollPools,
     scroll: true,
-    onRoll: () => setUsed(rollSkill.id, true),
+    onRoll: (r) => { setUsed(rollSkill.id, true); offerPush(r, rolledImpact); },
     skill: () => rollSkill.name,
     initiative: () => (C.isInitiative(rollSkill.id) ? { handle: text(current.handle) } : null),
-    readImpact: () => DICE.cleanImpact(rollImpact.value),
+    readImpact: () => {
+      offerPush(null); // a new roll takes the last one's push away
+      return (rolledImpact = DICE.cleanImpact(rollImpact.value));
+    },
   });
   $("skill-roll").addEventListener("click", rollSkillAndPost);
   rollTarget.addEventListener("keydown", (e) => { if (e.key === "Enter") rollSkillAndPost(); });

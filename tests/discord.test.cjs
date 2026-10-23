@@ -158,3 +158,8 @@ test("initiative with emoji, and with no target", () => {
   assert.equal(l.result, "41");
   assert.equal(l.detail, "Rolled 41 · <:ncd_drawback:2>");
 });
+
+test("a pushed roll says how much Luck it spent", () => {
+  const r = { ...roll({ target: 30 }, () => 4), success: true, pushed: { luck: 20, dice: 2, adv: 0 } };
+  assert.equal(lines(r, { player: "Parker", skill: "Hack" }).intro, "Parker rolled *Hack* against 30, pushed 20 Luck, and got a");
+});

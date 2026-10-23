@@ -39,7 +39,7 @@
   function initiativeLines(r, { player, emoji, skill, handle }) {
     const turn = r.success == null ? null : r.success ? "Fast" : "Slow";
     return {
-      intro: `${player} rolled for ${skill}`,
+      intro: `${player} rolled for ${skill}${r.pushed ? `, pushed ${r.pushed.luck} Luck` : ""}`,
       result: turn ? `${handle || player} will go ${turn}` : String(r.total),
       detail: `Rolled ${r.total}${netSuffix(r, emoji)}`,
     };
@@ -47,13 +47,14 @@
 
   // The three lines: small intro, big result (with the impact, on a success with one), and a subtle footer.
   // `luck` and `influence` are null for the GM (or with no character open), so the footer can end up empty.
-  // `skill` is the skill's name, if any. With `initiative` (an Initiative skill), they're initiativeLines, and
+  // `skill` is the skill's name, if any. A pushed roll (dice.js's push) says how much Luck it spent. With `initiative` (an Initiative skill), they're initiativeLines, and
   // `handle` names the character going Fast or Slow.
   function lines(r, { player, emoji, luck = null, influence = null, skill, initiative = false, handle } = {}) {
     if (initiative) return initiativeLines(r, { player, emoji, skill, handle });
     const verdict = { success: "Success!", failure: "Failure.", none: "" }[outcomeOf(r)];
     return {
-      intro: `${player} rolled${skill ? ` *${skill}*` : ""}${r.target == null ? "" : ` against ${r.target}`} and got a`,
+      intro: `${player} rolled${skill ? ` *${skill}*` : ""}${r.target == null ? "" : ` against ${r.target}`}${
+        r.pushed ? `, pushed ${r.pushed.luck} Luck,` : ""} and got a`,
       result: [verdict, String(r.total)].filter(Boolean).join(" ") + (r.impact ? ` · Impact ${r.impact}` : "") + netSuffix(r, emoji),
       detail: [luck != null && `Luck: ${luck}`, influence != null && `Influence: ${influence}`, rolledText(r, emoji)]
         .filter(Boolean).join(" · "),

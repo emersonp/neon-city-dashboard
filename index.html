@@ -163,8 +163,9 @@
             <h2>Boons and Drawbacks</h2>
 
             <h3 class="boon">1-2 Boons (each)</h3>
-            <ul>
-              <li>Attack that hit and enemy: <b>+10 damage</b></li>
+            <!-- app.js reads this list for the Boon symbols' hover text -->
+            <ul id="boon-spends">
+              <li>Attack that hit an enemy: <b>+10 damage</b></li>
               <li>Progressing an objective: <b>+10 impact</b> <em>(even if failure)</em></li>
               <li>Attack on a minion squad <em>(that hit)</em>: squad size −1</li>
               <li>Restore 10 luck</li>
@@ -883,6 +884,11 @@
       </div>
       <section class="result" id="skill-result" aria-live="polite" data-steady="impact"></section>
     </div>
+    <!-- after a failed check, while there's the Luck and room for the challenge dice to make it succeed (roster.js) -->
+    <wa-button slot="footer" id="skill-push" appearance="outlined" hidden>
+      <wa-icon slot="start" name="clover"></wa-icon>
+      <span id="skill-push-label">Push your luck</span>
+    </wa-button>
     <wa-button slot="footer" id="skill-roll" variant="brand">
       <wa-icon slot="start" name="dice-d20"></wa-icon>
       Roll

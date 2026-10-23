@@ -107,3 +107,48 @@ test("tables: small dice read off d10s, every face reachable", () => {
   assert.equal(rollDie(4, seq(8, 3)), 4);
   for (let i = 0; i < 500; i++) { const n = rollDie(20); assert.ok(n >= 1 && n <= 20); }
 });
+
+const { pushCost, push } = globalThis.NCD_DICE;
+
+test("pushCost: 10 luck and a challenge die for every 10 the total is over the target", () => {
+  const r = roll({ target: 30, challenge: 1 }, seq(4, 8, 9)); // 48 against 30
+  assert.deepEqual(pushCost(r, { luck: 50 }), { luck: 20, dice: 2 });
+  assert.deepEqual(pushCost(r, { luck: 20 }), { luck: 20, dice: 2 });
+  assert.equal(pushCost(r, { luck: 19 }), null);
+  assert.deepEqual(pushCost(r, { luck: 50, step: 20 }), { luck: 10, dice: 1 }); // Will to Succeed
+  assert.deepEqual(pushCost(roll({ target: 30 }, seq(3, 1)), { luck: 50 }), { luck: 10, dice: 1 });
+});
+
+test("pushCost: never past 4 challenge dice, and only a failed check", () => {
+  const r = roll({ target: 30, challenge: 3 }, seq(4, 8, 9, 9, 9));
+  assert.equal(pushCost(r, { luck: 100 }), null);
+  assert.deepEqual(pushCost(roll({ target: 40, challenge: 3 }, seq(4, 8, 9, 9, 9)), { luck: 100 }), { luck: 10, dice: 1 });
+  assert.equal(pushCost(roll({ target: 50 }, seq(4, 8)), { luck: 100 }), null);
+  assert.equal(pushCost(roll({}, seq(4, 8)), { luck: 100 }), null);
+});
+
+test("push: rolls the challenge dice onto the roll, recounts, and succeeds", () => {
+  const r = roll({ target: 30, advantage: 1 }, seq(4, 8, 0)); // a boon
+  const p = push(r, pushCost(r, { luck: 50 }), {}, seq(0, 9));
+  assert.equal(p.success, true);
+  assert.equal(p.total, 48);
+  assert.deepEqual(p.chal, [true, false]);
+  assert.equal(p.net, 0);
+  assert.equal(p.cancelled, 1);
+  assert.deepEqual(p.pushed, { luck: 20, dice: 2, adv: 0 });
+});
+
+test("push: Transmute Probability adds advantage dice too, up to 4", () => {
+  const r = roll({ target: 30, advantage: 3 }, seq(4, 8, 1, 1, 1));
+  const p = push(r, { luck: 20, dice: 2 }, { advantage: true }, seq(0, 9, 9));
+  assert.deepEqual(p.adv, [false, false, false, true]);
+  assert.equal(p.pushed.adv, 1);
+  assert.equal(p.chal.length, 2);
+});
+
+test("push: impact is the total plus the bonus, or the luck spent on an attack", () => {
+  const r = roll({ target: 30 }, seq(4, 8));
+  assert.equal(push(r, { luck: 20, dice: 2 }, { impact: 20 }, seq(9, 9)).impact, 68);
+  assert.equal(push(r, { luck: 20, dice: 2 }, { impact: 20, attack: true }, seq(9, 9)).impact, 40);
+  assert.equal(push(r, { luck: 20, dice: 2 }, {}, seq(9, 9)).impact, null);
+});

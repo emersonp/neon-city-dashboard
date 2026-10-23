@@ -5,6 +5,7 @@
 // - Challenge die: d10 with 6 Drawback faces + 4 blanks (60%)
 // - Boons and Drawbacks cancel one for one
 // - optional impact (a weapon's damage, a kit's bonus): a success's impact is the total plus it
+// - pushing your luck: a failed check spends luck in 10s to succeed, rolling a challenge die per 10
 (function (root) {
   const MAX_POOL = 4;
 
@@ -43,6 +44,37 @@
     };
   }
 
+  // Recounts a roll's symbols after dice are added to it.
+  function tally(r) {
+    const boons = r.adv.filter(Boolean).length, drawbacks = r.chal.filter(Boolean).length;
+    return { ...r, boons, drawbacks, net: boons - drawbacks, cancelled: Math.min(boons, drawbacks) };
+  }
+
+  // Pushing your luck: a failed check can spend luck in 10s, each 10 raising the chance of success by `step` (10, or 20
+  // with Will to Succeed) and adding a challenge die, but never past 4 challenge dice. What pushing r would take,
+  // { luck, dice }, or null when `luck` can't make it succeed.
+  function pushCost(r, { luck, step = 10 }) {
+    if (r?.success !== false || r.target == null) return null;
+    const dice = Math.ceil((r.total - r.target) / step);
+    const cost = dice * 10;
+    return cost <= luck && r.chal.length + dice <= MAX_POOL ? { luck: cost, dice } : null;
+  }
+  // r pushed by cost (from pushCost): its challenge dice rolled onto it, and it succeeds. With `advantage` (Transmute
+  // Probability) as many advantage dice come too, up to 4. `impact` is what the roll's impact adds; a pushed attack
+  // counts the luck spent instead of the total.
+  function push(r, cost, { advantage = false, impact = null, attack = false } = {}, rng = rand10) {
+    const adv = advantage ? Math.min(cost.dice, MAX_POOL - r.adv.length) : 0;
+    const bonus = cleanImpact(impact);
+    return tally({
+      ...r,
+      adv: [...r.adv, ...Array.from({ length: adv }, () => rng() % 2 === 0)],
+      chal: [...r.chal, ...Array.from({ length: cost.dice }, () => rng() < 6)],
+      success: true,
+      impact: bonus ? (attack ? cost.luck : r.total) + bonus : null,
+      pushed: { luck: cost.luck, dice: cost.dice, adv },
+    });
+  }
+
   // A table to roll on (the Tables tab): its first column's head names the die ("d100", "d6") and each row's first
   // cell the range it covers ("01-10", "96-100", or one number; "00" is the die's top face).
   const tableDie = (table) => Number(/^d(\d+)$/i.exec(String(table?.head?.[0] ?? "").trim())?.[1]) || null;
@@ -76,5 +108,5 @@
     return { die, total, row };
   }
 
-  root.NCD_DICE = { MAX_POOL, clampPool, cleanImpact, rand10, roll, fmtTens, tableDie, rollDie, rollTable };
+  root.NCD_DICE = { MAX_POOL, clampPool, cleanImpact, rand10, roll, pushCost, push, fmtTens, tableDie, rollDie, rollTable };
 })(globalThis);

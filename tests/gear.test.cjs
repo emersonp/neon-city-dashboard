@@ -180,11 +180,11 @@ test("descriptionText: the book's own words for what the item is, trimmed to wha
 });
 
 test("rollOf: the skills, extra dice and impact an item rolls with", () => {
-  assert.deepEqual(G.rollOf(w("One-handed melee")), { skills: ["slash-stab-or-strike-someone"], adv: 1, impact: 10 });
-  assert.deepEqual(G.rollOf(w("Two-handed melee")), { skills: ["slash-stab-or-strike-someone"], adv: 1, impact: 20 });
-  assert.deepEqual(G.rollOf(w("Pistol")), { skills: ["shoot-someone"], adv: 0, impact: 20 });
-  assert.deepEqual(G.rollOf(w("Launcher")), { skills: ["shoot-someone"], adv: 0, impact: 20 });
-  assert.deepEqual(G.rollOf(w("Thrown")), { skills: ["throw-something"], adv: 0, impact: 10 });
+  assert.deepEqual(G.rollOf(w("One-handed melee")), { skills: ["slash-stab-or-strike-someone"], adv: 1, impact: 10, attack: "melee" });
+  assert.deepEqual(G.rollOf(w("Two-handed melee")), { skills: ["slash-stab-or-strike-someone"], adv: 1, impact: 20, attack: "melee" });
+  assert.deepEqual(G.rollOf(w("Pistol")), { skills: ["shoot-someone"], adv: 0, impact: 20, attack: "ranged" });
+  assert.deepEqual(G.rollOf(w("Launcher")), { skills: ["shoot-someone"], adv: 0, impact: 20, attack: "ranged" });
+  assert.deepEqual(G.rollOf(w("Thrown")), { skills: ["throw-something"], adv: 0, impact: 10, attack: "ranged" });
   assert.equal(G.rollOf(w("Mine")), null);
   assert.equal(G.rollOf(w(undefined)), null);
   const kit = (extra) => C.newGear({ kind: "kit", description: "K", set: "Hacker's Deck", quality: "standard", ...extra });

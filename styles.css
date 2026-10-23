@@ -337,6 +337,15 @@ html.gm [data-player] { display: none !important; }
 .verdict.success { color: var(--color-good); }
 .verdict.failure { color: var(--color-bad); }
 .wa-dark .verdict.success, .wa-dark .verdict.failure { text-shadow: 0 0 10px currentColor; }
+/* a pushed roll (roster.js): how much Luck it took, popping in as the push lands */
+.pushed {
+  font-family: var(--font-mono);
+  font-size: var(--wa-font-size-s);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--wa-color-text-quiet);
+  animation: pop 0.4s ease-out backwards;
+}
 .impact {
   font-family: var(--font-mono);
   font-weight: 700;
@@ -397,7 +406,7 @@ html.gm [data-player] { display: none !important; }
 @keyframes pop { 0% { transform: scale(0.6); opacity: 0; } 70% { transform: scale(1.06); } 100% { transform: scale(1); opacity: 1; } }
 @keyframes shake { 0%, 100% { transform: translate(0, 0) rotate(0); } 25% { transform: translate(-2px, 1px) rotate(-6deg); } 75% { transform: translate(2px, -1px) rotate(6deg); } }
 @media (prefers-reduced-motion: reduce) {
-  :is(.reveal, .reveal > .result-body) > *, .rolling .d10 { animation: none; }
+  :is(.reveal, .reveal > .result-body) > *, .rolling .d10, .pushed { animation: none; }
 }
 
 /* ---- Discord card ---- */

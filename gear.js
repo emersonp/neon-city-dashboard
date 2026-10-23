@@ -207,23 +207,26 @@
 
   // ---- rolling with it ----
   // The rolls an item makes, or null where there's no obvious one: { skills (ids; the player picks when there's more
-  // than one), adv (extra Advantage dice), impact }. Melee weapons Slash, Stab, or Strike with an extra Advantage die;
-  // guns and launchers Shoot; thrown weapons Throw (the book's ranged attacks with them). Mines aren't rolled. A kit
-  // rolls any of its set's skills with its impact bonus, a hyper-specialized one only its one skill, with 2 extra
-  // Advantage dice (its Right Tool for the Job x2); a vehicle is driven.
+  // than one), adv (extra Advantage dice), impact, and a weapon's attack ("melee" or "ranged") }. Melee weapons Slash,
+  // Stab, or Strike with an extra Advantage die; guns and launchers Shoot; thrown weapons Throw (the book's ranged
+  // attacks with them). Mines aren't rolled. A kit rolls any of its set's skills with its impact bonus, a
+  // hyper-specialized one only its one skill, with 2 extra Advantage dice (its Right Tool for the Job x2); a vehicle is
+  // driven.
   // Equipment, armor and props have none.
   const WEAPON_ROLLS = {
-    "One-handed melee": { skill: "slash-stab-or-strike-someone", adv: 1 }, "Two-handed melee": { skill: "slash-stab-or-strike-someone", adv: 1 },
-    Thrown: { skill: "throw-something" },
-    Pistol: { skill: "shoot-someone" }, Rifle: { skill: "shoot-someone" }, Shotgun: { skill: "shoot-someone" },
-    "Sniper rifle": { skill: "shoot-someone" }, Launcher: { skill: "shoot-someone" },
+    "One-handed melee": { skill: "slash-stab-or-strike-someone", adv: 1, attack: "melee" },
+    "Two-handed melee": { skill: "slash-stab-or-strike-someone", adv: 1, attack: "melee" },
+    Thrown: { skill: "throw-something", attack: "ranged" },
+    Pistol: { skill: "shoot-someone", attack: "ranged" }, Rifle: { skill: "shoot-someone", attack: "ranged" },
+    Shotgun: { skill: "shoot-someone", attack: "ranged" }, "Sniper rifle": { skill: "shoot-someone", attack: "ranged" },
+    Launcher: { skill: "shoot-someone", attack: "ranged" },
   };
   function rollOf(item) {
     const s = stats(item);
     switch (item?.kind) {
       case "weapon": {
         const r = weaponOf(item) && WEAPON_ROLLS[weaponOf(item).name];
-        return r ? { skills: [r.skill], adv: r.adv ?? 0, impact: s.damage || null } : null;
+        return r ? { skills: [r.skill], adv: r.adv ?? 0, impact: s.damage || null, attack: r.attack } : null;
       }
       case "kit": {
         const set = toolSetOf(item);

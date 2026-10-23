@@ -92,6 +92,10 @@ Same as neon-city-overlay:
 - Boons and Drawbacks **cancel one for one**; whatever is left over is the result.
 - The target sticks between rolls; the dice pools reset to 0 after every roll.
 
+Hovering over a Boon that counts (not one cancelled out), in any roll's result, lists what each of one or two Boons can be
+spent on, read from the Cheat Sheet's **1-2 Boons (each)** list (`#boon-spends` in `index.html`). The 3-4 Boon options are the
+Administrator's to choose, so they aren't shown.
+
 Press <kbd>R</kbd> on the Dice tab to roll. The **×** in the corner of the result clears it (the Administrator's clears the
 overlay's too). The result panel is always the height of the biggest roll (a target and all 8 pool dice), so it doesn't
 jump about and whatever goes under it stays put.
@@ -317,6 +321,16 @@ Skill rolls from a running character (Character tab → **Run**, then click a sk
 `Parker rolled *Shoot Someone* against 75 and got a` (the skill in italics). The roll dialog starts at the skill's value and intrinsic dice.
 It also has an **Impact** box (whole numbers above zero, or blank): on a success, the main line gets a third item, the
 total plus the impact (`Success! 32 · Impact 52`).
+
+**Pushing your luck:** after a failed check in the roll dialog, a player (never the Administrator) gets a **Push your
+luck** button saying what it costs: 10 Luck and one challenge die for every 10 the total is over the target. It only
+shows while the character has that much Current Luck and the challenge dice wouldn't go past 4. Pushing takes the Luck
+off the sheet, rolls the new challenge dice onto the same result (only they spin), and makes it a success, marked
+"Pushed · 20 Luck"; it posts again as `Parker rolled *Hack* against 30, pushed 20 Luck, and got a`. An attack (a roll from
+a weapon's dice button) can't be pushed unless the character has Corrective Measures (melee) or Targeting Correction
+(ranged), and then its impact counts the Luck spent instead of the total. Will to Succeed makes each 10 Luck count for 20,
+and Transmute Probability adds an advantage die per 10 Luck (up to 4). Mental and digital attacks (Déjà Vu, Data
+Scramble) aren't told apart from checks, since the dialog can't know one. The rules are `pushCost` and `push` in `dice.js`.
 
 While running, gear with an obvious roll (`rollOf` in `gear.js`) has a dice button that opens the roll dialog for it,
 with Impact filled in from the item: melee weapons roll *Slash, Stab, or Strike Someone* with 1 extra Advantage die;

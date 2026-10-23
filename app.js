@@ -6,7 +6,7 @@
   const { svg: icon } = window.NCD_ICONS;
   const store = window.NCD_STORE;
   const SESSION = window.NCD_SESSION;
-  const { $, text } = window.NCD_UTIL;
+  const { $, text, escapeHTML } = window.NCD_UTIL;
 
   // The two kinds of pool die, and the symbol each one rolls.
   const KINDS = {
@@ -113,20 +113,26 @@
       <line class="facet" x1="50" y1="70" x2="50" y2="97"/>
       <text class="num" x="50" y="44">${n}</text></svg></div>`;
   const dicePair = (tens, ones) => `<div class="d10s">${D10("tens", tens)}${D10("ones", ones)}</div>`;
-  const symbol = (kind, cls = "") => `<span class="${kind}${cls}" title="${KINDS[kind].title}">${icon(KINDS[kind].symbol)}</span>`;
+  // A Boon that counts (not one cancelled out) says, on hover, what each one or two can be spent on: the Cheat Sheet's list.
+  const BOON_SPENDS = [...document.querySelectorAll("#boon-spends li")].map((li) => `• ${li.textContent.replace(/\s+/g, " ").trim()}`);
+  const BOON_TITLE = ["Boon. With 1-2 Boons, spend each on:", ...BOON_SPENDS].join("\n");
+  const titleOf = (kind, cancelled = false) => (kind === "adv" && !cancelled && BOON_SPENDS.length ? BOON_TITLE : KINDS[kind].title);
+  const symbol = (kind, cls = "") => `<span class="${kind}${cls}" title="${escapeHTML(titleOf(kind, cls.includes("cancelled")))}">${icon(KINDS[kind].symbol)}</span>`;
 
   // Each pool die is a slot-machine reel, like the overlay's: its die icon over a window showing what it landed on,
   // a Boon / Drawback or a blank. Spinning, the reel runs through random faces (at the die's real odds) first.
+  // `landed` counts the dice of each kind that are already showing and don't spin again (the ones before a push).
   const ODDS = { adv: 0.5, chal: 0.6 };
   const reelFace = (kind, hit) => `<div class="face">${hit ? symbol(kind) : ""}</div>`;
-  function reelsHTML(r, spinning) {
-    const dice = [...r.adv.map((hit) => ["adv", hit]), ...r.chal.map((hit) => ["chal", hit])];
+  function reelsHTML(r, spinning, landed = { adv: 0, chal: 0 }) {
+    const dice = [...r.adv.map((hit, n) => ["adv", hit, n]), ...r.chal.map((hit, n) => ["chal", hit, n])];
     if (!dice.length) return "";
-    return `<div class="reels">${dice.map(([kind, hit], i) => {
-      const len = spinning ? 14 + i * 3 : 1;
+    let spun = 0;
+    return `<div class="reels">${dice.map(([kind, hit, n], i) => {
+      const len = spinning && n >= landed[kind] ? 14 + spun++ * 3 : 1;
       const faces = Array.from({ length: len - 1 }, () => reelFace(kind, Math.random() < ODDS[kind])).join("") + reelFace(kind, hit);
       const gap = kind === "chal" && i === r.adv.length && r.adv.length ? `<span class="gap"></span>` : "";
-      return `${gap}<div class="slot ${kind}" data-len="${len}" title="${hit ? KINDS[kind].title : "Blank"}">
+      return `${gap}<div class="slot ${kind}" data-len="${len}" title="${hit ? escapeHTML(titleOf(kind)) : "Blank"}">
         ${icon(KINDS[kind].die, "slot-die")}<div class="window"><div class="strip">${faces}</div></div></div>`;
     }).join("")}</div>`;
   }
@@ -134,7 +140,7 @@
   const reelStopAt = (i) => 1050 + i * 220;
   function spinReels(el) {
     const body = el.querySelector(".result-body") ?? el;
-    const slots = body.querySelectorAll(".slot");
+    const slots = body.querySelectorAll(".slot:not([data-len='1'])");
     const net = body.querySelector(".net");
     if (!slots.length) return;
     net?.classList.add("waiting");
@@ -171,18 +177,20 @@
 
   const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
 
-  function rollHTML(r, spinning) {
+  function rollHTML(r, spinning, landed) {
     const verdict = r.success == null ? "" : `<div class="verdict ${r.success ? "success" : "failure"}">${r.success ? "Success" : "Failure"}</div>`;
+    const pushed = r.pushed ? `<div class="pushed">Pushed · ${r.pushed.luck} Luck</div>` : "";
     const impact = r.impact ? `<div class="impact">Impact ${r.impact}</div>` : "";
-    return dicePair(DICE.fmtTens(r.tens), r.ones) + `<div class="total">${r.total}</div>` + verdict + impact + reelsHTML(r, spinning) + netHTML(r);
+    return dicePair(DICE.fmtTens(r.tens), r.ones) + `<div class="total">${r.total}</div>` + verdict + pushed + impact
+      + reelsHTML(r, spinning, landed) + netHTML(r);
   }
 
   // A panel marked data-steady (the Dice tab's, the roll dialog's) stays the height of the biggest roll there is, a
   // target and every pool die, so it doesn't jump about from roll to roll: a hidden copy of that roll sits under whatever
-  // is showing. data-steady="impact" counts an impact line too.
+  // is showing. data-steady="impact" (the roll dialog) counts an impact line too, and a push's.
   const all = (hit) => Array(DICE.MAX_POOL).fill(hit);
   const BIGGEST = { tens: 0, ones: 0, total: 100, success: true, adv: all(true), chal: all(true), boons: DICE.MAX_POOL, net: 0, cancelled: DICE.MAX_POOL };
-  const BIGGEST_IMPACT = { ...BIGGEST, impact: 999 };
+  const BIGGEST_IMPACT = { ...BIGGEST, impact: 999, pushed: { luck: 100 } };
   // With clear, it gets the small button that clears the roll away (a data-clearable panel's, while a roll shows).
   const CLEAR_BUTTON = `<wa-button class="result-clear" size="s" appearance="plain" title="Clear the roll">
       <wa-icon name="xmark" label="Clear the roll"></wa-icon></wa-button>`;
@@ -193,12 +201,13 @@
         + (clear ? CLEAR_BUTTON : "");
   }
 
-  function showResult(r, animate, el) {
+  // With `landed` (a push, from roster.js), only the dice the push added spin, and the rest doesn't pop in again.
+  function showResult(r, animate, el, landed) {
     const spinning = animate && !reducedMotion.matches;
     (el.reelTimers ?? []).forEach(clearTimeout);
     el.reelTimers = [];
-    el.className = "result" + (animate ? " reveal" : "");
-    fill(el, rollHTML(r, spinning), el.hasAttribute("data-clearable"));
+    el.className = "result" + (animate && !landed ? " reveal" : "");
+    fill(el, rollHTML(r, spinning, landed), el.hasAttribute("data-clearable"));
     if (spinning) spinReels(el);
   }
   // Spins the d10 faces for a moment before the real result lands.
@@ -371,7 +380,6 @@
   {
     const DATABANK = window.NCD_DATABANK;
     const { formatDescription } = window.NCD_FORMAT;
-    const { escapeHTML } = window.NCD_UTIL;
     const ICON_COLOR = { "advantage-die": "adv", boon: "adv", "challenge-die": "chal", drawback: "chal" };
     const rich = (s) => `<div class="ability-text">${formatDescription(s, (name) => icon(name, ICON_COLOR[name] ?? ""))}</div>`;
     // A table's cells are plain text, unless it has its own cell(value, column) giving HTML, or `format` (format.js text).
@@ -557,5 +565,5 @@
   }
 
   // For the Character tab (roster.js).
-  window.NCD_APP = { KINDS, toast, targetField, makeRoller, postInfluence, clearResult, emptyResult, tablePicker };
+  window.NCD_APP = { KINDS, toast, targetField, makeRoller, showResult, postRoll, postInfluence, clearResult, emptyResult, tablePicker };
 })();
