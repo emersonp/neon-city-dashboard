@@ -321,7 +321,8 @@
             <dl class="sheet-stats">
               <div class="stat" id="max-luck"><dt>Max Luck</dt><dd data-field="maxLuck"></dd></div>
               <div class="stat stat-luck">
-                <dt id="luck-label">Current Luck</dt>
+                <!-- running, the maximum sits quietly after the label (roster.js) -->
+                <dt><span id="luck-label">Current Luck</span><span class="luck-max" id="luck-max" hidden> · Max <span data-field="maxLuck"></span></span></dt>
                 <dd id="current-luck" class="luck-steps">
                   <wa-button size="s" appearance="outlined" data-luck="-5" hidden>−5</wa-button>
                   <wa-button size="s" appearance="outlined" data-luck="-1" hidden>−1</wa-button>

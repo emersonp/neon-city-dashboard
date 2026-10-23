@@ -899,6 +899,7 @@ button.condition:hover, button.condition:focus-visible { background: color-mix(i
 .skills.editing .skill-controls wa-input { width: 5.75rem; }
 .skills.editing .skill-controls > .skill-value { justify-self: end; padding-right: var(--wa-space-s); }
 .skills.editing .skill-controls > wa-button { width: 100%; }
+.luck-max { color: var(--wa-color-text-quiet); font-weight: 400; }
 .luck-steps { gap: var(--wa-space-2xs); }
 .luck-steps [data-field], .luck-steps [data-step-value] { min-width: 3ch; text-align: center; }
 /* editing Luck: the value between the buttons, like Running */
