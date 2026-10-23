@@ -3,6 +3,23 @@
 A static page for Neon City games: dice rolls posted to Discord, a rules cheat sheet, a gear and keyword reference, tables to roll on, a character roster, and player settings.
 Built with [Web Awesome](https://webawesome.com) (free, from its CDN). No build step.
 
+## Who it's for
+
+One group of friends playing live, together, on a Discord video call. That shapes what it does and doesn't do:
+
+- **Everyone is on the call.** If you're not there, you're not there: nothing is kept or summarized for players who miss
+  a session or join late, and the Discord channel isn't meant to be a record of the game.
+- **The Administrator's camera is the shared state.** Heat, Group Influence, Day, Planning countdowns and initiative
+  show on the OBS overlay on the Administrator's camera, which everyone is watching. They don't need to be posted to
+  Discord as well.
+- **Discord gets only rolls and Influence.** The page pushes to a webhook and never reads anything back. Wounds, Luck
+  and conditions are changed on the player's own sheet and said out loud at the table.
+- **No server, no global state.** Each browser keeps its own characters and settings; there's no syncing between players
+  or with the Administrator.
+
+Features that only matter for asynchronous play, absent players, or players off the call (catch-up logs, mirroring the
+overlay to Discord, shared or synced character state) are out of scope.
+
 ## Run it
 
 1. Open `index.html` in a browser, or serve the folder (for example `npx serve` or `python -m http.server`).
