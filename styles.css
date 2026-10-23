@@ -802,6 +802,11 @@ button.condition:hover, button.condition:focus-visible { background: color-mix(i
   padding: 0;
   cursor: pointer;
   text-align: start;
+  /* Web Awesome's native buttons are nowrap inline-flex; a long prop name wraps inside its row instead */
+  display: inline-block;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 .ability-name:hover, .ability-name:focus-visible { text-decoration: underline; }
 .ability-summary, .ability-tag { color: var(--wa-color-text-quiet); font-size: var(--wa-font-size-s); }
