@@ -285,7 +285,7 @@
 
   // A roll button's whole job: roll, reset the pools, spin, show the result, then post it. One roll at a time.
   // The Administrator's rolls also play on the OBS overlay (admin.js), starting with the spin here.
-  // `scroll` brings the result into view (the skill dialog, where on phones it's below the fold).
+  // `scroll` brings the result into view where it's off screen (on phones it stacks below the roll button).
   // `onRoll` runs once the result shows; `skill` names the skill for the message, if any; `readImpact` gives the impact, if any;
   // `initiative` gives { handle } when it's an Initiative roll (so the message says Fast or Slow), else null.
   function makeRoller({ button, readTarget, pools, result, resetPools, scroll = false, onRoll = () => {}, skill = () => undefined,
@@ -326,6 +326,7 @@
     pools,
     result: $("result"),
     resetPools: () => { for (const group of Object.values(pools)) group.value = "0"; },
+    scroll: true,
     onRoll: (r) => store.set("lastRoll", JSON.stringify(r)),
   });
   try {
