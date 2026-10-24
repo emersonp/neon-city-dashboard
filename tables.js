@@ -10,8 +10,9 @@
 //                 or Finish Job.
 // distinctiveTraits the distinctive visual traits table: [range, trait]. Create's physical appearance can take one, and a
 //                 successful job's distinctive feature reward adds one to it.
-// objectivesObstacles the rulebook's sample objectives, the basics of obstacles, example obstacles, and the physical and
-//                 Network security systems as objectives: { title, intro, entries: [{ name, tag?, text }] }
+// objectives      the rulebook's sample objectives: [{ title, intro, entries: [{ name, tag?, text }] }]
+// obstacles       the basics of obstacles, example obstacles, and the physical and Network security systems as
+//                 objectives, in the same shape
 // complications   the complications the Administrator spends heat on, in the rulebook's three groups (minor, major,
 //                 plot twists): { title, intro, entries: [{ name, tag?, text }] }; the title's [heat] is the icon
 (function (root) {
@@ -126,7 +127,7 @@
     ["99-100", "A patch of exposed metal or circuitry on an otherwise flesh-covered surface"],
   ];
 
-  const objectivesObstacles = [
+  const objectives = [
     {
       title: "Sample objectives",
       intro: "While most objectives will be relatively straightforward, consisting of only a difficulty that the crew must overcome with their rolls, this section includes some more concrete examples of commonly-used objectives that each have some small degree of complexity to them. Administrators can use these objectives or make up their own; they are here for illustration purposes only, and you can opt into, or out of, this level of complexity based on how things are going at your table.",
@@ -173,6 +174,9 @@
 **Getting Lost:** Track each time an attempt to progress this objective fails or has any drawbacks on the roll; after four such instances, the current scene immediately ends, with the crew failing to achieve their goal for the scene as they must instead focus on finding their way back to the surface.` },
       ],
     },
+  ];
+
+  const obstacles = [
     {
       title: "The basics of obstacles",
       intro: `The crew members determine the nature and goals of legwork scenes, and it's up to you to make those scenes interesting and challenging with obstacles and complications. Where complications are tied directly to heat, obstacles are added to the scene by the Administrator based on the nature of the legwork scene. The best obstacles make sense in the context of the scene and feel like a natural collaboration between the Administrator and the player who initially described the nature of the scene.
@@ -414,5 +418,5 @@ There are no specific mechanics for the plot twist you introduce. As the Adminis
     },
   ];
 
-  root.NCD_TABLES = { randomKeywordsIntro, randomKeywords, securityTiers, alarmHeatIntro, alarmHeat, securityDefenses, liabilities, distinctiveTraits, objectivesObstacles, complications };
+  root.NCD_TABLES = { randomKeywordsIntro, randomKeywords, securityTiers, alarmHeatIntro, alarmHeat, securityDefenses, liabilities, distinctiveTraits, objectives, obstacles, complications };
 })(globalThis);
