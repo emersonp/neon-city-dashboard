@@ -286,11 +286,17 @@
           <wa-tab panel="tables-obstacles">Obstacles</wa-tab>
           <wa-tab panel="tables-complications">Complications</wa-tab>
           <wa-tab panel="tables-scenes">Scenes</wa-tab>
+          <wa-tab panel="tables-adversaries">Adversaries</wa-tab>
           <wa-tab-panel name="tables-general"><div class="cheat-sheet databank" id="tables-general"></div></wa-tab-panel>
           <wa-tab-panel name="tables-objectives"><div class="cheat-sheet databank" id="tables-objectives"></div></wa-tab-panel>
           <wa-tab-panel name="tables-obstacles"><div class="cheat-sheet databank" id="tables-obstacles"></div></wa-tab-panel>
           <wa-tab-panel name="tables-complications"><div class="cheat-sheet databank" id="tables-complications"></div></wa-tab-panel>
           <wa-tab-panel name="tables-scenes"><div class="cheat-sheet databank" id="tables-scenes"></div></wa-tab-panel>
+          <wa-tab-panel name="tables-adversaries">
+            <!-- every enemy in the rulebook (adversaries.js); the filter shows one type of enemy, or all of them -->
+            <wa-radio-group id="adversary-filter" class="adversary-filter" label="Type" orientation="horizontal" value="all"></wa-radio-group>
+            <div class="cheat-sheet databank" id="tables-adversaries"></div>
+          </wa-tab-panel>
         </wa-tab-group>
       </wa-tab-panel>
 
@@ -919,6 +925,7 @@
   <script src="rules.js"></script>
   <script src="databank.js"></script>
   <script src="tables.js"></script>
+  <script src="adversaries.js"></script>
   <script src="gear.js"></script>
   <script src="advancement.js"></script>
   <script src="profiles.js"></script>

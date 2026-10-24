@@ -171,7 +171,7 @@ html.gm [data-player] { display: none !important; }
 }
 .sheet-column h2 { margin: 0 0 var(--wa-space-m); font-size: var(--wa-font-size-l); letter-spacing: 0.12em; text-transform: uppercase; }
 /* card and column titles: a small lit square before the name, like a HUD label */
-:is(.sheet-column, .card-header, .databank-section) > h2::before {
+:is(.sheet-column, .card-header, .databank-section, .adversary-head > div) > h2::before {
   content: "";
   display: inline-block;
   width: 0.45em;
@@ -180,7 +180,7 @@ html.gm [data-player] { display: none !important; }
   vertical-align: 0.18em;
   background: var(--color-accent);
 }
-.wa-dark :is(.sheet-column, .card-header, .databank-section) > h2::before { box-shadow: 0 0 8px var(--glow-accent); }
+.wa-dark :is(.sheet-column, .card-header, .databank-section, .adversary-head > div) > h2::before { box-shadow: 0 0 8px var(--glow-accent); }
 .sheet-column h3 { margin: var(--wa-space-l) 0 var(--wa-space-xs); font-size: var(--wa-font-size-m); text-transform: uppercase; letter-spacing: 0.08em; }
 .sheet-column h3.boon { color: var(--color-good); }
 .sheet-column h3.drawback { color: var(--color-bad); }
@@ -230,6 +230,13 @@ html.gm [data-player] { display: none !important; }
 .table-roll { color: var(--color-accent-text); font-variant-numeric: tabular-nums; }
 .databank-table tr.rolled td { background: color-mix(in oklch, var(--color-accent) 18%, transparent); color: var(--color-ink); }
 .databank-table tr.rolled td:first-child { box-shadow: inset 3px 0 0 var(--color-accent); }
+/* the Adversaries subtab: the type filter above the cards; each card's face beside its name and type */
+.adversary-filter { margin-bottom: var(--wa-space-l); }
+.adversary[hidden] { display: none; }
+.adversary-head { display: flex; align-items: center; gap: var(--wa-space-m); margin-bottom: var(--wa-space-m); }
+.adversary-head h2 { margin-bottom: var(--wa-space-2xs); }
+.adversary-head .ability-tag { margin: 0; }
+.adversary-head .adversary-portrait { flex: none; width: 5rem; }
 /* A table to pick a row from (app.js tablePicker): rows are clickable, and the picked one is lit like a rolled one. */
 .table-picker-head { display: flex; align-items: center; margin: 0 0 var(--wa-space-xs); color: var(--wa-color-text-quiet); }
 .table-picker .databank-table { font-size: var(--wa-font-size-s); line-height: 1.45; }
