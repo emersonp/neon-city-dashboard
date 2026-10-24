@@ -829,7 +829,7 @@ button.condition:hover, button.condition:focus-visible { background: color-mix(i
 .ability-summary, .ability-tag { color: var(--wa-color-text-quiet); font-size: var(--wa-font-size-s); }
 .ability-tag { margin-top: 0; }
 .ability-lead { font-style: italic; }
-:is(.ability-text, .databank-table) .icon { width: 1.2em; height: 1.2em; vertical-align: -0.25em; --ink: var(--wa-color-brand); }
+:is(.ability-text, .databank-table, .databank-section h2) .icon { width: 1.2em; height: 1.2em; vertical-align: -0.25em; --ink: var(--wa-color-brand); }
 :is(.ability-text, .databank-table) .icon.adv { --ink: var(--color-good); }
 :is(.ability-text, .databank-table) .icon.chal { --ink: var(--color-bad); }
 .ability-text ul { padding-inline-start: 1.5em; }

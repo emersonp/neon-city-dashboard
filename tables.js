@@ -11,7 +11,7 @@
 // distinctiveTraits the distinctive visual traits table: [range, trait]. Create's physical appearance can take one, and a
 //                 successful job's distinctive feature reward adds one to it.
 // complications   the complications the Administrator spends heat on, in the rulebook's three groups (minor, major,
-//                 plot twists): { title, intro, entries: [{ name, tag?, text }] }
+//                 plot twists): { title, intro, entries: [{ name, tag?, text }] }; the title's [heat] is the icon
 (function (root) {
   const randomKeywordsIntro = "When the crew acquires a piece of gear during a session, you can give it a positive and a negative keyword and describe what makes the item different: roll twice on this table (once for each), or just pick two that make sense. Re-roll a keyword that doesn't make sense for the item or the situation.";
   const randomKeywords = [
@@ -126,7 +126,7 @@
 
   const complications = [
     {
-      title: "Minor complications (5 heat)",
+      title: "Minor complications (5 [heat])",
       intro: "These complications provide interesting tension for a single scene.",
       entries: [
         { name: "Access Denied", text: "The crew trips a security system and doors, elevators, windows, and other methods of egress in the players' vicinity become temporarily locked (or encrypted, in the Network) while security teams investigate. Add a difficulty 50 objective to the scene to circumvent the locks." },
@@ -156,7 +156,7 @@ For every 2 heat ([heat][heat]) the Administrator spends when introducing this c
       ],
     },
     {
-      title: "Major complications (10 heat)",
+      title: "Major complications (10 [heat])",
       intro: "These complications pose more significant threats to the crew and might require the entire crew to pitch in to overcome safely.",
       entries: [
         { name: "APB", text: "Video screens and holograms throughout the district in which the scene takes place are displaying images of members of the crew. Each crew member that is not sufficiently disguised adds 2 heat ([heat][heat]) to the heat pool at the start of any scenes in this district for the remainder of the job." },
@@ -192,7 +192,7 @@ Some examples of hazards that could be added to the scene include:
       ],
     },
     {
-      title: "Plot twists (20 heat)",
+      title: "Plot twists (20 [heat])",
       intro: `When the heat pool grows sufficiently large, you can spend 20 heat to introduce a plot twist. These are major shifts in the job's narrative that can have a critical impact on the crew and their plans. A plot twist should be something that forces the crew to reevaluate their plans, coming out of nowhere to take them by surprise.
 
 There are no specific mechanics for the plot twist you introduce. As the Administrator, introducing a plot twist gives you a free hand in shoving the narrative in a different direction, and is the strongest meddling you can do during a job. While some jobs will include suggested plot twists in their description, ultimately a plot twist is a chance for you to get creative and take your players by surprise.`,

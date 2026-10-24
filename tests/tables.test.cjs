@@ -20,6 +20,7 @@ function* texts() {
   yield ["alarm heat", T.alarmHeatIntro];
   for (const d of T.securityDefenses) yield [d.name, d.text];
   for (const g of T.complications) {
+    yield [g.title, g.title];
     yield [g.title, g.intro];
     for (const e of g.entries) yield [e.name, e.text];
   }
@@ -99,7 +100,7 @@ test("tables: the alarm heat table names each security tier but Unprotected, in 
 });
 
 test("tables: the complications come in the rulebook's three groups, each with entries", () => {
-  assert.deepEqual(T.complications.map((g) => g.title), ["Minor complications (5 heat)", "Major complications (10 heat)", "Plot twists (20 heat)"]);
+  assert.deepEqual(T.complications.map((g) => g.title), ["Minor complications (5 [heat])", "Major complications (10 [heat])", "Plot twists (20 [heat])"]);
   for (const g of T.complications) {
     assert.ok(g.entries.length, g.title);
     for (const e of g.entries) assert.ok(e.name.trim(), g.title);
