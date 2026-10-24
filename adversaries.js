@@ -1,7 +1,6 @@
 // The GM Screen tab's Adversaries: the rulebook's Enemies chapter, every enemy's stat block in the book's order.
 // No page code here, so it can be tested in Node. Text uses the format.js description format, like tables.js.
 //
-// intro       the chapter's rules for running enemies: [{ name, text }]
 // TYPES       the kinds of enemy, weakest first, as the stat blocks name them
 // adversaries { name, type (one of TYPES), luck (null for a minion squad), network (a threat in the Network: its stats
 //             are only for scenes there), portrait (its face from the book's art, 256 pixels square, in
@@ -9,29 +8,6 @@
 //             perks: [[name, text]] }
 (function (root) {
   const TYPES = ["Minion squad", "Antagonist", "Minor villain", "Major villain"];
-
-  const intro = [
-    { name: "Enemies", text: `The Administrator adjudicates what happens when enemies try to stop the crew from pulling off the job. The Administrator runs the crew's opposition, whether law-abiding or otherwise, and narrates not only their actions but also the results when the crew members defeat their enemies or are defeated by them. The crew can encounter multiple kinds of enemies while on a job.
-
-- A **major villain** can challenge the entire crew (perhaps with some backup) and acts as an impediment for long stretches of the job.
-- **Minor villains** are often lieutenants or assistants to major villains, though occasionally they stand out as a lone named opponent in a scene full of minions. Minor villains have enough luck to confront a single member of the crew in a scene, but they can usually be eliminated by the end of that scene.
-- An **antagonist** represents a challenge to be overcome in a single scene, but it might take multiple attacks to do so. They usually have some luck and serve as an impediment to the crew for a turn or two before quickly being taken out.
-- **Minions** embody groups of enemies meant to oppose the crew en masse. They act in concert and are easily whittled down. They do not have luck, and every attack against a squad of minions reduces their number.` },
-    { name: "Running enemies", text: `The Administrator rarely rolls dice for enemies outside conflicts. If there is some doubt about whether an enemy should succeed on a task, use the following guidelines to determine the outcome:
-
-- Is the action inconsequential, or would failure be uninteresting? The enemy succeeds.
-- Is the enemy such an expert in the action being attempted that it makes no sense for the enemy to fail? The enemy succeeds.
-- Is the attempted action within the enemy's areas of expertise? Roll a check with a 75% chance of success.
-- If none of the above are true, roll a check with a 40% chance of success.` },
-    { name: "Dramatic enemies", text: "In some cases, enemies might be classified as dramatic enemies instead of physical opposition. A dramatic enemy applies luck only to mental and digital attacks against them and has 0 luck against physical attacks. Coercing the hard-line magistrate into pardoning a member of the crew might offer an imposing challenge, but it doesn't take much to bash the magistrate over the head and knock him out. Minions are never dramatic enemies; they have special rules for taking damage." },
-    { name: "Automatons", text: "Some enemies are machines, robots, or programs, and though they may be capable of complex behavior and decision-making they lack emotions or the ability to think. As such, they are considered to be automatons and mental attacks against them automatically fail and deal no damage." },
-    { name: "Minions", text: `Minions are enemies that appear in large numbers and are usually faceless goons in a scene: a band of street toughs, a contingent of private security guards, a mob of angry citizens, and so forth. Minions group up into squads, and a squad has a size equal to the number of minions in that squad. A group of ten members of an executive's security team is a size 10 squad.
-
-A squad counts as a single opponent in a scene. Rather than depleting luck, any successful attack against the squad reduces its size by 1. Additionally, if a player rolls any boons along with the attack roll, the player can reduce the squad's size by 1 for each boon rolled. When a crew member hits a squad, the player should describe how they are taking out one or more members of this group in a cinematic fashion.
-
-When it attacks, a squad's damage is equal to five times its size.` },
-    { name: "Threats in the Network", text: "These enemies can be found in the Network. Each of them is either a program (an automaton, which can manifest in a variety of humanoid or non-humanoid forms), or avatars, which are the representations of users from the physical world that are connected to the Network node (who usually, though not always, appear in humanoid form). The stats for these enemies are only to be used in scenes taking place in the virtual world of the Network." },
-  ];
 
   // The perks many enemies share, word for word.
   const COLLECTIVE = ["Collective Strength", "Every successful attack (or boon on an attack) reduces the squad's size by 1."];
@@ -410,5 +386,5 @@ When it attacks, a squad's damage is equal to five times its size.` },
     },
   ];
 
-  root.NCD_ADVERSARIES = { TYPES, intro, adversaries };
+  root.NCD_ADVERSARIES = { TYPES, adversaries };
 })(globalThis);

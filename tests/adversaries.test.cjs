@@ -7,7 +7,7 @@ require("../shared.js");
 require("../format.js");
 require("../adversaries.js");
 
-const { TYPES, intro, adversaries } = globalThis.NCD_ADVERSARIES;
+const { TYPES, adversaries } = globalThis.NCD_ADVERSARIES;
 const { ICON_TOKENS } = globalThis.NCD_FORMAT;
 
 test("adversaries: every enemy in the rulebook, each named once", () => {
@@ -33,7 +33,7 @@ test("adversaries: every enemy outside the Network has its face, 256 pixels squa
 });
 
 test("adversaries: every attack and perk has text, and only known icon tokens", () => {
-  const texts = [...intro.map((r) => [r.name, r.text])];
+  const texts = [];
   for (const a of adversaries) {
     assert.ok(a.attacks.length && a.perks.length, a.name);
     texts.push([a.name, a.text], ...[...a.attacks, ...a.perks].map(([n, t]) => [`${a.name}: ${n}`, t]));
