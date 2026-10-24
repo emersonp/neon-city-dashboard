@@ -23,6 +23,14 @@ test("adversaries: each has a known type, and luck unless it's a minion squad", 
   }
 });
 
+test("adversaries: each has its page in the Enemies chapter, in the book's order", () => {
+  let last = 167;
+  for (const a of adversaries) {
+    assert.ok(Number.isInteger(a.page) && a.page >= last && a.page <= 193, a.name);
+    last = a.page;
+  }
+});
+
 test("adversaries: every enemy outside the Network has its face, 256 pixels square", () => {
   for (const a of adversaries) {
     if (a.network) { assert.equal(a.portrait, undefined, a.name); continue; }

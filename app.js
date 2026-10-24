@@ -504,10 +504,12 @@
     ].join("");
 
     // The Adversaries subtab (adversaries.js): every enemy's stat block, with its face from the book's art where it has one.
-    // The Type filter hides every card but that type's.
+    // Sorted by name. The Type filter hides every card but that type's; the checkboxes hide the Network threats and the
+    // Dramatic Enemies.
     const ADVERSARIES = window.NCD_ADVERSARIES;
     const abilities = (list) => rich(list.map(([name, text]) => `**${name}:** ${text}`).join("\n\n"));
-    const adversaryCard = (a) => `<section class="sheet-column databank-section adversary" data-type="${escapeHTML(a.type)}">
+    const dramatic = (a) => a.perks.some(([name]) => name === "Dramatic Enemy");
+    const adversaryCard = (a) => `<section class="sheet-column databank-section adversary" data-type="${escapeHTML(a.type)}"${a.network ? " data-network" : ""}${dramatic(a) ? " data-dramatic" : ""}>
         <div class="adversary-head">
           ${a.portrait ? `<img class="portrait adversary-portrait" src="${C.PORTRAIT_DIR}adversaries/${a.portrait}" alt="" width="256" height="256" loading="lazy">` : ""}
           <div><h2>${escapeHTML(a.name)}</h2>
@@ -516,16 +518,21 @@
         ${rich(`*${a.text}*`)}
         <h3>Skills and attacks</h3>${abilities(a.attacks)}
         <h3>Perks</h3>${abilities(a.perks)}
+        <p class="adversary-page">Page ${a.page}</p>
       </section>`;
-    $("tables-adversaries").innerHTML = ADVERSARIES.adversaries.map(adversaryCard).join("");
+    $("tables-adversaries").innerHTML = [...ADVERSARIES.adversaries]
+      .sort((a, b) => a.name.localeCompare(b.name)).map(adversaryCard).join("");
     const adversaryFilter = $("adversary-filter");
     adversaryFilter.innerHTML = ["all", ...ADVERSARIES.TYPES].map((t) =>
       `<wa-radio appearance="button" value="${escapeHTML(t)}">${t === "all" ? "All" : escapeHTML(t)}</wa-radio>`).join("");
-    adversaryFilter.addEventListener("change", () => {
+    const filterAdversaries = () => {
       for (const card of $("tables-adversaries").querySelectorAll(".adversary")) {
-        card.hidden = adversaryFilter.value !== "all" && card.dataset.type !== adversaryFilter.value;
+        card.hidden = (adversaryFilter.value !== "all" && card.dataset.type !== adversaryFilter.value)
+          || ($("adversary-hide-network").checked && "network" in card.dataset)
+          || ($("adversary-hide-dramatic").checked && "dramatic" in card.dataset);
       }
-    });
+    };
+    for (const id of ["adversary-filter", "adversary-hide-network", "adversary-hide-dramatic"]) $(id).addEventListener("change", filterAdversaries);
 
     // A table to pick a row from (roster.js: a character's liability or distinctive feature; create.js: a visual trait), drawn into el. Clicking a row (or Enter or Space on
     // it) picks it; the dice button rolls the table's die and picks the row it lands on, as often as you like.
