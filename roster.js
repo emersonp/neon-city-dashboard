@@ -333,9 +333,10 @@
       dd.textContent = v == null || v === "" ? "—" : v;
     }
     const editable = state === "running";
-    // Running shows only the current luck and influence, labelled plainly, with the maximum luck quietly after its label.
+    // Running shows only the current luck and influence, labelled plainly, with the maximum luck quietly after its label
+    // while luck is below it.
     $("max-luck").hidden = editable;
-    $("luck-max").hidden = !editable;
+    $("luck-max").hidden = !editable || values.currentLuck >= values.maxLuck;
     $("starting-influence").hidden = editable;
     $("xp-stat").hidden = editable;
     $("luck-label").textContent = editable ? "Luck" : "Current Luck";

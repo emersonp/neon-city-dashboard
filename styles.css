@@ -773,6 +773,14 @@ button.condition:hover, button.condition:focus-visible { background: color-mix(i
 .gear-keyword.negative { color: var(--color-bad); }
 .gear-list li:has(.gear-keywords) { flex-wrap: wrap; }
 .gear-quantity { margin-inline-start: 0.25em; color: var(--wa-color-text-quiet); }
+/* phones: an item's text gets the whole line, then its keywords, then its buttons together at the right, then its conditions */
+@media (max-width: 640px) {
+  .gear-list li { flex-wrap: wrap; justify-content: flex-end; }
+  .gear-list li > .gear-text { flex-basis: 100%; }
+  .gear-list li > .gear-keywords { order: 1; }
+  .gear-list li > :is(wa-button, wa-dropdown, wa-switch) { order: 2; }
+  .gear-list li > .condition-list { order: 3; }
+}
 .keyword-picker { display: flex; flex-direction: column; gap: var(--wa-space-s); }
 .keyword-group { border: 0; margin: 0; padding: 0; }
 .keyword-group legend { padding: 0; margin-bottom: var(--wa-space-2xs); font-size: var(--wa-font-size-xs); letter-spacing: 0.2em; text-transform: uppercase; color: var(--wa-color-text-quiet); }
