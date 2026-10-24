@@ -19,7 +19,7 @@ function* texts() {
   for (const t of T.securityTiers) yield [t.name, t.text];
   yield ["alarm heat", T.alarmHeatIntro];
   for (const d of T.securityDefenses) yield [d.name, d.text];
-  for (const g of T.complications) {
+  for (const g of [...T.objectivesObstacles, ...T.complications]) {
     yield [g.title, g.title];
     yield [g.title, g.intro];
     for (const e of g.entries) yield [e.name, e.text];
@@ -104,5 +104,11 @@ test("tables: the complications come in the rulebook's three groups, each with e
   for (const g of T.complications) {
     assert.ok(g.entries.length, g.title);
     for (const e of g.entries) assert.ok(e.name.trim(), g.title);
+  }
+});
+
+test("tables: every sample objective and security system objective names its difficulty", () => {
+  for (const g of T.objectivesObstacles) {
+    for (const e of g.entries) if (e.tag) assert.match(e.tag, /^Objective · Difficulty \d+$/, e.name);
   }
 });

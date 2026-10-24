@@ -487,13 +487,14 @@
     const alarmHeatTable = { head: ["Security tier", "Heat added to the heat pool"], format: true,
       rows: TABLES.alarmHeat.map(([tier, heat]) => [tier, `${heat} ${"[heat]".repeat(heat)}`]) };
 
-    // The General, Complications, and Scenes subtabs. Each group of complications is a full-width card of entries in
-    // columns, like the Databank's, even the plot twists' three.
+    // The General, Objectives and Obstacles, Complications, and Scenes subtabs. Each group of objectives, obstacles, or
+    // complications is a full-width card of entries in columns, like the Databank's, even a group of two or three.
     $("tables-general").innerHTML = [
       tableSection({ title: "Random gear keywords", intro: TABLES.randomKeywordsIntro, table: { head: ["d100", "Positive", "Negative"], rows: TABLES.randomKeywords } }),
       tableSection({ title: "Liabilities", table: { head: ["d100", "Liability"], rows: TABLES.liabilities } }),
       tableSection({ title: "Distinctive visual traits", table: { head: ["d100", "Distinctive visual trait"], rows: TABLES.distinctiveTraits } }),
     ].join("");
+    $("tables-objectives").innerHTML = TABLES.objectivesObstacles.map((g) => section({ ...g, wide: true })).join("");
     $("tables-complications").innerHTML = TABLES.complications.map((g) => section({ ...g, wide: true })).join("");
     $("tables-scenes").innerHTML = [
       tableSection({ title: "Security system tiers", table: securityTable, after: securityTiersButton }),

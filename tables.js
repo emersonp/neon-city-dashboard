@@ -10,6 +10,8 @@
 //                 or Finish Job.
 // distinctiveTraits the distinctive visual traits table: [range, trait]. Create's physical appearance can take one, and a
 //                 successful job's distinctive feature reward adds one to it.
+// objectivesObstacles the rulebook's sample objectives, the basics of obstacles, example obstacles, and the physical and
+//                 Network security systems as objectives: { title, intro, entries: [{ name, tag?, text }] }
 // complications   the complications the Administrator spends heat on, in the rulebook's three groups (minor, major,
 //                 plot twists): { title, intro, entries: [{ name, tag?, text }] }; the title's [heat] is the icon
 (function (root) {
@@ -124,6 +126,206 @@
     ["99-100", "A patch of exposed metal or circuitry on an otherwise flesh-covered surface"],
   ];
 
+  const objectivesObstacles = [
+    {
+      title: "Sample objectives",
+      intro: "While most objectives will be relatively straightforward, consisting of only a difficulty that the crew must overcome with their rolls, this section includes some more concrete examples of commonly-used objectives that each have some small degree of complexity to them. Administrators can use these objectives or make up their own; they are here for illustration purposes only, and you can opt into, or out of, this level of complexity based on how things are going at your table.",
+      entries: [
+        { name: "Get Through a Lock", tag: "Objective · Difficulty 30", text: `This objective describes the effort it takes to get through a lock on a door or window, something sturdy like a deadbolt. This objective could be progressed by picking the lock in the classic fashion, trying to kick the door in, or using some kind of makeshift armature to unlock the door from the other side.
+
+**Non-Electronic Lock:** The Crash a System, Infiltrate a System, and Override a System skills cannot be used to progress this objective.` },
+        { name: "Mine for Data", tag: "Objective · Difficulty 50", text: `This objective represents the effort it takes to navigate a complex or unfamiliar file system when searching for data. It is best used when the crew member mining for the data is under some time pressure or threat of being caught.
+
+**Digital Fingerprints:** If Cover Your Tracks is not used to progress this objective at least once, add 2 heat ([heat][heat]) to the heat pool.` },
+        { name: "Escape in a Vehicle", tag: "Objective · Difficulty 200", text: `Use this objective when crew members are attempting to escape from pursuit while in a personal vehicle. Progressing this objective involves maneuvering the crew's vehicle to put enough distance between them and their pursuers that reinforcements would not immediately be on the crew's tail.
+
+**The Pursuers:** Use this objective only in a scene where there are enemies present pursuing the players. This scene ends one of three ways:
+- The crew escapes by fully progressing this objective
+- The crew escapes by defeating all pursuing enemies
+- The crew is captured when their vehicle is disabled or destroyed
+
+**Venue Change:** When the crew achieves 50, 100, and again at 150 progress toward this objective, change the nature of the environment where the chase scene is focused (moving to a different type of district, ascending or descending to different city levels, etc.). For each change, you choose one of the following hazards that best represents the nature of the new venue to be true while in that venue:
+- **Dense Traffic (Hazard):** The streets are choked with other vehicles, requiring the crew to weave in and out of traffic dangerously in order to escape. Each vehicle gains the Traffic Jam x2 negative condition, which cannot be removed while in this venue. During the hazard segment of initiative, each vehicle whose driver/pilot did not succeed on a roll to Drive or Pilot Something to maneuver through traffic in the last round must make a Drive or Pilot Something roll now; on a failure, the driver/pilot takes 20 physical damage for each drawback ([drawback]) rolled as other vehicles get in the way.
+- **Narrow Infrastructure:** The crew's vehicle enters a tunnel, viaduct, or other narrow confines that make maneuvering without striking the sides of the venue difficult. All vehicles and characters gain the Static Target condition, which acts as a positive condition for anyone attempting to target them with a physical attack.
+- **Smog-Choked:** Dense air pollution makes seeing the dangers ahead and behind nearly impossible. The scene gains the Low Visibility scene condition, which worsens at the start of each round as the chase goes deeper into the smog-choked area.
+- **Cargo Transports:** The crew's vehicle moves up alongside a cargo train or convoy of oversized transport vehicles that would cause serious damage to them in a collision. A driver/pilot of a vehicle can use their action to make a Drive or Pilot Something roll; on a success, they maneuver the vehicle to use the larger transport as cover, giving the vehicle the Behind Cover condition, which acts as a negative condition for any character attacking them. Taking this action on subsequent turns worsens this condition by one step.
+- **Under Construction (Hazard):** Roads are damaged, bridges closed, raw materials are piled up beside the road, and large construction vehicles lumber slowly through the area. During the hazard segment of initiative, the hazard attacks each vehicle in the scene (50% chance of success, damage equal to 10 × the number of rounds that have passed in the conflict scene (including the current one) since the chase entered this venue).` },
+        { name: "Flee Through the Network", tag: "Objective · Difficulty 200", text: `This objective represents the crew fleeing across the Network by jumping from one node to another in order to avoid capture. This particular objective is special because it can be used to replace multiple individual objectives introduced by a complication. Whenever more than 2 crew members are affected by the Locked Down complication, which traps them in the Network temporarily in order for the authorities to trace their connections back to the terminals they are using to visit the Network node. See "Locked Down" on page 229 for more information on this complication.
+
+**The Pursuers:** Use this objective only in a scene where there are enemies present that can pursue the players. This scene ends one of three ways:
+- The crew escapes by fully progressing this objective
+- The crew escapes by defeating all pursuing enemies
+- All crew members are reduced to 0 luck, resulting in the crew being captured as their bodies are located by the authorities
+
+**Venue Change:** When the crew achieves 50, 100, and again at 150 progress toward this objective, the chase moves to a different node, traveling through a portal to another virtual reality. The crew's avatars remain the same, visually, when they move to the new node. The pursuers come along as well, but only human or synthetic avatars retain their current aesthetic; any automatons involved in the pursuit shift their shape to match the aesthetic of the node the scene has moved to.` },
+        { name: "Long-Term Repairs", tag: "Objective · Difficulty 100", text: `This objective represents repairing something that potentially takes a long time to fix, either due to complexity or due to the extent of the damage. This objective is best used for repairing something large, like a vehicle or an oversized robot, or something that is one-of-a-kind or for which spare parts are hard to come by.
+
+**Extended Objective:** Progressing this objective requires a montage action.` },
+        { name: "Hack a Ghost", tag: "Objective · Difficulty 200", text: `This challenging objective represents the effort it takes to alter the digital backup of a person's mind, erasing or altering memories using a combination of code-based hacking and synsense production and what amounts to brain surgery. This kind of memory hacking is both difficult and time-consuming, and often the results of the effort will not be known until the ghost is loaded back into a shell.
+
+**Delicate:** This objective requires patience and precision, with any mistake resulting in potentially catastrophic failure. Track each time an attempt to progress this objective fails or has any drawbacks on the roll; after four such instances, all progress toward the objective is lost, and the crew's advancement of the objective must begin anew.
+
+**Extended Objective:** Progressing this objective requires a montage action.
+
+**Uncertain Results:** Double all heat generated as a result of rolling drawbacks on a roll made to progress this objective.` },
+        { name: "Navigate the Underground", tag: "Objective · Difficulty 150", text: `When the police or the corporations know the crew is on the job and districts start to lock down under oppressive martial law, sometimes the only way to get into the district is by traveling through the labyrinthine subterranean levels of the city. This objective represents the effort it takes to try and navigate through the buried tunnels and abandoned subway lines that crisscross under the city, with a very real possibility that the crew can get lost without ever making it to their target.
+
+**Getting Lost:** Track each time an attempt to progress this objective fails or has any drawbacks on the roll; after four such instances, the current scene immediately ends, with the crew failing to achieve their goal for the scene as they must instead focus on finding their way back to the surface.` },
+      ],
+    },
+    {
+      title: "The basics of obstacles",
+      intro: `The crew members determine the nature and goals of legwork scenes, and it's up to you to make those scenes interesting and challenging with obstacles and complications. Where complications are tied directly to heat, obstacles are added to the scene by the Administrator based on the nature of the legwork scene. The best obstacles make sense in the context of the scene and feel like a natural collaboration between the Administrator and the player who initially described the nature of the scene.
+
+The most common obstacles fall under the following categories:`,
+      entries: [
+        { name: "Restricted Access", text: "The crew cannot physically (or, in the Network, digitally) access the place or object they need to accomplish their goal. Locked gates, reinforced bank vault doors, piles of rubble filling a hallway, a sealed containment unit, a security door with a badge access reader, and bars over the windows are all examples of this kind of obstacle. These obstacles are usually objectives that have to be overcome to even have a chance of achieving the scene's goal." },
+        { name: "Raising Alarms", text: "Typically associated with security systems, these obstacles are usually less about impeding and more about the reaction that will occur if the main goal is attempted without dealing with the obstacle first. Security cameras, laser tripwires, pressure plates, and incorrect passwords are all examples of this kind of obstacle. They often have immediate repercussions when triggered." },
+        { name: "Guards/Security Automatons", text: "You can use enemies as obstacles, and not just as something the crew has to fight their way past. Enemies can be deceived, distracted, snuck past, hacked, and (of course) eliminated in order to proceed with the main objective without necessarily turning the scene into a conflict scene. See \"Using Enemies for Obstacles\" on page 217." },
+        { name: "Leaving Behind Evidence", text: "An obstacle more associated with future repercussions than immediate consequences, the risk of leaving behind evidence is a common worry for criminals. Usually, these kinds of obstacles may provide a distraction to the crew members in the scene, occupying their thoughts when they need to concentrate on something else, and often they generate heat if not dealt with. Examples include a dust-covered floor that will easily leave footprints, unmonitored security cameras that nonetheless record what they see, or a data logging program in a Network node represented as a diligent, but unresponsive, scribe that chronicles everything it sees." },
+        { name: "Witnesses", text: "The city is packed with law-abiding citizens who, though oppressed by the government and corporations alike, will raise an alarm or make a report to the authorities if they witness a crime. These kinds of obstacles are always people (human, or synthetic) that can be interacted with in a variety of ways, from bribery (\"This pile of credits says you didn't see anything here, get me?\") to intimidation to stealth. Most witnesses would also possess the Dramatic Enemies trait (see \"Dramatic Enemies\" on page 226), meaning that they can be quickly dispatched with violence if need be." },
+        { name: "Hazards", text: "These kinds of obstacles represent something dangerous in the scene that can bring harm to some or all of the crew members in that scene. Hazards, like electrified floor tiles or industrial machinery, add an element of threat to a scene that often results in them escalating into conflict scenes, as the presence of hazards makes such scenes more thrilling; if it seems like the crew is having too easy of a time, spending heat to turn a legwork scene with a hazard into a conflict scene by introducing enemies as a complication is a reliable way to spice things up." },
+        { name: "How Many Obstacles?", text: `When a player describes a legwork scene, you can follow these general guidelines for how many obstacles to describe being a part of that scene.
+- If the scene is going to be short, of little consequence, or unlikely to set up a compelling dramatic situation, don't describe any obstacles.
+- Otherwise, describe one obstacle. If there are more than four members of the crew participating in the job, describe two obstacles.` },
+        { name: "Using Enemies for Obstacles", text: `You can use enemies (both minions, and those with luck) in lieu of one or more obstacles in your scene. Instead of creating an obstacle, you can instead say that there is an antagonist of your choosing, or a size 5 squad of minions, in the scene, putting them between the characters and their goal. If there should be two obstacles in the scene, you can instead use a minor villain or a size 10 squad of minions in lieu of two obstacles. You should usually only do this in situations where it makes sense that there would be individuals and groups directly set against the players achieving their goal.
+
+When players attempt to deal with an obstacle involving enemies, you can track their progress toward overcoming it by tracking the depletion of luck (for enemies that have it) or by reducing the size of a minion squad (for minions). You can use this method even in nonviolent situations, such as when the crew attempts to use social skills or digital attacks to keep the enemies from interfering with the main goal of the scene.` },
+      ],
+    },
+    {
+      title: "Example obstacles",
+      intro: `The following are some examples of standard, non-enemy obstacles. Usually, these are presented as hurdles that must be overcome in a legwork scene, lest they impose challenge dice on the person rolling to achieve the scene's primary goal. They should often be dealt with by another member of the crew other than the crew member taking the lead in that particular scene.
+
+The below examples can be easily represented as a single, difficulty 50 objective, with no particular special mechanics attached to them.`,
+      entries: [
+        { name: "Basic Character Obstacles", text: `- A crowd has gathered, making it difficult to work without being spotted
+- Other people are distracting or holding the attention of the mark
+- Private security guards are walking the area, keeping an eye out for trouble
+- An inebriated gang member is making a ruckus nearby, drawing eyes to the area
+- An anti-corporate provocateur is stirring up a crowd of people, making it hard to access the location` },
+        { name: "Basic Environmental Obstacles", text: `- The doors or windows of the building are locked or otherwise sealed
+- The location is in poor repair, and both the floor and doors make unwanted noise
+- The location is labyrinthine, making it easy to get lost
+- An automated security checkpoint with simple metal detectors bars access to the location
+- The area is covered in dust or dirt, making it easy to leave evidence behind` },
+      ],
+    },
+    {
+      title: "Security systems",
+      intro: `Below are example objectives for the most common security systems found throughout the city. While many of these are similar in complexity to the basic obstacles described above, they have been expanded to the full objective format to add small amounts of texture to them that makes them feel distinct from one another, given the frequency of their use.
+
+To determine which of these security system obstacles is appropriate for your scene, consider the security tier of the location and choose one of the systems belonging to that tier, or a lower tier (see "Security Tiers" on page 125). Or, just pick one that seems fun and appropriate; security tiers are guidelines to help you, not restrictions.`,
+      entries: [
+        { name: "Biometric Sensors", tag: "Objective · Difficulty 100", text: `While "biometric" sensors technically encompasses both fingerprint and retinal scanners, this objective represents advanced biometric sensors that use a combination of infrared and x-rays to identify a person based on their musculature, unique skeletal markers, and other indicators that lie beneath the skin. These sensors are sometimes preferred over fingerprint or retinal scanners because they do not require the subject to actively participate in the scanning process, which can be done secretly by cleverly-hidden sensors.
+
+**Difficult to Sneak Past:** Rolls made to Climb, Jump, or Tumble, Run Like Hell, or Sneak Around to progress this objective automatically add 2 challenge dice ([challenge][challenge]) to the roll.
+
+**Positive ID:** Double the amount of heat generated by drawbacks rolled when progressing this objective if the crew member who rolled is loaded into their default body and in range of the sensors, as anomalous scans are logged and passed on for evaluation.` },
+        { name: "Fingerprint Readers", tag: "Objective · Difficulty 50", text: `Similar in both function and drawbacks to retinal scanners, fingerprint readers require the person attempting to pass to place one or more fingers on a tactile reader, which then identifies the person passing through based on their unique fingerprints. Fingerprints are almost impossible to replicate, resulting in at least a confident identification of the shell.
+
+**Authorized Access:** Pressing the finger of an authorized individual onto the reader pad automatically overcomes this objective. The finger does not need to be attached to its living owner.
+
+**Positive ID:** Double the amount of heat generated by drawbacks rolled when progressing this objective if a crew member allows their fingerprint to be scanned while loaded into their default body, as anomalous scans are logged and passed on for evaluation.` },
+        { name: "Hive RFID Readers", tag: "Objective · Difficulty 200", text: `This objective represents getting through a locked door or security checkpoint requiring that the person scan their hive to verify their identity, an upgraded version of the badge reader. This objective is more difficult to bypass because it also requires the person scanning their hive to confirm that they voluntarily swiped it with a message direct to their internal HUD.
+
+**Authorized Access:** Swiping the real hive of an individual authorized for this system over the reader automatically overcomes this objective.
+
+**Two-Factor Authentication:** When an authorized user's badge is swiped over the reader, the reader sends a request via that hive to the owner's internal HUD, confirming that the swipe is intended. The hive's owner must respond in the affirmative (a silent response controlled by the user's thoughts) within 1 minute; failure to do so, or declining to confirm the swipe, automatically triggers connected alarm systems.` },
+        { name: "Retinal Scanners", tag: "Objective · Difficulty 100", text: `Retinal scanners read the unique patterns within the retinas of the human (or synthetic) eye, which act as an identifier at least of the body that is attempting verification. While it does not guarantee the true identity of the person within the body, given how infrequently most citizens load into a shell other than their default body it is usually seen as reliable verification for all but the most secure facilities.
+
+**Authorized Access:** Scanning the actual retinas of an individual authorized by this system automatically overcomes this objective.
+
+**Coercion Failsafe:** If the retinal scan does not detect the telltale movements of the eye associated with consciousness, it automatically triggers a security alert and this objective can no longer be progressed.
+
+**Positive ID:** Double the amount of heat generated by drawbacks rolled when progressing this objective if a crew member allows their retina to be scanned while loaded into their default body, as anomalous scans are logged and passed on for evaluation.` },
+        { name: "Security Cameras", tag: "Objective · Difficulty 50", text: `One of the oldest and still most reliable forms of electronic security, cameras are good not only for detecting the presence of intruders but also for collecting evidence of the crimes they are committing. Though there are many ways to overcome them, from breaking them to simply moving through their blind spots, they are also inexpensive enough that they are often put up in combination with other security systems.
+
+**Closed Circuit:** Security cameras transmit their recordings to a computer system for processing. The first time someone succeeds on a roll to Infiltrate a System to progress this objective, regardless of the impact of the roll that person gains the ability to intercept and delay audio and video transmitted from the security cameras. Any future rolls made to progress this objective cannot add heat to the heat pool for any reason.
+
+**Fragile Hardware:** Any amount of physical damage to the cameras immediately fully progresses this objective. Add 4 heat ([heat][heat][heat][heat]) to the heat pool as the feed from the damaged cameras obviously goes dead to its observers.` },
+      ],
+    },
+    {
+      title: "Network obstacles",
+      intro: `The following obstacles represent the effort required to overcome several common forms of security found in Network nodes. They can only be used in scenes in the Network, not in the physical world. These objectives can take many forms, based on the aesthetic of the node's interface; see "Network Security" on page 113 for a more in-depth examination of how each of these works, and some suggestions for how the Administrator can describe their visual appearance in a given node.
+
+Because all of these obstacles are forms of nonsentient software (automatons), none of them can be progressed using social interaction, including purely social skills like Convince Someone, Lie to Someone, or Intimidate Someone. See "What Skills to Ask For in the Network" on page 209 for more guidance on how players can use mental skills to overcome obstacles by interacting with the virtual reality of the node.`,
+      entries: [
+        { name: "Automated Backups", tag: "Objective · Difficulty 50", text: `This objective involves preventing the system from automatically creating backups of any data the crew alters while in the node, which would reveal a discrepancy later when the backup is compared to the altered data. This system is the digital equivalent of unmonitored security cameras used to capture evidence. Examples of how this can appear in the Network include:
+- A printing press cranking out books
+- Flying monkeys carrying missives away
+- A pneumatic tube messaging system
+- A scowling majordomo writing furiously in a book
+
+**Evidence Left Behind:** Ignoring this obstacle and failing to fully resolve it by the end of the scene adds 4 heat ([heat][heat][heat][heat]) to the heat pool.` },
+        { name: "Distributed Data Validation", tag: "Objective · Difficulty 200", text: `This objective represents the effort required to bypass software monitoring a node for unauthorized users, one which connects to other external systems to verify that authorization. This is the digital equivalent of a robotic sentry. Examples of how this can appear in the Network include:
+- A glowering, ten-foot-tall knight on guard
+- A fantasy monster with a huge central eye
+- A loincloth-clad cyclops sitting on a bone throne
+- A menacing fiery eye atop a dark stone tower
+
+**Deterioration:** Contacting external validators, running validation algorithms, and then receiving a response takes time, but not much. As this objective deteriorates, the virtual representation of this objective grows more directly attentive to unauthorized users, going from largely ignoring the unauthorized avatars to becoming actively hostile.
+
+**If This Becomes Irreparable:** The external validation reveals the unauthorized nature of the users and a system administrator is contacted, who either manifests as their own avatar or takes over the form of this objective. Add a System Admin enemy to the scene, which immediately becomes a conflict scene. See the "System Admin" on page 191.
+
+**All-Seeing Eyes:** If Infiltrate a System is not used to progress this objective at least once, add 2 heat ([heat][heat]) to the heat pool at the end of the scene.
+
+**Timed Objective:** At the start of the round, this objective gains or worsens the Deteriorating negative condition. If it already has Deteriorating x4, it instead becomes irreparable.` },
+        { name: "Encryption", tag: "Objective · Difficulty 100", text: `One of the most commonly-used obstacles in the Network, this objective represents the effort it takes to break through intentional obfuscation of data. This is the digital equivalent of writing a message in coded language. Examples of how this can appear in the Network include:
+- A dusty tome full of unreadable runes
+- Heavily-redacted files covered in black marks
+- A video screen showing nothing but static
+- A vinyl record player spouting garbled audio
+
+**Encryption Key:** If a person interacting with this objective is in possession of the actual encryption key required for this encryption automatically overcomes this objective.` },
+        { name: "Login Alerts", tag: "Objective · Difficulty 100", text: `This objective represents the effort required to avoid triggering a login alert upon entering a Network node. When visiting a node, avatars usually pass through a portal or tunnel of some kind, representing the Network connection they are traversing, giving them time to circumvent a login alert before actually manifesting in the node. This is the virtual reality equivalent of the employee at the reception desk in the lobby of an office building who inquires about the visitor's business and announces their arrival to the node's overseers. Examples of how this can appear in the Network include:
+- A friendly robot receptionist in an office building
+- A bored customs agent at the airport
+- A robotic eye extending from inside a door
+- An obsequious herald at a fancy noble's ball
+
+**Deterioration:** There is only a limited amount of time that a login alert can be avoided. When this objective deteriorates, the visual representation of the objective grows more persistent, demanding identification.
+
+**If This Becomes Irreparable:** The login alert sounds an alarm, warning system administrators that authorized users are attempting to operate within the node.
+
+**Digital Fingerprints:** If Cover Your Tracks is not used to progress this objective at least once, add 2 heat ([heat][heat]) to the heat pool at the end of the scene.
+
+**Urgent Objective:** At the start of the round, if this objective was not progressed on the last round, it gains or worsens the Deteriorating negative condition. If it already has Deteriorating x4, it instead becomes irreparable.` },
+        { name: "Password Protection", tag: "Objective · Difficulty 50", text: `This objective represents the effort required to bypass a password-protected section of the Network node. These usually take the form of a lock of some kind (such as a padlock, a door lock, and so forth), and the password itself usually manifests as either a key or a combination lock that can be spun to input the correct password. Examples of how this can appear in the Network include:
+- A personal safe built into the wall
+- A golden treasure chest with a heavy lock
+- A drawbridge controlled by a series of levers
+- A puzzle box with a specific solution
+
+**Authorized Access:** Entering an actual, authorized password that is known to the person interacting with this objective automatically overcomes this objective.` },
+        { name: "Restricted Permissions", tag: "Objective · Difficulty 50", text: `Each user in a Network node is granted certain permissions, which give them access to different parts of the node and the capability to perform certain actions. This objective reflects the effort required to surpass the default permissions granted to outsiders, breaking through safeguards to get what you want. This is the digital equivalent of secure doors in an office building that require a staff badge to pass through. Examples of how this can appear in the Network include:
+- A glowing forcefield with a scanner that sweeps over avatars as they approach
+- A bank vault door with an electronic lock
+- A towering rune-carved stone door
+- An iron-banded door sealed with chains` },
+        { name: "Scheduled Defragmentation", tag: "Objective · Difficulty 100", text: `To conceal something in a Network node owned by someone else, one must avoid the scheduled defragmentation, a process which sweeps through the node identifying unauthorized or anomalous code objects and quarantining them before they can do any harm. It is the digital equivalent of after-hours staff sweeping through a closed building to make sure everything is OK. Examples of how this can appear in the Network include:
+- Robot vacuum cleaners sweeping through a room
+- A doddering security guard with a flashlight
+- A hovering gyroscopic drone drifting around slowly
+- Cartoon rats scurrying around in the dark
+
+**Deterioration:** As this objective deteriorates, the virtual representation of the obstacle draws closer and closer to the crew's avatars or any malicious code or outside program they have brought with them into the node.
+
+**If This Becomes Irreparable:** The system identifies the unauthorized code and isolates it. If the crew has a virus or other program that they have created within, or brought into, the Network node, it is immediately destroyed. Add a number of Security Agent antagonists to the scene equal to the number of crew members in the scene, who are hostile to the crew. The scene immediately becomes a conflict scene. See the "Security Agent" on page 191.
+
+**Urgent Objective:** At the start of the round, if this objective was not progressed on the last round, it gains or worsens the Deteriorating negative condition. If it already has Deteriorating x4, it instead becomes irreparable.` },
+        { name: "Tracebacks", tag: "Objective · Difficulty 50", text: `This objective represents what is required to overcome tracebacks, a form of trap that pins someone in the Network and gives the node's administrators a chance to trace the avatar's connection back to the terminal their user is connected to in the physical world. Examples of how this can appear in the Network include:
+- A trap door in the floor leading to a pit
+- A thick rope net lying under dead animal bait
+- A paralysis beam projector
+- A cube-shaped forcefield
+
+**Locked Down:** Any avatar that falls into the trap presented by this objective is automatically affected by the Locked Down complication. The Administrator does not need to spend heat for this complication. See "Locked Down" on page 229.` },
+      ],
+    },
+  ];
+
   const complications = [
     {
       title: "Minor complications (5 [heat])",
@@ -212,5 +414,5 @@ There are no specific mechanics for the plot twist you introduce. As the Adminis
     },
   ];
 
-  root.NCD_TABLES = { randomKeywordsIntro, randomKeywords, securityTiers, alarmHeatIntro, alarmHeat, securityDefenses, liabilities, distinctiveTraits, complications };
+  root.NCD_TABLES = { randomKeywordsIntro, randomKeywords, securityTiers, alarmHeatIntro, alarmHeat, securityDefenses, liabilities, distinctiveTraits, objectivesObstacles, complications };
 })(globalThis);
