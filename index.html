@@ -49,7 +49,7 @@
       <wa-tab panel="character" id="character-tab" hidden>Character</wa-tab>
       <wa-tab panel="cheat-sheet">Cheat Sheet</wa-tab>
       <wa-tab panel="databank">Databank</wa-tab>
-      <wa-tab panel="tables" data-admin>Tables</wa-tab>
+      <wa-tab panel="tables" data-admin>GM Screen</wa-tab>
       <wa-tab panel="settings">Settings</wa-tab>
 
       <wa-tab-panel name="dice">
@@ -282,8 +282,10 @@
         <!-- Tables to roll on or look up, filled from tables.js by app.js -->
         <wa-tab-group id="tables-tabs" class="databank-tabs">
           <wa-tab panel="tables-general">General</wa-tab>
+          <wa-tab panel="tables-complications">Complications</wa-tab>
           <wa-tab panel="tables-scenes">Scenes</wa-tab>
           <wa-tab-panel name="tables-general"><div class="cheat-sheet databank" id="tables-general"></div></wa-tab-panel>
+          <wa-tab-panel name="tables-complications"><div class="cheat-sheet databank" id="tables-complications"></div></wa-tab-panel>
           <wa-tab-panel name="tables-scenes"><div class="cheat-sheet databank" id="tables-scenes"></div></wa-tab-panel>
         </wa-tab-group>
       </wa-tab-panel>
@@ -790,7 +792,7 @@
     <div id="gear-info-body"></div>
   </wa-dialog>
 
-  <!-- The Tables tab's pop-up: a security defense's description, or every security tier's (app.js) -->
+  <!-- The GM Screen tab's pop-up: a security defense's description, or every security tier's (app.js) -->
   <wa-dialog id="tables-info-dialog" label="Security" light-dismiss>
     <div id="tables-info-body"></div>
   </wa-dialog>

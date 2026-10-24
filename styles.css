@@ -222,7 +222,7 @@ html.gm [data-player] { display: none !important; }
 .databank-table th { font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; font-size: var(--wa-font-size-xs); }
 /* Long words wrap rather than push the table wider than its card. */
 .databank-table td { overflow-wrap: break-word; }
-/* the Tables tab: the dice button and its roll at the right of the card's title, and the row the roll fell in lit up */
+/* the GM Screen tab: the dice button and its roll at the right of the card's title, and the row the roll fell in lit up */
 .databank-section h2.rollable { display: flex; align-items: center; }
 .databank-section h2.rollable::before { flex-shrink: 0; }
 .table-roller { margin-left: auto; display: inline-flex; align-items: center; gap: var(--wa-space-2xs); margin-block: -0.5em; }

@@ -19,6 +19,10 @@ function* texts() {
   for (const t of T.securityTiers) yield [t.name, t.text];
   yield ["alarm heat", T.alarmHeatIntro];
   for (const d of T.securityDefenses) yield [d.name, d.text];
+  for (const g of T.complications) {
+    yield [g.title, g.intro];
+    for (const e of g.entries) yield [e.name, e.text];
+  }
 }
 
 test("tables: every entry has text, and only known icon tokens", () => {
@@ -92,4 +96,12 @@ test("tables: every described security defense but X-ray scanners is named in a 
 test("tables: the alarm heat table names each security tier but Unprotected, in order", () => {
   assert.deepEqual(T.alarmHeat.map(([tier]) => tier), T.securityTiers.slice(1).map((t) => t.name));
   for (const [tier, heat] of T.alarmHeat) assert.ok(Number.isInteger(heat) && heat > 0, tier);
+});
+
+test("tables: the complications come in the rulebook's three groups, each with entries", () => {
+  assert.deepEqual(T.complications.map((g) => g.title), ["Minor complications (5 heat)", "Major complications (10 heat)", "Plot twists (20 heat)"]);
+  for (const g of T.complications) {
+    assert.ok(g.entries.length, g.title);
+    for (const e of g.entries) assert.ok(e.name.trim(), g.title);
+  }
 });

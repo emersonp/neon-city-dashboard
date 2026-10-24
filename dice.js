@@ -75,7 +75,7 @@
     });
   }
 
-  // A table to roll on (the Tables tab): its first column's head names the die ("d100", "d6") and each row's first
+  // A table to roll on (the GM Screen tab): its first column's head names the die ("d100", "d6") and each row's first
   // cell the range it covers ("01-10", "96-100", or one number; "00" is the die's top face).
   const tableDie = (table) => Number(/^d(\d+)$/i.exec(String(table?.head?.[0] ?? "").trim())?.[1]) || null;
   function rowRange(cell, sides) {
