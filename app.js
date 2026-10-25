@@ -534,6 +534,16 @@
     };
     for (const id of ["adversary-filter", "adversary-hide-network", "adversary-hide-dramatic"]) $(id).addEventListener("change", filterAdversaries);
 
+    // The Headlines subtab: each headline news table, and Generate news rolls them all into the first card, hidden till then.
+    $("tables-headlines").innerHTML = `<section class="sheet-column databank-section wide headline-news" hidden></section>`
+      + TABLES.headlines.map((t) => tableSection({ title: t.title, table: t })).join("");
+    $("generate-news").addEventListener("click", () => {
+      const news = $("tables-headlines").querySelector(".headline-news");
+      news.innerHTML = `<h2>Headline news</h2><div class="ability-text"><ul>${TABLES.headlineNews().map((n) =>
+        `<li><strong>${escapeHTML(n.question)}</strong> ${escapeHTML(n.text)}</li>`).join("")}</ul></div>`;
+      news.hidden = false;
+    });
+
     // A table to pick a row from (roster.js: a character's liability or distinctive feature; create.js: a visual trait), drawn into el. Clicking a row (or Enter or Space on
     // it) picks it; the dice button rolls the table's die and picks the row it lands on, as often as you like.
     // onPick(row) gets the picked row's cells. Drawing it again clears the pick.

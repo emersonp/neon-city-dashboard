@@ -15,6 +15,11 @@
 //                 objectives, in the same shape
 // complications   the complications the Administrator spends heat on, in the rulebook's three groups (minor, major,
 //                 plot twists): { title, intro, entries: [{ name, tag?, text }] }; the title's [heat] is the icon
+// headlines       the headline news tables, in the order they're rolled: { title, question, head, rows: [range, text] }.
+//                 A row naming Table X-1 rolls on it again (headlineNews).
+// headlineNews(rng) rolls each headline news table in order: [{ question, text }], text being the roll and its row
+//                 ("16: C04: The Digital Security Firm"). Where a row says to roll on Table X-1, it does: "07, then 59: C15: The
+//                 Software Firm", like the rulebook's example. Needs dice.js.
 (function (root) {
   const randomKeywordsIntro = "When the crew acquires a piece of gear during a session, you can give it a positive and a negative keyword and describe what makes the item different: roll twice on this table (once for each), or just pick two that make sense. Re-roll a keyword that doesn't make sense for the item or the situation.";
   const randomKeywords = [
@@ -418,5 +423,124 @@ There are no specific mechanics for the plot twist you introduce. As the Adminis
     },
   ];
 
-  root.NCD_TABLES = { randomKeywordsIntro, randomKeywords, securityTiers, alarmHeatIntro, alarmHeat, securityDefenses, liabilities, distinctiveTraits, objectives, obstacles, complications };
+  const headlines = [
+    { title: "Table X-1: Who is the subject?", head: ["d100", "Faction/Person in the News"], rows: [
+      ["01-04", "C01: The Bank"],
+      ["05-08", "C02: The Construction Company"],
+      ["09-12", "C03: The Consumer Goods Manufacturer"],
+      ["13-16", "C04: The Digital Security Firm"],
+      ["17-20", "C05: The Food Supplier"],
+      ["21-24", "C06: The Franchise Chain"],
+      ["25-28", "C07: The Gig Work Facilitator"],
+      ["29-32", "C08: The Industrialist Company"],
+      ["33-35", "C09: The Law Firm"],
+      ["36-39", "C10: The Media Company"],
+      ["40-43", "C11: The Pharmaceutical Company"],
+      ["44-47", "C12: The Private Security Firm"],
+      ["48-51", "C13: The Robotics Manufacturer"],
+      ["52-55", "C14: The Shipping Company"],
+      ["56-59", "C15: The Software Firm"],
+      ["60-63", "C16: The Sports Franchise"],
+      ["64-67", "C17: The Taxi Service"],
+      ["68-71", "C18: The Vehicle Manufacturer"],
+      ["72-75", "C19: The Weapons Manufacturer"],
+      ["76-78", "P09: The Government Figurehead"],
+      ["79-81", "P13: The Nefarious Executive"],
+      ["82-85", "X01: The City Government"],
+      ["86-89", "X04: The Mercenary Group"],
+      ["90-93", "X04: The Military"],
+      ["94-97", "X06: The Police"],
+      ["98-100", "X08: The Religious Group"],
+    ] },
+    { title: "Table X-2: What happened?", head: ["d100", "Event"], rows: [
+      ["01-07", "...has won a legal battle over..."],
+      ["08-19", "...is being accused of polluting/poisoning..."],
+      ["20-31", "...clashed violently with..."],
+      ["32-43", "...is responsible for a tragic accident involving..."],
+      ["44-50", "...publicly denounced..."],
+      ["51-62", "...stole/embezzled a large amount of money from..."],
+      ["63-73", "...took something valuable from..."],
+      ["74-80", "...brokered a lopsided deal with..."],
+      ["81-87", "...has lobbied the government for action against..."],
+      ["88-100", "...destroyed the homes/other property of..."],
+    ] },
+    { title: "Table X-3: Who is the victim?", head: ["d100", "Victim"], rows: [
+      ["01-20", "Roll again on Table X-1"],
+      ["21-25", "An individual citizen"],
+      ["26-35", "The citizens of a particular district"],
+      ["36-45", "A group of employees"],
+      ["46-50", "A person or group outside the city"],
+      ["51-55", "A specific group of people using the Network"],
+      ["56-60", "A group of transients or other downtrodden people"],
+      ["61-65", "Tourists or visitors from another place"],
+      ["66-85", "The inhabitants of a particular district"],
+      ["86-90", "The P05: Celebrity"],
+      ["91-100", "The Right Kind of People"],
+    ] },
+    { title: "Table X-4: What motivated this event?", head: ["d100", "Driving Force"], rows: [
+      ["01-08", "Quarterly profit margins"],
+      ["09-16", "A personal grudge"],
+      ["17-26", "Covering up something even worse"],
+      ["27-34", "The whims of an individual executive"],
+      ["35-44", "Avoiding the consequences for something else"],
+      ["45-52", "A large financial transaction between wealthy parties"],
+      ["53-60", "A bid for political power"],
+      ["61-70", "Sabotaging some undertaking of a third party (roll on Table X-1 for the third party)"],
+      ["71-78", "A warning meant for someone else"],
+      ["79-88", "Corporate espionage"],
+      ["89-96", "A threat from the P12: Malevolent Elder God"],
+      ["97-100", "A prediction from the P12: Oracular Elder God"],
+    ] },
+    { title: "Table X-5: How did the victim respond?", head: ["d100", "Response"], rows: [
+      ["01-07", "They publicly vowed retaliation"],
+      ["08-15", "They have issued no response so far"],
+      ["16-22", "They have made pleas for sympathy from the public"],
+      ["23-30", "They have gone into hiding or secreted people away"],
+      ["31-38", "They have released damning information about the perpetrator"],
+      ["39-45", "They have denied being victimized at all"],
+      ["46-52", "They have petitioned the government for justice"],
+      ["53-60", "They have set the X09: Secret Police on the subject"],
+      ["61-68", "They have hired the G01: Body Butchers to exact revenge"],
+      ["69-70", "They have bribed the G02: Cult to interfere with the subject"],
+      ["71-77", "They have paid the G03: Terrorist Group to attack the subject"],
+      ["78-84", "They have cut a deal with the G04: Untrustworthy Cartel to target the subject"],
+      ["85-92", "They have scapegoated one of their own"],
+      ["93-100", "They or some of their number have fled the city"],
+    ] },
+    { title: "Table X-6: What truth does the story hide?", head: ["d100", "Covered-Up Secret"], rows: [
+      ["01-07", "Dozens of citizens died and their deaths were covered up"],
+      ["08-13", "Something dangerous has gone missing during these events"],
+      ["14-18", "A team of criminals was involved"],
+      ["19-24", "The event was a distraction shielding a corporate defection"],
+      ["25-30", "Several citizens have gone missing without a trace"],
+      ["31-36", "The official story blames the P01: Anarchist Demagogue"],
+      ["37-42", "The official story blames the P02: Arms Dealer"],
+      ["43-48", "The official story blames the P06: Crime Lord"],
+      ["49-54", "The official story blames the P07: Cult Leader"],
+      ["55-62", "The official story blames the P08: Cyberterrorist"],
+      ["63-68", "The event was orchestrated by the P10: Inscrutable Elder God"],
+      ["69-74", "The event was the work of the X09: Secret Police"],
+      ["75-80", "Someone's ghost was irrecoverably corrupted"],
+      ["81-86", "Someone very powerful was directly involved"],
+      ["87-92", "The event was facilitated by a traitor"],
+      ["93-98", "A disaster was narrowly avoided"],
+      ["99-100", "The event involved a player faction not controlled by any of the players in the session"],
+    ] },
+  ];
+  for (const t of headlines) t.question = t.title.replace(/^Table X-\d+: /, "");
+
+  function headlineNews(rng) {
+    const { rollTable } = root.NCD_DICE;
+    const roll = (t) => { const r = rollTable(t, rng); return { total: String(r.total).padStart(2, "0"), text: t.rows[r.row][1] }; };
+    return headlines.map((t) => {
+      const first = roll(t);
+      if (!/Table X-1/.test(first.text)) return { question: t.question, text: `${first.total}: ${first.text}` };
+      const again = roll(headlines[0]);
+      const before = /^Roll again/.test(first.text) ? first.total
+        : `${first.total}: ${first.text.replace(/\s*\(roll on Table X-1[^)]*\)/, "")}`;
+      return { question: t.question, text: `${before}, then ${again.total}: ${again.text}` };
+    });
+  }
+
+  root.NCD_TABLES = { randomKeywordsIntro, randomKeywords, securityTiers, alarmHeatIntro, alarmHeat, securityDefenses, liabilities, distinctiveTraits, objectives, obstacles, complications, headlines, headlineNews };
 })(globalThis);

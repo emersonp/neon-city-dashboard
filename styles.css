@@ -233,7 +233,7 @@ html.gm [data-player] { display: none !important; }
 /* the Adversaries subtab: the type filter above the cards; each card's face beside its name and type */
 .adversary-filters { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--wa-space-s) var(--wa-space-l); margin-bottom: var(--wa-space-l); }
 .adversary-page { margin: var(--wa-space-s) 0 0; text-align: right; color: var(--wa-color-text-quiet); font-size: var(--wa-font-size-2xs); }
-.adversary[hidden] { display: none; }
+.adversary[hidden], .headline-news[hidden] { display: none; }
 .adversary-head { display: flex; align-items: center; gap: var(--wa-space-m); margin-bottom: var(--wa-space-m); }
 .adversary-head h2 { margin-bottom: var(--wa-space-2xs); }
 .adversary-head .ability-tag { margin: 0; }

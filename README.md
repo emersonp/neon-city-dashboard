@@ -125,7 +125,7 @@ node --test tests/dice.test.cjs tests/discord.test.cjs tests/characters.test.cjs
 | `rules.js` | Rulebook data for Create and the Databank: archetype intros and "on the job" text, skills, initiative, knows, starting gear templates; origin intros, options, Advancement text and augmentation gear; the sentences every archetype or origin section repeats (`text`) (needs `characters.js`; testable in Node) |
 | `profiles.js` | The Databank's Archetypes and Origins pages, built from `rules.js`, `abilities.js` and `advancement.js`; Create's archetype panel uses its text too (testable in Node) |
 | `databank.js` | The Databank tab's text from the rulebook's Equipment chapter: gear, tool sets, weapons, armor, vehicles, gear and weapon keywords with their restrictions (testable in Node) |
-| `tables.js` | The GM Screen tab's tables: random gear keywords, liabilities, and distinctive visual traits (General); sample objectives (Objectives); obstacles (Obstacles); the complications (Complications); security system tiers with each defense's description, and the heat alarms add (Scenes) (testable in Node) |
+| `tables.js` | The GM Screen tab's tables: random gear keywords, liabilities, and distinctive visual traits (General); sample objectives (Objectives); obstacles (Obstacles); the complications (Complications); security system tiers with each defense's description, and the heat alarms add (Scenes); the headline news tables, and rolling them all into a news story (Headlines) (testable in Node) |
 | `adversaries.js` | The GM Screen tab's Adversaries: every enemy's stat block from the Enemies chapter, with its bust in `portraits/adversaries/` (testable in Node) |
 | `gear.js` | Gear rules from `databank.js`: built-in keywords, which keywords an item can take, damage and impact, labels, rules text, and Create's starting gear (testable in Node) |
 | `gear-ui.js` | Gear on the page: item rows, keyword chips, rules text, and the keyword picker the gear dialog and Create share |
@@ -177,6 +177,11 @@ name, each with its type, luck, skills and attacks, perks, and page in the ruleb
 checkboxes hide the Network's threats and the enemies with the Dramatic Enemy perk. Every enemy
 outside the Network has its bust from the book's art, 256 pixels square, in `portraits/adversaries/` (the Network's
 threats have no art), ready to be a Discord avatar like a character's portrait. `tests/adversaries.test.cjs` checks them.
+
+A seventh subtab, **Headlines**, has the rulebook's six headline news tables from `tables.js`, each with its dice button.
+**Generate news** rolls all six in order into a card above them, rolling again on Table X-1 where a row says to (the
+victim, or the third party a motive sabotages), and shows each roll beside its result, like the rulebook's example. The
+book's overlapping ranges are fixed (Table X-1's 33-35, Table X-2's 63-73, Table X-6's 75-80).
 
 ## Gear
 

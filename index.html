@@ -287,6 +287,7 @@
           <wa-tab panel="tables-complications">Complications</wa-tab>
           <wa-tab panel="tables-scenes">Scenes</wa-tab>
           <wa-tab panel="tables-adversaries">Adversaries</wa-tab>
+          <wa-tab panel="tables-headlines">Headlines</wa-tab>
           <wa-tab-panel name="tables-general"><div class="cheat-sheet databank" id="tables-general"></div></wa-tab-panel>
           <wa-tab-panel name="tables-objectives"><div class="cheat-sheet databank" id="tables-objectives"></div></wa-tab-panel>
           <wa-tab-panel name="tables-obstacles"><div class="cheat-sheet databank" id="tables-obstacles"></div></wa-tab-panel>
@@ -301,6 +302,13 @@
               <wa-checkbox id="adversary-hide-dramatic">Hide Dramatic</wa-checkbox>
             </div>
             <div class="cheat-sheet databank" id="tables-adversaries"></div>
+          </wa-tab-panel>
+          <wa-tab-panel name="tables-headlines">
+            <!-- the headline news tables (tables.js); Generate news rolls them all, in order, into the first card -->
+            <div class="adversary-filters">
+              <wa-button id="generate-news" variant="brand"><wa-icon slot="start" name="dice"></wa-icon>Generate news</wa-button>
+            </div>
+            <div class="cheat-sheet databank" id="tables-headlines"></div>
           </wa-tab-panel>
         </wa-tab-group>
       </wa-tab-panel>
