@@ -180,7 +180,8 @@ threats have no art), ready to be a Discord avatar like a character's portrait. 
 
 A seventh subtab, **Headlines**, has the rulebook's six headline news tables from `tables.js`, each with its dice button.
 **Generate news** rolls all six in order into a card above them, rolling again on Table X-1 where a row says to (the
-victim, or the third party a motive sabotages), and shows each roll beside its result, like the rulebook's example. The
+victim, or the third party a motive sabotages). The subject, event, and victim read as one sentence ("C04: The Digital
+Security Firm publicly denounced C15: The Software Firm."), and the other three show each roll beside its result. The
 book's overlapping ranges are fixed (Table X-1's 33-35, Table X-2's 63-73, Table X-6's 75-80).
 
 ## Gear

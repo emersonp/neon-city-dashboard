@@ -141,9 +141,17 @@ test("tables: headline news rolls each table in order, like the rulebook's examp
   assert.deepEqual(news.map((n) => n.text), ["16: C04: The Digital Security Firm", "50: ...publicly denounced...",
     "07, then 59: C15: The Software Firm", "26: Covering up something even worse",
     "67: They have hired the G01: Body Butchers to exact revenge", "11: Something dangerous has gone missing during these events"]);
+  assert.equal(T.headline(news), "C04: The Digital Security Firm publicly denounced C15: The Software Firm.");
 });
 
 test("tables: a motive sabotaging a third party rolls the third party on Table X-1", () => {
   const motive = T.headlineNews(rolling(1, 1, 21, 65, 23, 1, 1, 100))[3];
   assert.equal(motive.text, "65: Sabotaging some undertaking of a third party, then 23: C06: The Franchise Chain");
+});
+
+test("tables: the headline reads as a sentence, the victim lowercased mid-sentence", () => {
+  assert.equal(T.headline(T.headlineNews(rolling(1, 20, 34, 1, 1, 1))),
+    "C01: The Bank clashed violently with the citizens of a particular district.");
+  assert.equal(T.headline(T.headlineNews(rolling(98, 100, 22, 1, 1, 1))),
+    "X08: The Religious Group destroyed the homes/other property of an individual citizen.");
 });

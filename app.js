@@ -534,13 +534,15 @@
     };
     for (const id of ["adversary-filter", "adversary-hide-network", "adversary-hide-dramatic"]) $(id).addEventListener("change", filterAdversaries);
 
-    // The Headlines subtab: each headline news table, and Generate news rolls them all into the first card, hidden till then.
+    // The Headlines subtab: each headline news table, and Generate news rolls them all into the first card, hidden till then:
+    // the subject, event, and victim as a sentence, then the rest.
     $("tables-headlines").innerHTML = `<section class="sheet-column databank-section wide headline-news" hidden></section>`
       + TABLES.headlines.map((t) => tableSection({ title: t.title, table: t })).join("");
     $("generate-news").addEventListener("click", () => {
       const news = $("tables-headlines").querySelector(".headline-news");
-      news.innerHTML = `<h2>Headline news</h2><div class="ability-text"><ul>${TABLES.headlineNews().map((n) =>
-        `<li><strong>${escapeHTML(n.question)}</strong> ${escapeHTML(n.text)}</li>`).join("")}</ul></div>`;
+      const story = TABLES.headlineNews();
+      news.innerHTML = `<h2>Headline news</h2><div class="ability-text"><p>${escapeHTML(TABLES.headline(story))}</p><ul>${
+        story.slice(3).map((n) => `<li><strong>${escapeHTML(n.question)}</strong> ${escapeHTML(n.text)}</li>`).join("")}</ul></div>`;
       news.hidden = false;
     });
 

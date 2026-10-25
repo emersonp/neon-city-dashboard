@@ -17,9 +17,12 @@
 //                 plot twists): { title, intro, entries: [{ name, tag?, text }] }; the title's [heat] is the icon
 // headlines       the headline news tables, in the order they're rolled: { title, question, head, rows: [range, text] }.
 //                 A row naming Table X-1 rolls on it again (headlineNews).
-// headlineNews(rng) rolls each headline news table in order: [{ question, text }], text being the roll and its row
-//                 ("16: C04: The Digital Security Firm"). Where a row says to roll on Table X-1, it does: "07, then 59: C15: The
-//                 Software Firm", like the rulebook's example. Needs dice.js.
+// headlineNews(rng) rolls each headline news table in order: [{ question, text, result }], text being the roll and its
+//                 row ("16: C04: The Digital Security Firm"). Where a row says to roll on Table X-1, it does: "07, then 59: C15:
+//                 The Software Firm", like the rulebook's example. result is the last row rolled ("C15: The Software Firm").
+//                 Needs dice.js.
+// headline(news)  the first three results as a sentence, without the event's ellipses: "C04: The Digital Security Firm
+//                 publicly denounced C15: The Software Firm."
 (function (root) {
   const randomKeywordsIntro = "When the crew acquires a piece of gear during a session, you can give it a positive and a negative keyword and describe what makes the item different: roll twice on this table (once for each), or just pick two that make sense. Re-roll a keyword that doesn't make sense for the item or the situation.";
   const randomKeywords = [
@@ -534,13 +537,20 @@ There are no specific mechanics for the plot twist you introduce. As the Adminis
     const roll = (t) => { const r = rollTable(t, rng); return { total: String(r.total).padStart(2, "0"), text: t.rows[r.row][1] }; };
     return headlines.map((t) => {
       const first = roll(t);
-      if (!/Table X-1/.test(first.text)) return { question: t.question, text: `${first.total}: ${first.text}` };
+      if (!/Table X-1/.test(first.text)) return { question: t.question, text: `${first.total}: ${first.text}`, result: first.text };
       const again = roll(headlines[0]);
       const before = /^Roll again/.test(first.text) ? first.total
         : `${first.total}: ${first.text.replace(/\s*\(roll on Table X-1[^)]*\)/, "")}`;
-      return { question: t.question, text: `${before}, then ${again.total}: ${again.text}` };
+      return { question: t.question, text: `${before}, then ${again.total}: ${again.text}`, result: again.text };
     });
   }
 
-  root.NCD_TABLES = { randomKeywordsIntro, randomKeywords, securityTiers, alarmHeatIntro, alarmHeat, securityDefenses, liabilities, distinctiveTraits, objectives, obstacles, complications, headlines, headlineNews };
+  // A victim like "The citizens of a particular district" reads mid-sentence as "the citizens..."; "C15: The Software
+  // Firm" is left as it is.
+  function headline([subject, event, victim]) {
+    const object = victim.result.replace(/^(The|An?) /, (w) => w.toLowerCase());
+    return `${subject.result} ${event.result.replace(/^\.{3}|\.{3}$/g, "")} ${object}.`;
+  }
+
+  root.NCD_TABLES = { randomKeywordsIntro, randomKeywords, securityTiers, alarmHeatIntro, alarmHeat, securityDefenses, liabilities, distinctiveTraits, objectives, obstacles, complications, headlines, headlineNews, headline };
 })(globalThis);
