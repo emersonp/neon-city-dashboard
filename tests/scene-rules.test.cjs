@@ -427,3 +427,8 @@ test("import refuses a file it can't use, saying why", () => {
   const doc = S.exportDoc({ ...CUSTOM, enemies: [...CUSTOM.enemies, { name: "No id" }] }, [heist(), { name: "No id" }]);
   assert.deepEqual(S.importDoc(doc), { custom: CUSTOM, scenes: [heist()] });
 });
+
+test("run: the overlay reporting the initiative it already has changes nothing", () => {
+  const state = run(started(), ...round(), ...round());
+  assert.equal(run(state, { type: "initiative", initiative: { ...state.initiative } }), state);
+});

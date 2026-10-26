@@ -109,7 +109,7 @@ test("read drops what it doesn't know and cleans what it does", () => {
 });
 
 test("the pages send and handle only messages overlay-rules.js knows", () => {
-  const dashboard = ["app.js", "admin.js", "admin-overlay.js", "admin-planning.js", "admin-initiative.js"].map(source).join("\n");
+  const dashboard = ["app.js", "admin.js", "admin-overlay.js", "admin-planning.js", "admin-initiative.js", "scene-runner.js"].map(source).join("\n");
   const sent = [...dashboard.matchAll(/\b(?:send|make)\("(\w+)"/g)].map((m) => m[1]);
   const overlay = source("overlay.html");
   const handled = [...overlay.matchAll(/msg\.type === "(\w+)"/g)].map((m) => m[1]);

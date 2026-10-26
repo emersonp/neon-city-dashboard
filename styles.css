@@ -1087,6 +1087,111 @@ html:not(.bevel).wa-dark .portrait-frame { filter: drop-shadow(0 0 6px color-mix
 .gear-info-keyword { margin-top: var(--wa-space-xs); }
 .ability-text + .gear-info-keyword { margin-top: var(--wa-space-m); }
 
+/* ---- the Scene Runner tab (scene-runner.js) ---- */
+.scene-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--wa-space-s); margin-bottom: var(--wa-space-l); }
+.scene-bar-end { display: flex; gap: var(--wa-space-s); margin-left: auto; }
+.scene-bar-end input[type="file"] { display: none; }
+/* a list on the left, the one picked on the right */
+.scene-split { display: grid; grid-template-columns: minmax(14rem, 18rem) minmax(0, 1fr); gap: var(--wa-space-l); align-items: start; }
+@media (max-width: 800px) { .scene-split { grid-template-columns: minmax(0, 1fr); } }
+.scene-nav { display: flex; flex-direction: column; gap: var(--wa-space-m); min-width: 0; }
+.scene-nav h3 {
+  margin: var(--wa-space-s) 0 var(--wa-space-2xs); font-family: var(--font-display); font-size: var(--wa-font-size-s);
+  letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-accent-text);
+}
+.scene-items { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.scene-item {
+  all: unset; box-sizing: border-box; width: 100%; cursor: pointer; display: flex; justify-content: space-between; gap: var(--wa-space-s);
+  padding: var(--wa-space-xs) var(--wa-space-s); border-radius: var(--wa-border-radius-s); border-left: 3px solid transparent;
+}
+.scene-item:hover { background: var(--color-row-hover); }
+.scene-item:focus-visible { outline: 2px solid var(--color-focus); outline-offset: -2px; }
+.scene-item.on { border-left-color: var(--color-accent); background: color-mix(in oklch, var(--color-accent) 12%, transparent); color: var(--color-accent-text); }
+.scene-item-tag, .scene-element-tag { color: var(--wa-color-text-quiet); font-size: var(--wa-font-size-2xs); }
+.scene-empty, .scene-hint { margin: 0; color: var(--wa-color-text-quiet); font-size: var(--wa-font-size-s); }
+.scene-detail { min-width: 0; }
+.scene-form { display: flex; flex-direction: column; gap: var(--wa-space-m); max-width: 48rem; }
+.scene-form h2 { margin: 0; }
+.scene-form h3 { margin: var(--wa-space-s) 0 0; }
+.scene-form-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--wa-space-m); }
+.scene-form [hidden] { display: none; }
+.pair-list { display: flex; flex-direction: column; gap: var(--wa-space-xs); }
+.pair-row { display: grid; grid-template-columns: minmax(8rem, 1fr) minmax(0, 2.5fr) auto; gap: var(--wa-space-xs); align-items: center; }
+@media (max-width: 640px) { .pair-row { grid-template-columns: minmax(0, 1fr) auto; } .pair-row [data-pair-text] { grid-row: 2; } }
+.pair-list + wa-button { align-self: flex-start; }
+.scene-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--wa-space-s); margin-top: var(--wa-space-m); }
+.scene-elements { list-style: none; margin: var(--wa-space-m) 0 0; padding: 0; display: flex; flex-direction: column; gap: var(--wa-space-xs); }
+.scene-elements li { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--wa-space-2xs) var(--wa-space-s); padding: var(--wa-space-2xs) 0; border-bottom: 1px solid var(--color-rule); }
+.goal-badge {
+  display: inline-block; padding: 0 var(--wa-space-xs); border-radius: var(--wa-border-radius-s); font-size: var(--wa-font-size-2xs);
+  font-family: var(--font-display); letter-spacing: 0.08em; text-transform: uppercase; vertical-align: middle;
+  background: var(--color-accent); color: var(--color-accent-ink);
+}
+
+/* the Builder: the scene's name, kind and notes, then its elements, each a copy with what a copy may change */
+.builder { display: flex; flex-direction: column; gap: var(--wa-space-l); }
+.builder-rows { list-style: none; margin: 0 0 var(--wa-space-l); padding: 0; display: flex; flex-direction: column; gap: var(--wa-space-s); }
+.builder-row {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--wa-space-xs) var(--wa-space-m); align-items: end;
+  padding: var(--wa-space-s) var(--wa-space-m); border: 1px solid var(--color-rule); border-radius: var(--wa-border-radius-m);
+}
+.builder-row.main-goal { border-color: var(--color-accent); }
+.builder-row-head { grid-column: 1 / -1; display: flex; align-items: center; gap: var(--wa-space-s); }
+.builder-row-fields { display: flex; flex-wrap: wrap; gap: var(--wa-space-s); align-items: end; }
+.builder-row-fields wa-input[data-el-field="name"] { flex: 1 1 14rem; }
+.builder-row-fields wa-input[type="number"] { width: 7rem; }
+.builder-row-actions { display: flex; gap: var(--wa-space-2xs); }
+.kind-badge {
+  font-family: var(--font-display); font-size: var(--wa-font-size-2xs); letter-spacing: 0.1em; text-transform: uppercase;
+  padding: 0 var(--wa-space-xs); border: 1px solid currentColor; border-radius: var(--wa-border-radius-s);
+}
+.kind-badge[data-kind="enemy"] { color: var(--color-turn-antagonists); }
+.kind-badge[data-kind="objective"] { color: var(--color-holo-text); }
+.kind-badge[data-kind="hazard"] { color: var(--color-turn-hazard); }
+.add-picker { display: flex; flex-wrap: wrap; gap: var(--wa-space-s); align-items: end; }
+.add-picker wa-select { flex: 1 1 16rem; }
+
+/* the Runner: the scene's elements on the left, the roll on the right */
+.runner { display: grid; grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem); gap: var(--wa-space-l); align-items: start; }
+@media (max-width: 900px) { .runner { grid-template-columns: minmax(0, 1fr); } .runner-side { order: -1; } }
+.runner-main { display: flex; flex-direction: column; gap: var(--wa-space-l); min-width: 0; }
+.runner-side { position: sticky; top: var(--wa-space-m); display: flex; flex-direction: column; gap: var(--wa-space-s); }
+.runner-roll-label { margin: 0; font-size: var(--wa-font-size-s); color: var(--color-accent-text); min-height: 2.6em; }
+.runner-head { display: flex; flex-wrap: wrap; gap: var(--wa-space-m) var(--wa-space-l); align-items: flex-start; justify-content: space-between; }
+.runner-head h2 { margin: 0; }
+.runner-head .scene-actions { margin: 0; }
+.runner-initiative { flex: 1 1 18rem; max-width: 26rem; }
+.runner-goal, .runner-notice {
+  margin: 0 0 var(--wa-space-s); padding: var(--wa-space-s) var(--wa-space-m);
+  border-left: 3px solid var(--color-accent); background: color-mix(in oklch, var(--color-accent) 8%, transparent);
+}
+.runner-goal .ability-text p { margin: 0; }
+.runner-notice.bad { border-left-color: var(--color-bad); background: color-mix(in oklch, var(--color-bad) 10%, transparent); }
+.runner-elements { display: grid; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); gap: var(--wa-space-m); align-items: start; }
+.run-element {
+  display: flex; flex-direction: column; gap: var(--wa-space-s); padding: var(--wa-space-m);
+  border: 1px solid var(--color-rule); border-radius: var(--wa-border-radius-m); background: var(--color-paper-2);
+  transition: opacity var(--dur-normal) var(--ease-out), box-shadow var(--dur-normal) var(--ease-out);
+}
+.run-element header h3 { margin: 0; }
+.run-element header .ability-tag { margin: 0; }
+.run-element.main-goal { border-color: var(--color-accent); }
+/* defeated or dealt with: still there, to see and undo */
+.run-element.done { opacity: 0.45; }
+/* whose turn it is */
+.run-element.on { --tc: var(--color-turn-hazard); border-color: var(--tc); box-shadow: 0 0 0 1px var(--tc), 0 0 14px color-mix(in oklch, var(--tc) 40%, transparent); }
+.run-element.on[data-turn="antagonists"] { --tc: var(--color-turn-antagonists); }
+.run-stepper { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--wa-space-2xs) var(--wa-space-s); }
+.run-steps { display: flex; align-items: center; gap: var(--wa-space-2xs); }
+.run-value { min-width: 4.5rem; text-align: center; font-family: var(--font-mono); font-weight: 700; }
+.run-quick { display: flex; gap: var(--wa-space-2xs); justify-content: flex-end; }
+.run-quick wa-input { width: 7rem; }
+.run-status { margin: 0; font-size: var(--wa-font-size-s); color: var(--color-turn-hazard); }
+.run-status.irreparable { color: var(--color-bad); font-weight: 700; }
+.run-attacks { display: flex; flex-wrap: wrap; gap: var(--wa-space-2xs); }
+.run-attack-numbers { margin-left: var(--wa-space-2xs); color: var(--wa-color-text-quiet); font-family: var(--font-mono); font-size: var(--wa-font-size-2xs); }
+.run-details summary { cursor: pointer; color: var(--wa-color-text-quiet); font-size: var(--wa-font-size-s); }
+
 /* Influence is the second light: cyan wherever its icon appears (stat boxes, rules text, the Databank), as on the
    OBS overlay. Last in the file, so it wins over the rules above that colour icons by where they sit. */
 .icon.icon-influence { --ink: var(--color-holo); }

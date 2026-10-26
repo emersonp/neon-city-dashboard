@@ -231,6 +231,8 @@
   // The initiative as it is now (from a step here, or what the overlay reports): each round it's gone on starts anew.
   function toInitiative(state, initiative) {
     const next = OVERLAY().cleanInitiative(initiative);
+    const { conflict, phase, round } = state.initiative;
+    if (next.conflict === conflict && next.phase === phase && next.round === round) return state;
     let out = { ...state, initiative: next, notices: [] };
     for (let r = state.initiative.round; r < next.round; r++) out = { ...newRound(out), initiative: next };
     return out;

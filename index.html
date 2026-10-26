@@ -50,6 +50,7 @@
       <wa-tab panel="cheat-sheet">Cheat Sheet</wa-tab>
       <wa-tab panel="databank">Databank</wa-tab>
       <wa-tab panel="tables" data-admin>GM Screen</wa-tab>
+      <wa-tab panel="scenes" data-admin>Scene Runner</wa-tab>
       <wa-tab panel="settings">Settings</wa-tab>
 
       <wa-tab-panel name="dice">
@@ -315,6 +316,63 @@
               <wa-button id="generate-news" variant="brand"><wa-icon slot="start" name="dice"></wa-icon>Generate news</wa-button>
             </div>
             <div class="cheat-sheet databank" id="tables-headlines"></div>
+          </wa-tab-panel>
+        </wa-tab-group>
+      </wa-tab-panel>
+
+      <wa-tab-panel name="scenes" data-admin>
+        <!-- The Scene Runner (scene-runner.js, its rules in scene-rules.js). Builder shows only while a scene is being built,
+             Runner only while one is running; never both. -->
+        <wa-tab-group id="scene-tabs" class="databank-tabs">
+          <wa-tab panel="scenes-custom">Custom</wa-tab>
+          <wa-tab panel="scenes-list">List</wa-tab>
+          <wa-tab panel="scenes-builder" id="scene-builder-tab" hidden>Builder</wa-tab>
+          <wa-tab panel="scenes-runner" id="scene-runner-tab" hidden>Runner</wa-tab>
+          <wa-tab-panel name="scenes-custom">
+            <div class="scene-bar">
+              <wa-button variant="brand" data-custom-new="enemy"><wa-icon slot="start" name="plus"></wa-icon>Enemy</wa-button>
+              <wa-button variant="brand" data-custom-new="objective"><wa-icon slot="start" name="plus"></wa-icon>Objective</wa-button>
+              <wa-button variant="brand" data-custom-new="hazard"><wa-icon slot="start" name="plus"></wa-icon>Hazard</wa-button>
+              <wa-button appearance="outlined" id="custom-copy"><wa-icon slot="start" name="copy"></wa-icon>Copy from rulebook</wa-button>
+              <span class="scene-bar-end">
+                <wa-button appearance="outlined" id="scenes-export"><wa-icon slot="start" name="file-export"></wa-icon>Export</wa-button>
+                <wa-button appearance="outlined" id="scenes-import"><wa-icon slot="start" name="file-import"></wa-icon>Import</wa-button>
+                <input type="file" id="scenes-import-file" accept=".json,application/json" hidden>
+              </span>
+            </div>
+            <div class="scene-split">
+              <nav class="scene-nav">
+                <wa-radio-group id="custom-filter" label="Show" orientation="horizontal" value="all" size="s"></wa-radio-group>
+                <div id="custom-list"></div>
+              </nav>
+              <div class="scene-detail" id="custom-editor"></div>
+            </div>
+          </wa-tab-panel>
+          <wa-tab-panel name="scenes-list">
+            <div class="scene-split">
+              <nav class="scene-nav">
+                <wa-button variant="brand" id="scene-new"><wa-icon slot="start" name="plus"></wa-icon>New scene</wa-button>
+                <div id="scene-list"></div>
+              </nav>
+              <div class="scene-detail" id="scene-detail"></div>
+            </div>
+          </wa-tab-panel>
+          <wa-tab-panel name="scenes-builder"><div id="scene-builder"></div></wa-tab-panel>
+          <wa-tab-panel name="scenes-runner">
+            <div class="runner">
+              <div class="runner-main">
+                <div id="runner-head"></div>
+                <div id="runner-notices"></div>
+                <div class="runner-elements" id="runner-elements"></div>
+                <div id="runner-add"></div>
+              </div>
+              <aside class="runner-side">
+                <!-- the last roll made here; with Keep hidden on, the next roll goes nowhere else -->
+                <p class="runner-roll-label" id="runner-roll-label" aria-live="polite">Click an attack to roll it.</p>
+                <section class="result" id="runner-result" aria-live="polite" data-steady></section>
+                <wa-switch id="runner-hidden">Keep the next roll hidden</wa-switch>
+              </aside>
+            </div>
           </wa-tab-panel>
         </wa-tab-group>
       </wa-tab-panel>
@@ -927,6 +985,31 @@
     </wa-button>
   </wa-dialog>
 
+  <!-- Scene Runner: Copy from rulebook starts a custom item from a rulebook one -->
+  <wa-dialog id="scene-copy-dialog" label="Copy from rulebook" light-dismiss>
+    <div class="scene-form">
+      <wa-radio-group id="scene-copy-kind" label="Kind" orientation="horizontal" value="enemy"></wa-radio-group>
+      <wa-select id="scene-copy-item" label="Copy" placeholder="Choose one"></wa-select>
+    </div>
+    <wa-button slot="footer" variant="neutral" data-dialog="close">Cancel</wa-button>
+    <wa-button slot="footer" id="scene-copy-confirm" variant="brand"><wa-icon slot="start" name="copy"></wa-icon>Copy</wa-button>
+  </wa-dialog>
+
+  <!-- Scene Runner: another scene is open (being built or running) when one is about to be built or run -->
+  <wa-dialog id="scene-open-dialog" label="A scene is open">
+    <p id="scene-open-text"></p>
+    <wa-button slot="footer" variant="neutral" data-dialog="close">Cancel</wa-button>
+    <wa-button slot="footer" id="scene-open-discard" variant="danger" appearance="outlined">Discard</wa-button>
+    <wa-button slot="footer" id="scene-open-save" variant="brand"><wa-icon slot="start" name="floppy-disk"></wa-icon>Save</wa-button>
+  </wa-dialog>
+
+  <!-- Scene Runner: confirms deleting a scene or a custom item, or an import replacing them -->
+  <wa-dialog id="scene-confirm-dialog" label="Delete">
+    <p id="scene-confirm-text"></p>
+    <wa-button slot="footer" variant="neutral" data-dialog="close">Keep</wa-button>
+    <wa-button slot="footer" id="scene-confirm-ok" variant="danger"><wa-icon slot="start" name="trash"></wa-icon><span id="scene-confirm-label">Delete</span></wa-button>
+  </wa-dialog>
+
   <wa-toast id="toast" placement="bottom-center"></wa-toast>
 
   <!-- shared.js is loaded in <head> -->
@@ -958,5 +1041,7 @@
   <script src="gear-ui.js"></script>
   <script src="create.js"></script>
   <script src="roster.js"></script>
+  <script src="scene-rules.js"></script>
+  <script src="scene-runner.js"></script>
 </body>
 </html>

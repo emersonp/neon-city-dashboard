@@ -141,11 +141,13 @@ node --test tests/dice.test.cjs tests/discord.test.cjs tests/characters.test.cjs
 | `admin.js` | The Administrator: the GM switch, `data-admin` parts of the page, and the one OBS link every Administrator feature shares |
 | `admin-overlay.js` | The Administrator's Overlay and Ticker cards on the Dashboard tab: Heat, Group Influence, Day and the ticker |
 | `admin-planning.js` | Planning, in the Administrator's Overlay card: the overlay's countdown |
+| `scene-rules.js` | The Scene Runner's rules: the enemy, objective and hazard lists with the custom ones, cleaning custom items, copies, scenes, reading attacks, the run reducer, storage, Export and Import (testable in Node) |
+| `scene-runner.js` | The Administrator's Scene Runner tab: Custom, List, Builder and Runner |
 | `admin-initiative.js` | The Administrator's Initiative card: a conflict scene on the overlay, and whose turn it is |
 | `obs-link.js` | Minimal OBS WebSocket client the dashboard and the overlay share |
 | `obs-config.example.js` | Template for `obs-config.js` (gitignored): OBS host, port, password and which side the overlay sits on |
 
-Things remembered in localStorage (all under `ncd.`): characters (with the ids of their perks and augmentations, their gear with its type and keywords, and the conditions on them and their gear), the open character, player name, GM toggle, Send to Discord, webhook, theme, the last tab, the target number, and the last roll.
+Things remembered in localStorage (all under `ncd.`): characters (with the ids of their perks and augmentations, their gear with its type and keywords, and the conditions on them and their gear), the open character, player name, GM toggle, Send to Discord, webhook, theme, the last tab, the target number, the last roll, and the Scene Runner's custom enemies, objectives and hazards, its scenes, and the scene being built or run with everything tracked in it.
 
 ## Databank
 
@@ -190,6 +192,37 @@ An eighth subtab, **Headlines**, has the rulebook's six headline news tables fro
 victim, or the third party a motive sabotages). The subject, event, and victim read as one sentence ("C04: The Digital
 Security Firm publicly denounced C15: The Software Firm."), and the other three show each roll beside its result. The
 book's overlapping ranges are fixed (Table X-1's 33-35, Table X-2's 63-73, Table X-6's 75-80).
+
+## Scene Runner
+
+The **Scene Runner** tab (Administrator only, between GM Screen and Settings) is for preparing scenes and running them.
+Its page code is `scene-runner.js`; the rules are in `scene-rules.js`, and `tests/scene-rules.test.cjs` checks them.
+
+- **Custom**: your own enemies (the rulebook enemy's fields: name, type, luck unless a minion squad, description, attacks
+  and perks), objectives (name, description, difficulty, Urgent or Timed) and hazards (name, description, difficulty,
+  hit %, damage of 10 × round, a fixed number or none, and effect). **Copy from rulebook** starts one from a rulebook entry;
+  rulebook entries themselves stay as the book has them. Custom enemies and hazards show in the GM Screen's Enemies (with a
+  **Custom** type filter) and Hazards. **Export** saves every custom item and scene as one JSON file and **Import** loads one
+  back, replacing them; a file it can't use is refused and nothing changes.
+- **List**: the saved scenes. **New**, **Edit**, **Duplicate**, **Delete** and **Run**. The running scene can't be edited,
+  deleted or run again.
+- **Builder** (only while building): the scene's name, Legwork or Conflict, notes, and its elements: copies of enemies,
+  objectives (every tagged objective in `tables.js`, and yours) and hazards, each taken when it's added, so later changes to
+  the lists don't change it. A copy can have its own name (two Bodyguards called Vex and Moth), a squad its own size, and an
+  objective or hazard its own difficulty and Urgent or Timed. One element can be the **Main Goal**; the rest are obstacles.
+- **Runner** (only while running): one click rolls any attack, its hit chance read from the attack's text ("75%; 45
+  physical damage"), a squad's damage from its size now, a hazard's from 10 × the round. The roll goes where Dashboard rolls
+  go, labelled "Vex — Shock Pistol", unless **Keep the next roll hidden** is on. Each element tracks luck, squad size,
+  wounds and Defeated (villains), progress, Dealt with (automatic at full progress, 0 luck or squad size 0), and
+  Deteriorating: at the start of each round an Urgent objective not progressed in the round before, and every Timed one,
+  gains or worsens it, and past ×4 becomes Irreparable (no more progress; add heat). The Main Goal shows how many
+  obstacles are left. The turn arrows step the overlay's initiative like the Initiative card, so the two stay in step;
+  without OBS the Runner counts turns and rounds itself. Running a Conflict scene starts the overlay's conflict layout at
+  Hazard, round 1; **Make it a conflict** does that for a Legwork one; **End run** turns it off and clears the tracking.
+  Copies added mid-run are for this run only, unless **Also add to the saved scene** is ticked.
+
+Only one scene is open at a time, being built or running: starting another asks to Save, Discard (or End run) or Cancel.
+Everything stays in this browser (a reload mid-run brings it all back), so Export now and then.
 
 ## Gear
 

@@ -292,15 +292,30 @@
     return () => (input.value === "" ? null : Number(input.value));
   }
 
-  // A roll button's whole job: roll, reset the pools, spin, show the result, then post it. One roll at a time.
-  // The Administrator's rolls also play on the OBS overlay (admin.js), starting with the spin here.
-  // `scroll` brings the result into view where it's off screen (on phones it stacks below the roll button).
-  // `onRoll` runs once the result shows; `skill` names the skill for the message, if any; `readImpact` gives the impact, if any;
-  // `initiative` gives { handle } when it's an Initiative roll (so the message says Fast or Slow), else null.
+  // Plays a roll that's been made: on the overlay (the Administrator's, admin.js), spinning then landing in `result`, then
+  // posted to Discord. `hidden` keeps it to `result` alone (the Scene Runner's keep-hidden rolls). `scroll` brings the
+  // result into view where it's off screen (on phones it stacks below the roll button). `onRoll` runs once the result
+  // shows; `skill` names the skill for the message, if any; `initiative` is { handle } for an Initiative roll (so the
+  // message says Fast or Slow), else null.
+  async function playRoll(r, { result, scroll = false, onRoll = () => {}, skill, initiative = null, hidden = false }) {
+    const reveal = () => { if (scroll) result.scrollIntoView({ block: "nearest" }); };
+    if (!hidden) window.NCD_ADMIN.send("roll", r);
+    result.hidden = false;
+    const spinning = spin(result);
+    reveal();
+    await spinning;
+    showResult(r, true, result);
+    reveal();
+    onRoll(r);
+    if (!hidden) await postRoll(r, skill, initiative);
+  }
+
+  // A roll button's whole job: roll, reset the pools, then play it (playRoll). One roll at a time.
+  // `skill` names the skill for the message, if any; `readImpact` gives the impact, if any; `initiative` gives { handle }
+  // when it's an Initiative roll, else null.
   function makeRoller({ button, readTarget, pools, result, resetPools, scroll = false, onRoll = () => {}, skill = () => undefined,
     readImpact = () => null, initiative = () => null }) {
     let busy = false;
-    const reveal = () => { if (scroll) result.scrollIntoView({ block: "nearest" }); };
     return async function rollAndPost() {
       if (busy) return;
       busy = true;
@@ -308,15 +323,7 @@
       try {
         const r = DICE.roll({ target: readTarget(), advantage: pools.adv.value, challenge: pools.chal.value, impact: readImpact() });
         resetPools();
-        window.NCD_ADMIN.send("roll", r);
-        result.hidden = false;
-        const spinning = spin(result);
-        reveal();
-        await spinning;
-        showResult(r, true, result);
-        reveal();
-        onRoll(r);
-        await postRoll(r, skill(), initiative());
+        await playRoll(r, { result, scroll, onRoll, skill: skill(), initiative: initiative() });
       } finally {
         busy = false;
         button.loading = false;
@@ -509,8 +516,8 @@
     const ENEMIES = window.NCD_ENEMIES;
     const abilities = (list) => rich(list.map(([name, text]) => `**${name}:** ${text}`).join("\n\n"));
     const dramatic = (a) => a.perks.some(([name]) => name === "Dramatic Enemy");
-    const pageOf = (item) => `<p class="enemy-page">${item.custom ? "Custom" : `Page ${item.page}`}</p>`;
-    const enemyCard = (a) => `<section class="sheet-column databank-section enemy" data-type="${escapeHTML(a.type)}"${a.custom ? " data-custom" : ""}${a.network ? " data-network" : ""}${dramatic(a) ? " data-dramatic" : ""}>
+    const pageOf = (item) => `<p class="enemy-page">${item.source === "custom" ? "Custom" : `Page ${item.page}`}</p>`;
+    const enemyCard = (a) => `<section class="sheet-column databank-section enemy" data-type="${escapeHTML(a.type)}"${a.source === "custom" ? " data-custom" : ""}${a.network ? " data-network" : ""}${dramatic(a) ? " data-dramatic" : ""}>
         <div class="enemy-head">
           ${a.portrait ? `<img class="portrait enemy-portrait" src="${C.PORTRAIT_DIR}enemies/${a.portrait}" alt="" width="256" height="256" loading="lazy">` : ""}
           <div><h2>${escapeHTML(a.name)}</h2>
@@ -543,8 +550,8 @@
         ${pageOf(h)}
       </section>`;
     const byName = (a, b) => a.name.localeCompare(b.name);
-    // custom is { enemies, hazards }: the Administrator's own, each marked custom (scene-runner.js calls this again
-    // whenever they change).
+    // custom is { enemies, hazards }: the Administrator's own, each with source "custom" (scene-runner.js calls this
+    // again whenever they change).
     showCustomLists = (custom = { enemies: [], hazards: [] }) => {
       $("tables-enemies").innerHTML = [...ENEMIES.enemies, ...custom.enemies].sort(byName).map(enemyCard).join("");
       $("tables-hazards").innerHTML = [...HAZARDS.hazards, ...custom.hazards].sort(byName).map(hazardCard).join("");
@@ -636,6 +643,6 @@
   }
 
   // For the Character tab (roster.js) and the Scene Runner (scene-runner.js).
-  window.NCD_APP = { KINDS, toast, targetField, makeRoller, showResult, postRoll, postInfluence, clearResult, emptyResult, tablePicker,
+  window.NCD_APP = { KINDS, toast, targetField, makeRoller, playRoll, showResult, postRoll, postInfluence, clearResult, emptyResult, tablePicker,
     showCustomLists };
 })();
