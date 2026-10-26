@@ -1,7 +1,7 @@
 // The Administrator's Scene Runner tab: the page code for scene-rules.js (which has the rules and storage).
+// - List (the first tab): the saved scenes; New, Edit, Duplicate, Delete and Run. The running scene can't be edited, deleted or run.
 // - Custom: the Administrator's own enemies, objectives and hazards (a list on the left, the one picked on the right),
 //   Copy from rulebook, and Export / Import of everything (custom items and scenes) as one JSON file.
-// - List: the saved scenes; New, Edit, Duplicate, Delete and Run. The running scene can't be edited, deleted or run.
 // - Builder (only while a scene is being built) and Runner (only while one is running). One scene is open at a time:
 //   starting to build or run another asks to Save, Discard or Cancel.
 // The Runner's turn arrows send through admin.js's link like the Initiative card (admin-initiative.js), and the run

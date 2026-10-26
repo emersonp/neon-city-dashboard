@@ -148,7 +148,7 @@ node --test tests/dice.test.cjs tests/discord.test.cjs tests/characters.test.cjs
 | `admin-overlay.js` | The Administrator's Overlay and Ticker cards on the Dashboard tab: Heat, Group Influence, Day and the ticker |
 | `admin-planning.js` | Planning, in the Administrator's Overlay card: the overlay's countdown |
 | `scene-rules.js` | The Scene Runner's rules: the enemy, objective and hazard lists with the custom ones, cleaning custom items, copies, scenes, reading attacks, the run reducer, storage, Export and Import (testable in Node) |
-| `scene-runner.js` | The Administrator's Scene Runner tab: Custom, List, Builder and Runner |
+| `scene-runner.js` | The Administrator's Scene Runner tab: List, Custom, Builder and Runner |
 | `admin-initiative.js` | The Administrator's Initiative card: a conflict scene on the overlay, and whose turn it is |
 | `obs-link.js` | Minimal OBS WebSocket client the dashboard and the overlay share |
 | `obs-config.example.js` | Template for `obs-config.js` (gitignored): OBS host, port, password and which side the overlay sits on |

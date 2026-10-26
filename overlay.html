@@ -16,6 +16,8 @@
 <style>
   /* Hallmark · overlay on the dashboard's system (tokens.css): amber interface, cyan second light, neon on a
    * dark panel over the camera. display: Saira Condensed · body: JetBrains Mono · colours: tokens only.
+   * The panel is a column of the dashboard's cards (cut corners, a lit square before each title, stat boxes lit along
+   * the top and left) over the dashboard's night air.
    * The stream effects (flicker, glitch slices, jitter, the sweep, the sign) stay: on stream they're the show. */
   :root {
     --panel-w: 40vw;
@@ -30,19 +32,19 @@
     color: var(--color-ink);
   }
 
+  /* Top to bottom: the stats, whose turn it is (only in a conflict scene), and the roll, which takes the rest of the
+     height. Sized so the biggest roll (both pools full, every symbol cancelled) fits in either layout. */
   .panel {
     position: absolute; top: 0; left: 0;
     width: var(--panel-w); height: 100vh;
-    /* height split: heat 20% · influence/day 20% · dice 20% · results 40% */
-    display: grid; grid-template-rows: 2fr 2fr 2fr 4fr; grid-template-columns: 100%;
-    justify-items: center; align-items: center;
-    padding: 3vh 2.5vw;
-    /* the dashboard's air: neon pooling in from above and below, and faint scan lines */
+    display: flex; flex-direction: column; gap: 1.6vh;
+    padding: 2.4vh 1.6vw;
+    /* the dashboard's air (atmosphere.css): sodium light low on one side, a cyan sign high on the other, and scan lines */
     background:
       repeating-linear-gradient(0deg, var(--color-scanline) 0 1px, transparent 1px 4px),
-      radial-gradient(ellipse at 50% 0%, var(--color-neon-cool), transparent 60%),
-      radial-gradient(ellipse at 50% 100%, var(--color-neon-warm), transparent 55%),
-      var(--color-paper);
+      radial-gradient(ellipse 90% 40% at 0% 105%, var(--color-neon-warm), transparent 70%),
+      radial-gradient(ellipse 80% 40% at 100% -5%, var(--color-neon-cool), transparent 70%),
+      linear-gradient(var(--color-sky), var(--color-sky-2));
     border-right: 2px solid var(--color-accent);
     box-shadow: 0 0 18px var(--glow-accent), inset -12px 0 30px -18px var(--color-accent);
   }
@@ -52,27 +54,62 @@
     box-shadow: 0 0 18px var(--glow-accent), inset 12px 0 30px -18px var(--color-accent);
   }
 
-  /* ---------- Section labels ---------- */
-  .label {
-    font-family: var(--font-display); font-weight: 700;
-    font-size: 1.3vw; letter-spacing: 0.55em; padding-left: 0.55em;
-    color: var(--color-holo-text); text-shadow: 0 0 8px var(--glow-holo);
-    display: flex; align-items: center; gap: 1vw; justify-content: center;
+  /* ---------- Cards, as on the dashboard: square, with the top-left and bottom-right corners cut ----------
+     OBS's browser has no corner-shape, so the corners are clipped and a thin gradient line redraws the border along each
+     cut, as styles.css does outside Chrome. --edge-tl lights the top and left edges. */
+  .card {
+    --cut: 1vw; --edge: var(--color-rule); --edge-tl: var(--edge);
+    position: relative; min-height: 0;
+    border: 1px solid var(--edge); border-top-color: var(--edge-tl); border-left-color: var(--edge-tl);
+    background-color: var(--color-paper-2);
+    background-image:
+      linear-gradient(135deg, transparent 50%, var(--edge-tl) 50%, var(--edge-tl) calc(50% + 1px), transparent calc(50% + 1px)),
+      linear-gradient(-45deg, transparent 50%, var(--edge) 50%, var(--edge) calc(50% + 1px), transparent calc(50% + 1px));
+    background-size: var(--cut) var(--cut);
+    background-position: left top, right bottom;
+    background-repeat: no-repeat;
+    background-origin: border-box;
+    clip-path: polygon(var(--cut) 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%, 0 var(--cut));
   }
-  .label::before, .label::after { content: ""; width: 4vw; height: 2px; background: currentColor; box-shadow: 0 0 6px currentColor; }
+  /* a card's title, like the dashboard's card headers: a small lit square (in --lit) before the name, a rule under it */
+  .card-title {
+    display: flex; align-items: center; gap: 0.7vw;
+    padding: 1.1vh 1.2vw; border-bottom: 1px solid var(--color-rule-2);
+    font-family: var(--font-display); font-weight: 800; font-size: 1.3vw; line-height: 1;
+    letter-spacing: 0.24em; color: var(--color-ink);
+  }
+  .card-title::before {
+    content: ""; flex: none; width: 0.5vw; height: 0.5vw;
+    background: var(--lit, var(--color-accent)); box-shadow: 0 0 8px var(--lit, var(--color-accent));
+  }
 
-  /* ---------- Heat: the glow runs from the heat colour toward hot red as it climbs ---------- */
-  .heat { text-align: center; --glow: oklch(calc(70% + var(--heat-t) * 8%) 0.2 calc(36 - var(--heat-t) * 34)); }
-  .heat-row { display: flex; align-items: center; justify-content: center; gap: 2.2vw; margin-top: 1vh; }
-  .heat-icon { height: 6.6vw; width: auto; overflow: visible; --ink: var(--glow); --paper: var(--color-ink); }
+  /* ---------- Heat, Group Influence, Day: the dashboard's stat boxes, each lit in its own colour ----------
+     Heat across the top and the other two under it; in a conflict scene, all three in one row. */
+  .stats { flex: none; display: grid; grid-template-columns: 1fr 1fr; gap: 0.8vw; }
+  .stat {
+    --cut: 0.6vw; --edge-tl: color-mix(in oklch, var(--c) 70%, transparent);
+    background-color: var(--color-paper-3); padding: 1vh 0.9vw 1.4vh;
+  }
+  .stat .label {
+    font-family: var(--font-display); font-weight: 700; font-size: 1vw; line-height: 1;
+    letter-spacing: 0.24em; white-space: nowrap; color: var(--c); text-shadow: 0 0 8px var(--c);
+  }
+  .stat-row { display: flex; align-items: center; justify-content: center; gap: 1.2vw; height: 6vw; margin-top: 0.6vh; }
+  .heat { grid-column: 1 / -1; --c: var(--color-heat); }
+  .influence { --c: var(--color-holo); }
+  .day { --c: var(--color-accent); }
+
+  /* Heat: the glow runs from the heat colour toward hot red as it climbs */
+  .heat { --glow: oklch(calc(70% + var(--heat-t) * 8%) 0.2 calc(36 - var(--heat-t) * 34)); }
+  .heat .stat-row { height: 7.6vw; gap: 1.8vw; }
+  .heat-icon { height: 6vw; width: auto; overflow: visible; --ink: var(--glow); --paper: var(--color-ink); }
   .heat-icon .ink   { filter: drop-shadow(0 0 6px var(--glow)) drop-shadow(0 0 18px var(--glow)); }
   .heat-icon .paper { filter: drop-shadow(0 0 5px var(--color-ink)) drop-shadow(0 0 12px var(--glow)); }
-  .heat .label { color: var(--color-heat); text-shadow: 0 0 8px var(--color-heat); }
   .heat-value {
     font-family: var(--font-display); font-weight: 800;
-    font-size: 8vw; line-height: 1; font-variant-numeric: tabular-nums;
+    font-size: 7.2vw; line-height: 1; font-variant-numeric: tabular-nums;
     color: var(--color-ink);
-    text-shadow: 0 0 6px var(--color-ink), 0 0 18px var(--glow), 0 0 42px var(--glow), 0 0 80px var(--glow);
+    text-shadow: 0 0 6px var(--color-ink), 0 0 18px var(--glow), 0 0 40px var(--glow);
     display: inline-block;
   }
   .heat-value.bump-up   { animation: bumpUp 0.55s var(--ease-out); }
@@ -84,32 +121,35 @@
     0% { transform: scale(1); } 25% { transform: scale(0.75); opacity: 0.5; filter: brightness(0.6); } 100% { transform: scale(1); }
   }
 
-  /* ---------- Group Influence + Day ---------- */
-  .stats { display: grid; grid-template-columns: 1.2fr 0.8fr; width: 100%; align-items: start; }
-  .stat { text-align: center; }
-  .stat .label { font-size: 1.05vw; letter-spacing: 0.3em; padding-left: 0.3em; gap: 0.6vw; white-space: nowrap; }
-  .stat .label::before, .stat .label::after { width: 1.4vw; }
-  .stat-row { display: flex; align-items: center; justify-content: center; gap: 1.3vw; height: 6vw; margin-top: 1vh; }
   .stat-value {
-    font-family: var(--font-display); font-weight: 800; font-size: 6vw; line-height: 1; font-variant-numeric: tabular-nums;
+    font-family: var(--font-display); font-weight: 800; font-size: 5.2vw; line-height: 1; font-variant-numeric: tabular-nums;
     color: var(--color-ink); display: inline-block;
-    text-shadow: 0 0 6px var(--color-ink), 0 0 16px var(--c), 0 0 38px var(--c);
+    text-shadow: 0 0 6px var(--color-ink), 0 0 16px var(--c), 0 0 34px var(--c);
   }
-  .stat-value.broker { font-size: 3vw; letter-spacing: 0.12em; }
-  /* Influence in the second light, Day in the interface's amber */
-  .influence { --c: var(--color-holo); }
-  .day { --c: var(--color-accent); }
-  .stat .label { color: var(--c); text-shadow: 0 0 8px var(--c); }
-  .influence-icon { height: 4.8vw; width: 4.8vw; overflow: visible; --ink: var(--c); --paper: var(--color-ink); }
+  .stat-value.broker { font-size: 2.8vw; letter-spacing: 0.12em; }
+  .influence-icon { height: 4.4vw; width: 4.4vw; overflow: visible; --ink: var(--c); --paper: var(--color-ink); }
   .influence-icon .ink   { filter: drop-shadow(0 0 5px var(--c)) drop-shadow(0 0 14px var(--c)); }
   .influence-icon .paper { filter: drop-shadow(0 0 4px var(--color-ink)); }
   .stat-value.bump-up   { animation: bumpUp 0.55s var(--ease-out); }
   .stat-value.bump-down { animation: bumpDown 0.55s var(--ease-out); }
 
-  /* ---------- Dice: tens amber, ones cyan, as on the dashboard ---------- */
-  .dice-wrap { text-align: center; width: 100%; }
-  .dice { display: flex; justify-content: center; gap: 3vw; margin-top: 1.4vh; }
-  .die { width: 7.6vw; text-align: center; }
+  /* ---------- The roll: the dashboard's result screen (the darker glass, with scan lines) ---------- */
+  .roll { flex: 1; display: flex; flex-direction: column; background-color: var(--color-paper-3); }
+  .roll::before {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: repeating-linear-gradient(transparent 0 2px, var(--color-scanline) 2px 3px);
+  }
+  .roll-body {
+    flex: 1; min-height: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1vh;
+    padding: 1.4vh 1.2vw 2vh; text-align: center;
+  }
+  /* no roll showing: the whole card goes (hidden, not removed, so nothing else moves) */
+  body.no-roll .roll { visibility: hidden; }
+
+  /* Dice: tens amber, ones cyan, as on the dashboard */
+  .dice { display: flex; justify-content: center; gap: 2.6vw; }
+  .die { width: 6.4vw; text-align: center; }
   .die svg { width: 100%; height: auto; overflow: visible; display: block; }
   .die .shape { fill: var(--color-paper-3); stroke-width: 2.2; }
   .die .facet { fill: none; stroke-width: 1.2; opacity: 0.7; }
@@ -134,17 +174,16 @@
     100% { transform: scale(1); }
   }
 
-  .results { text-align: center; width: 100%; align-self: start; padding-top: 1vh; }
   .total {
-    height: 5.6vw;
-    font-family: var(--font-display); font-weight: 800; font-size: 6vw; line-height: 5.6vw; font-variant-numeric: tabular-nums;
+    height: 5.4vw;
+    font-family: var(--font-display); font-weight: 800; font-size: 5.8vw; line-height: 5.4vw; font-variant-numeric: tabular-nums;
     color: var(--color-ink); text-shadow: 0 0 10px var(--glow-accent), 0 0 32px var(--glow-accent);
     transition: opacity var(--dur-normal) var(--ease-out);
   }
   .total.hidden { opacity: 0; }
   .total.pop { animation: pop 0.45s var(--ease-out); }
   .verdict {
-    height: 2vw; margin-top: 0.4vh;
+    height: 2vw;
     font-family: var(--font-display); font-weight: 800; font-size: 1.6vw; line-height: 2vw;
     letter-spacing: 0.5em; padding-left: 0.5em; transition: opacity var(--dur-normal) var(--ease-out);
   }
@@ -159,7 +198,7 @@
 
   /* neon tube flicker on section headers */
   .heat .label      { animation: flicker 44s infinite; }
-  .dice-wrap .label { animation: flicker 52s infinite 18s; }
+  .roll .label      { animation: flicker 52s infinite 18s; }
   .influence .label { animation: flicker 57s infinite 9s; }
   .day .label       { animation: flicker 63s infinite 27s; }
   .initiative .label { animation: flicker 49s infinite 33s; }
@@ -241,13 +280,12 @@
   .icon .ink-stroke { stroke: var(--ink); } .icon .paper-stroke { stroke: var(--paper); }
   .adv  { --c: var(--color-good); --ink: var(--color-good); --paper: var(--color-paper); }
   .chal { --c: var(--color-bad); --ink: var(--color-bad); --paper: var(--color-paper); }
-  .pool { margin-top: 2.2vh; }
-  /* no roll showing: the ROLL label, the dice and the results go (hidden, not removed, so nothing else moves) */
-  body.no-roll .dice-wrap, body.no-roll .results { visibility: hidden; }
-  .reels { display: flex; justify-content: center; flex-wrap: wrap; gap: 0.7vw; --s: 3.4vw; }
-  .reels .gap { width: 1.4vw; }
+  .pool { margin-top: 0.8vh; }
+  /* eight reels (both pools full) fit across the card */
+  .reels { display: flex; justify-content: center; flex-wrap: wrap; gap: 0.6vw; --s: 3vw; }
+  .reels .gap { width: 1.2vw; }
   .slot { display: flex; flex-direction: column; align-items: center; gap: 0.5vh; }
-  .slot-die { width: 1.9vw; height: 1.9vw; filter: drop-shadow(0 0 4px var(--c)); animation: flicker 47s infinite 26s; }
+  .slot-die { width: 1.6vw; height: 1.6vw; filter: drop-shadow(0 0 4px var(--c)); animation: flicker 47s infinite 26s; }
   .window {
     width: var(--s); height: var(--s); overflow: hidden; position: relative;
     border: 2px solid var(--c); border-radius: 0.2vw; background: var(--color-paper-3);
@@ -264,10 +302,10 @@
   .slot.landed .window { animation: slotLand 0.45s var(--ease-out); }
   @keyframes slotLand { 0% { transform: scale(1.18); box-shadow: 0 0 22px var(--c); } 100% { transform: scale(1); } }
 
-  .net { margin-top: 1.8vh; display: flex; flex-direction: column; align-items: center; gap: 0.6vh; min-height: 5vw; }
+  .net { margin-top: 1.4vh; display: flex; flex-direction: column; align-items: center; gap: 0.6vh; min-height: 4.4vw; }
   .net.hidden { visibility: hidden; }
-  .net-icons { display: flex; align-items: center; gap: 0.5vw; height: 2.6vw; }
-  .net-icons .icon { width: 2.6vw; height: 2.6vw; filter: drop-shadow(0 0 6px var(--c)); }
+  .net-icons { display: flex; align-items: center; gap: 0.5vw; height: 2.4vw; }
+  .net-icons .icon { width: 2.4vw; height: 2.4vw; filter: drop-shadow(0 0 6px var(--c)); }
   .net-icons .cancelled { opacity: 0.22; filter: grayscale(1); }
   .net-icons .sep { width: 2px; height: 70%; background: var(--color-rule); margin: 0 0.6vw; }
   .net-icons .pop { animation: pop 0.4s var(--ease-out) backwards; }
@@ -407,34 +445,21 @@
     85%, 100% { clip-path: inset(100% 0 0 0); transform: none; }
   }
 
-  /* ---------- Conflict scene: a third layout, with whose turn it is under a squeezed Heat / Influence / Day row ----------
-     Off: the initiative section is gone and the panel is as above. On: Heat and the stats share the top row. */
-  .initiative { display: none; }
-  .panel.conflict {
-    grid-template-columns: 0.85fr 1.15fr; grid-template-rows: 1.7fr 2.3fr 2fr 4fr;
-    column-gap: 1.5vw;
-  }
-  .panel.conflict .heat { grid-area: 1 / 1; }
-  .panel.conflict .stats { grid-area: 1 / 2; }
-  .panel.conflict .initiative { grid-area: 2 / 1 / 3 / -1; }
-  .panel.conflict .dice-wrap { grid-area: 3 / 1 / 4 / -1; }
-  .panel.conflict .results { grid-area: 4 / 1 / 5 / -1; }
-  .panel.conflict .heat .label::before, .panel.conflict .heat .label::after { width: 1.6vw; }
-  .panel.conflict .heat .label { font-size: 1.1vw; letter-spacing: 0.4em; padding-left: 0.4em; gap: 0.6vw; }
-  .panel.conflict .heat-row { gap: 1.2vw; margin-top: 0.6vh; }
-  .panel.conflict .heat-icon { height: 4.4vw; }
-  .panel.conflict .heat-value { font-size: 5.4vw; }
-  .panel.conflict .stat .label { font-size: 0.8vw; letter-spacing: 0.16em; padding-left: 0.16em; }
-  .panel.conflict .stat .label::before, .panel.conflict .stat .label::after { display: none; }
-  .panel.conflict .stat-row { height: 4.4vw; gap: 0.8vw; margin-top: 0.6vh; }
-  .panel.conflict .stat-value { font-size: 4.2vw; }
+  /* ---------- Conflict scene: Heat, Group Influence and Day in one row, and whose turn it is under them ----------
+     Off: the initiative card is gone and the panel is as above. */
+  .initiative { display: none; flex: none; --lit: var(--tc); }
+  .panel.conflict .initiative { display: block; }
+  .panel.conflict .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .panel.conflict .heat { grid-column: auto; }
+  .panel.conflict .stat .label { letter-spacing: 0.14em; }
+  .panel.conflict .stat-row, .panel.conflict .heat .stat-row { height: 4.6vw; gap: 0.8vw; }
+  .panel.conflict .heat-icon { height: 3.8vw; }
+  .panel.conflict .heat-value, .panel.conflict .stat-value { font-size: 4.4vw; }
   .panel.conflict .stat-value.broker { font-size: 2.1vw; }
   .panel.conflict .influence-icon { height: 3.4vw; width: 3.4vw; }
 
   /* the turn: its name large in the turn's colour, over a track of all four with this one lit */
-  .panel.conflict .initiative {
-    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.4vh; width: 100%;
-  }
+  .initiative-body { display: flex; flex-direction: column; align-items: center; gap: 1.4vh; padding: 1.4vh 1.2vw 1.8vh; }
   .initiative { --tc: var(--color-turn-hazard); }
   .initiative[data-phase="fast"]        { --tc: var(--color-turn-fast); }
   .initiative[data-phase="antagonists"] { --tc: var(--color-turn-antagonists); }
@@ -484,13 +509,9 @@
 
   /* ---------- Planning: a countdown that takes over the whole panel ---------- */
   .panel.planning-on > :not(.planning, .status) { display: none; }
-  .planning {
-    grid-row: 1 / -1; grid-column: 1 / -1; align-self: stretch;
-    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3vh;
-    --glow: var(--color-holo);
-  }
+  .planning { flex: 1; display: flex; flex-direction: column; --glow: var(--color-holo); --lit: var(--color-holo); }
   .planning[hidden] { display: none; }
-  .planning .label { font-size: 1.8vw; }
+  .planning-body { flex: 1; display: flex; align-items: center; justify-content: center; }
   /* minutes over seconds, so the digits can fill the tall panel; each digit gets a fixed width so nothing shifts */
   .clock {
     display: flex; flex-direction: column; align-items: center;
@@ -507,16 +528,14 @@
   .planning.paused .clock, .planning.paused .clock-sep { opacity: 0.4; }
   .planning.paused .label { animation: blink 1.2s steps(1) infinite; }
   /* time's up: the clock flashes for FLASH_MS */
-  .planning.done { --glow: var(--color-accent); }
+  .planning.done { --glow: var(--color-accent); --lit: var(--color-accent); }
   .planning.done .label { color: var(--color-accent-text); text-shadow: 0 0 8px var(--color-accent); }
   .planning.done .clock, .planning.done .clock-sep { animation: timeUp 0.5s steps(1) infinite; }
   @keyframes timeUp { 50% { opacity: 0.08; } }
 
-  /* connection warning, only visible while OBS link is down */
-  .status {
-    position: absolute; bottom: 1.2vh; left: 0; right: 0; text-align: center;
-    font-size: 0.75vw; color: var(--color-bad); letter-spacing: 0.1em; opacity: 0.85;
-  }
+  /* connection warning, only there while the OBS link is down */
+  .status { flex: none; text-align: center; font-size: 0.75vw; color: var(--color-bad); letter-spacing: 0.1em; opacity: 0.85; }
+  .status:empty { display: none; }
 
   /* the idle ambience stops for reduced motion (OBS doesn't ask for it, so the stream keeps it);
      rolls, the ticker and the countdown still play */
@@ -537,80 +556,82 @@
   <div class="ticker-window"><div class="ticker-track" id="tickerTrack"></div></div>
 </div>
 <div class="panel">
-  <section class="heat">
-    <div class="label">HEAT</div>
-    <div class="heat-row">
-      <span data-icon="heat" data-cls="heat-icon"></span>
-      <div class="heat-num"><div class="heat-value glitch" id="heat" data-text="0">0</div></div>
-    </div>
-  </section>
-
   <section class="stats">
-    <div class="stat influence">
+    <div class="stat card heat">
+      <div class="label">HEAT</div>
+      <div class="stat-row">
+        <span data-icon="heat" data-cls="heat-icon"></span>
+        <div class="heat-num"><div class="heat-value glitch" id="heat" data-text="0">0</div></div>
+      </div>
+    </div>
+    <div class="stat card influence">
       <div class="label">GROUP INFLUENCE</div>
       <div class="stat-row">
         <span data-icon="influence" data-cls="influence-icon"></span>
         <div class="stat-value glitch" id="influence" data-text="0">0</div>
       </div>
     </div>
-    <div class="stat day">
+    <div class="stat card day">
       <div class="label">DAY</div>
       <div class="stat-row"><div class="stat-value glitch" id="day" data-text="0">0</div></div>
     </div>
   </section>
 
   <!-- only in a conflict scene: whose turn it is -->
-  <section class="initiative" id="initiative" data-phase="hazard">
-    <div class="label">INITIATIVE</div>
-    <div class="turn glitch" id="turn" data-text="HAZARD">HAZARD</div>
-    <div class="turn-row">
-      <ol class="turn-track" id="turnTrack"></ol>
-      <div class="round" id="round">ROUND <b>1</b></div>
-    </div>
-  </section>
-
-  <section class="dice-wrap">
-    <div class="label">ROLL</div>
-    <div class="dice">
-      <div class="die tens" id="dieTens">
-        <svg viewBox="0 0 100 100">
-          <polygon class="shape" points="50,3 96,46 96,58 50,97 4,58 4,46"/>
-          <polyline class="facet" points="4,46 26,56 50,3 74,56 96,46"/>
-          <polyline class="facet" points="26,56 50,70 74,56"/>
-          <line class="facet" x1="50" y1="70" x2="50" y2="97"/>
-          <text class="num" x="50" y="44">–</text>
-        </svg>
-      </div>
-      <div class="die ones" id="dieOnes">
-        <svg viewBox="0 0 100 100">
-          <polygon class="shape" points="50,3 96,46 96,58 50,97 4,58 4,46"/>
-          <polyline class="facet" points="4,46 26,56 50,3 74,56 96,46"/>
-          <polyline class="facet" points="26,56 50,70 74,56"/>
-          <line class="facet" x1="50" y1="70" x2="50" y2="97"/>
-          <text class="num" x="50" y="44">–</text>
-        </svg>
+  <section class="initiative card" id="initiative" data-phase="hazard">
+    <div class="card-title label">INITIATIVE</div>
+    <div class="initiative-body">
+      <div class="turn glitch" id="turn" data-text="HAZARD">HAZARD</div>
+      <div class="turn-row">
+        <ol class="turn-track" id="turnTrack"></ol>
+        <div class="round" id="round">ROUND <b>1</b></div>
       </div>
     </div>
   </section>
 
-  <section class="results">
-    <div class="total glitch hidden" id="total">—</div>
-    <div class="verdict glitch hidden" id="verdict"></div>
-    <div class="pool" id="pool" hidden>
-      <div class="reels" id="reels"></div>
-      <div class="net hidden" id="net">
-        <div class="net-icons" id="netIcons"></div>
-        <div class="net-label glitch" id="netLabel"></div>
+  <section class="roll card">
+    <div class="card-title label">ROLL</div>
+    <div class="roll-body">
+      <div class="dice">
+        <div class="die tens" id="dieTens">
+          <svg viewBox="0 0 100 100">
+            <polygon class="shape" points="50,3 96,46 96,58 50,97 4,58 4,46"/>
+            <polyline class="facet" points="4,46 26,56 50,3 74,56 96,46"/>
+            <polyline class="facet" points="26,56 50,70 74,56"/>
+            <line class="facet" x1="50" y1="70" x2="50" y2="97"/>
+            <text class="num" x="50" y="44">–</text>
+          </svg>
+        </div>
+        <div class="die ones" id="dieOnes">
+          <svg viewBox="0 0 100 100">
+            <polygon class="shape" points="50,3 96,46 96,58 50,97 4,58 4,46"/>
+            <polyline class="facet" points="4,46 26,56 50,3 74,56 96,46"/>
+            <polyline class="facet" points="26,56 50,70 74,56"/>
+            <line class="facet" x1="50" y1="70" x2="50" y2="97"/>
+            <text class="num" x="50" y="44">–</text>
+          </svg>
+        </div>
+      </div>
+      <div class="total glitch hidden" id="total">—</div>
+      <div class="verdict glitch hidden" id="verdict"></div>
+      <div class="pool" id="pool" hidden>
+        <div class="reels" id="reels"></div>
+        <div class="net hidden" id="net">
+          <div class="net-icons" id="netIcons"></div>
+          <div class="net-label glitch" id="netLabel"></div>
+        </div>
       </div>
     </div>
   </section>
 
-  <section class="planning" id="planning" hidden>
-    <div class="label" id="planLabel">PLANNING</div>
-    <div class="clock" id="clock">
-      <div class="clock-row" id="clockMin"></div>
-      <div class="clock-sep"></div>
-      <div class="clock-row" id="clockSec"></div>
+  <section class="planning card" id="planning" hidden>
+    <div class="card-title label" id="planLabel">PLANNING</div>
+    <div class="planning-body">
+      <div class="clock" id="clock">
+        <div class="clock-row" id="clockMin"></div>
+        <div class="clock-sep"></div>
+        <div class="clock-row" id="clockSec"></div>
+      </div>
     </div>
   </section>
 
