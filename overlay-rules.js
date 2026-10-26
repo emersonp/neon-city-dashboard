@@ -7,7 +7,8 @@
 // clearRoll     {}                                dashboard → overlay: wipe the roll off
 // ticker        { items }                         dashboard → overlay: the ticker's items, in order
 // planning      { action, seconds }               dashboard → overlay: start, pause, play, stop or add to the countdown
-// initiative    { conflict, phase }               dashboard → overlay: a conflict scene on or off, and whose turn it is
+// initiative    { conflict, phase, round }        dashboard → overlay: a conflict scene on or off, whose turn it is, and
+//                                                   which round
 // ping          {}                                dashboard → overlay: ask what it's showing
 // overlayState  { heat, influence, day, ticker,   overlay → dashboard: what it's showing (on connect, on ping, and
 //                 planning, initiative }            whenever the countdown or initiative changes)
@@ -77,15 +78,17 @@
   }
 
   // ---- Initiative: in a conflict scene, each round goes Hazard, Fast (the crew who succeeded), Antagonists, then
-  // Slow (the crew who failed). Outside one, no phase shows. ----
+  // Slow (the crew who failed), and the rounds are counted from 1. Outside one, no phase shows. ----
   const PHASES = ["hazard", "fast", "antagonists", "slow"];
   const PHASE_NAMES = { hazard: "Hazard", fast: "Fast", antagonists: "Antagonists", slow: "Slow" };
-  const NO_CONFLICT = { conflict: false, phase: PHASES[0] };
+  const NO_CONFLICT = { conflict: false, phase: PHASES[0], round: 1 };
 
-  // { conflict, phase }: conflict as true or false, and a phase that's one of PHASES (the first if not).
+  // { conflict, phase, round }: conflict as true or false, a phase that's one of PHASES (the first if not), and a round
+  // that's a whole number from 1 (1 if not).
   const cleanInitiative = (m) => ({
     conflict: Boolean(m?.conflict),
     phase: PHASES.includes(m?.phase) ? m.phase : PHASES[0],
+    round: Number.isInteger(Number(m?.round)) && Number(m.round) >= 1 ? Number(m.round) : 1,
   });
 
   // The phase step places on from this one (1 is next, -1 is back), round and round.
@@ -93,6 +96,14 @@
     const i = Math.max(0, PHASES.indexOf(phase));
     return PHASES[(((i + step) % PHASES.length) + PHASES.length) % PHASES.length];
   };
+  // The initiative one turn on (1) or back (-1): on from Slow to Hazard is the next round, and back from Hazard to Slow
+  // the round before (never before round 1).
+  function stepInitiative(initiative, step) {
+    const { conflict, phase, round } = cleanInitiative(initiative);
+    const next = stepPhase(phase, step);
+    const wrapped = step > 0 ? phase === PHASES.at(-1) && next === PHASES[0] : phase === PHASES[0] && next === PHASES.at(-1);
+    return { conflict, phase: next, round: Math.max(1, round + (wrapped ? Math.sign(step) : 0)) };
+  }
 
   const digit = (n) => Number.isInteger(n) && n >= 0 && n <= 9;
   const bools = (a) => (Array.isArray(a) ? a.map(Boolean) : []);
@@ -138,7 +149,7 @@
   root.NCD_OVERLAY = {
     STATS, clampStat, cleanTicker, tidyTicker,
     PLANNING_MAX, planningLeft, planningStep, cleanPlanning, fmtClock,
-    PHASES, PHASE_NAMES, NO_CONFLICT, cleanInitiative, stepPhase,
+    PHASES, PHASE_NAMES, NO_CONFLICT, cleanInitiative, stepPhase, stepInitiative,
     make, read,
   };
 })(globalThis);

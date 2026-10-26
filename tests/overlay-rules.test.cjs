@@ -5,7 +5,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 require("../overlay-rules.js");
 const { STATS, clampStat, cleanTicker, tidyTicker, PLANNING_MAX, planningLeft, planningStep, cleanPlanning, fmtClock, make, read,
-  PHASES, cleanInitiative, stepPhase } = globalThis.NCD_OVERLAY;
+  PHASES, cleanInitiative, stepPhase, stepInitiative } = globalThis.NCD_OVERLAY;
 
 const source = (file) => fs.readFileSync(path.join(__dirname, "..", file), "utf8");
 const TYPES = ["stat", "roll", "clearRoll", "ticker", "planning", "initiative", "ping", "overlayState"];
@@ -128,11 +128,23 @@ test("initiative runs Hazard, Fast, Antagonists, Slow, and round again", () => {
   assert.equal(stepPhase("nonsense", 1), "fast");
 });
 
-test("initiative messages are cleaned", () => {
-  assert.deepEqual(cleanInitiative({ conflict: 1, phase: "fast" }), { conflict: true, phase: "fast" });
-  assert.deepEqual(cleanInitiative({ phase: "toString" }), { conflict: false, phase: "hazard" });
-  assert.deepEqual(cleanInitiative(null), { conflict: false, phase: "hazard" });
-  assert.deepEqual(make("initiative", { conflict: true, phase: "slow" }), { type: "initiative", conflict: true, phase: "slow" });
+test("initiative messages are cleaned, with a round of at least 1", () => {
+  assert.deepEqual(cleanInitiative({ conflict: 1, phase: "fast", round: 3 }), { conflict: true, phase: "fast", round: 3 });
+  assert.deepEqual(cleanInitiative({ phase: "toString" }), { conflict: false, phase: "hazard", round: 1 });
+  assert.deepEqual(cleanInitiative(null), { conflict: false, phase: "hazard", round: 1 });
+  for (const round of [0, -2, 2.5, "x", null]) assert.equal(cleanInitiative({ round }).round, 1, String(round));
+  assert.equal(cleanInitiative({ round: "4" }).round, 4);
+  assert.deepEqual(make("initiative", { conflict: true, phase: "slow", round: 2 }),
+    { type: "initiative", conflict: true, phase: "slow", round: 2 });
   assert.deepEqual(read({ type: "overlayState", initiative: { conflict: true, phase: "antagonists" } }).initiative,
-    { conflict: true, phase: "antagonists" });
+    { conflict: true, phase: "antagonists", round: 1 });
+});
+
+test("stepping from Slow to Hazard starts the next round, and back again ends it, never below round 1", () => {
+  const at = (phase, round) => ({ conflict: true, phase, round });
+  assert.deepEqual(stepInitiative(at("hazard", 1), 1), at("fast", 1));
+  assert.deepEqual(stepInitiative(at("slow", 1), 1), at("hazard", 2));
+  assert.deepEqual(stepInitiative(at("hazard", 2), -1), at("slow", 1));
+  assert.deepEqual(stepInitiative(at("fast", 2), -1), at("hazard", 2));
+  assert.deepEqual(stepInitiative(at("hazard", 1), -1), at("slow", 1));
 });

@@ -56,7 +56,8 @@ the Dashboard says "No rolls yet", the overlay is cleared to match, including wh
 Under the roll result, an **Initiative** card has a **Conflict scene** switch. Off, the overlay shows nothing of initiative.
 On, the overlay changes to its conflict layout (Heat, Group Influence and Day squeezed into one row, and the turn under them),
 starting on **Hazard**; the card's arrows step through the round, Hazard (yellow), Fast (red), Antagonists (magenta) and Slow
-(cyan), and round again. In a normal browser the overlay toggles a conflict scene on <kbd>C</kbd> and steps the turn on
+(cyan), and round again. Stepping on from Slow to Hazard starts the next round, and stepping back from Hazard ends it (never
+before round 1); the overlay shows **Round N** beside its turn track, and the card shows it too. In a normal browser the overlay toggles a conflict scene on <kbd>C</kbd> and steps the turn on
 <kbd>[</kbd> and <kbd>]</kbd>.
 
 Rolling **Initiative in the World** or **in the Network** from the Character tab posts who rolled, whether the character

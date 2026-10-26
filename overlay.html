@@ -454,7 +454,13 @@
     50%  { transform: none; opacity: 1; filter: brightness(1.6); }
     100% { transform: none; filter: none; }
   }
-  .turn-track { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.6vw; width: 100%; }
+  /* the track, with the round's number beside it */
+  .turn-row { display: flex; align-items: flex-end; gap: 1.2vw; width: 100%; }
+  .round {
+    flex: none; font-family: var(--font-display); font-weight: 700; font-size: 1.1vw; letter-spacing: 0.18em; line-height: 1;
+    color: var(--color-ink); text-shadow: 0 0 6px var(--tc);
+  }
+  .turn-track { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.6vw; flex: 1; }
   .turn-track li {
     --c: var(--color-turn-hazard);
     display: flex; flex-direction: column; align-items: center; gap: 0.6vh;
@@ -555,7 +561,10 @@
   <section class="initiative" id="initiative" data-phase="hazard">
     <div class="label">INITIATIVE</div>
     <div class="turn glitch" id="turn" data-text="HAZARD">HAZARD</div>
-    <ol class="turn-track" id="turnTrack"></ol>
+    <div class="turn-row">
+      <ol class="turn-track" id="turnTrack"></ol>
+      <div class="round" id="round">ROUND 1</div>
+    </div>
   </section>
 
   <section class="dice-wrap">
@@ -608,7 +617,7 @@
 
 <script>
   const { config, connect } = window.NCD_OBS_LINK;
-  const { STATS, clampStat, cleanTicker, planningLeft, planningStep, cleanPlanning, fmtClock, PHASES, PHASE_NAMES, cleanInitiative, stepPhase,
+  const { STATS, clampStat, cleanTicker, planningLeft, planningStep, cleanPlanning, fmtClock, PHASES, PHASE_NAMES, cleanInitiative, stepInitiative,
     make, read } = window.NCD_OVERLAY;
   if (config?.side === "right") document.body.classList.add("right");
 
@@ -893,11 +902,13 @@
   const initEl = document.getElementById("initiative");
   const turnEl = document.getElementById("turn");
   const turnTrack = document.getElementById("turnTrack");
+  const roundEl = document.getElementById("round");
   let initiative = cleanInitiative(store.get("nco.initiative", null));
   turnTrack.innerHTML = PHASES.map((p) => `<li data-phase="${p}">${PHASE_NAMES[p].toUpperCase()}</li>`).join("");
 
   function renderInitiative(animate) {
-    const { conflict, phase } = initiative;
+    const { conflict, phase, round } = initiative;
+    roundEl.textContent = `ROUND ${round}`;
     const changed = initEl.dataset.phase !== phase || !panelEl.classList.contains("conflict");
     panelEl.classList.toggle("conflict", conflict);
     initEl.dataset.phase = phase;
@@ -909,7 +920,7 @@
       turnEl.classList.add("change");
     }
   }
-  // msg is an initiative message: { conflict, phase }
+  // msg is an initiative message: { conflict, phase, round }
   function setInitiative(msg) {
     initiative = cleanInitiative(msg);
     store.set("nco.initiative", initiative);
@@ -981,8 +992,8 @@
     else if (e.key === "d") setStat("day", (stats.day + 1) % 11);
     else if (e.key === "p") planningAction({ action: planning ? "stop" : "start", seconds: 5 });
     else if (e.key === "o") planningAction({ action: planning?.running ? "pause" : "play" });
-    else if (e.key === "c") setInitiative({ conflict: !initiative.conflict, phase: PHASES[0] });
-    else if (e.key === "[" || e.key === "]") setInitiative({ ...initiative, phase: stepPhase(initiative.phase, e.key === "]" ? 1 : -1) });
+    else if (e.key === "c") setInitiative({ conflict: !initiative.conflict, phase: PHASES[0], round: 1 });
+    else if (e.key === "[" || e.key === "]") setInitiative(stepInitiative(initiative, e.key === "]" ? 1 : -1));
     else if (e.key === " " || e.key === "r") {
       const n = () => Math.floor(Math.random() * 5);
       roll(rand10(), rand10(), 50, Array.from({ length: n() }, () => Math.random() < 0.5), Array.from({ length: n() }, () => Math.random() < 0.6));
