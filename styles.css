@@ -1118,6 +1118,11 @@ html:not(.bevel).wa-dark .portrait-frame { filter: drop-shadow(0 0 6px color-mix
 .scene-form { display: flex; flex-direction: column; gap: var(--wa-space-m); max-width: 48rem; }
 .scene-form h2 { margin: 0; }
 .scene-form h3 { margin: var(--wa-space-s) 0 0; }
+/* where the scene is set: three lists, the location, and Randomize */
+.scene-place { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--wa-space-s); align-items: end; }
+@media (max-width: 640px) { .scene-place { grid-template-columns: minmax(0, 1fr); } }
+.scene-place wa-button { justify-self: start; }
+.scene-where { margin: var(--wa-space-2xs) 0 0; color: var(--color-holo-text); font-size: var(--wa-font-size-s); }
 .scene-form-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--wa-space-m); }
 .scene-form [hidden] { display: none; }
 .pair-list { display: flex; flex-direction: column; gap: var(--wa-space-xs); }

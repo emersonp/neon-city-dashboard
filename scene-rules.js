@@ -123,10 +123,11 @@
     return def && { id: str(raw.id), kind: raw.kind, from: str(raw.from), def, ...copyFields(raw.kind, def, {}, raw) };
   }
 
-  // ---- scenes: { id, name, mode ("legwork" or "conflict"), notes, elements (in order), mainGoal (an element's id, or
-  // null) }. Everything other than the Main Goal is an obstacle. ----
+  // ---- scenes: { id, name, mode ("legwork" or "conflict"), place (where it's set: places.js), notes, elements (in
+  // order), mainGoal (an element's id, or null) }. Everything other than the Main Goal is an obstacle. ----
   const MODES = ["legwork", "conflict"];
-  const newScene = (id) => ({ id, name: "", mode: "legwork", notes: "", elements: [], mainGoal: null });
+  const PLACES = () => root.NCD_PLACES;
+  const newScene = (id) => ({ id, name: "", mode: "legwork", place: { ...PLACES().NO_PLACE }, notes: "", elements: [], mainGoal: null });
   const addElement = (scene, element) => ({ ...scene, elements: [...scene.elements, element] });
   const removeElement = (scene, id) => ({
     ...scene, elements: scene.elements.filter((e) => e.id !== id), mainGoal: scene.mainGoal === id ? null : scene.mainGoal,
@@ -158,8 +159,8 @@
     if (!raw || typeof raw !== "object" || !str(raw.id)) return null;
     const elements = (Array.isArray(raw.elements) ? raw.elements : []).map(cleanElement).filter(Boolean);
     return {
-      id: str(raw.id), name: str(raw.name), mode: MODES.includes(raw.mode) ? raw.mode : "legwork", notes: str(raw.notes),
-      elements, mainGoal: elements.some((e) => e.id === raw.mainGoal) ? raw.mainGoal : null,
+      id: str(raw.id), name: str(raw.name), mode: MODES.includes(raw.mode) ? raw.mode : "legwork",
+      place: PLACES().cleanPlace(raw.place), notes: str(raw.notes), elements, mainGoal: elements.some((e) => e.id === raw.mainGoal) ? raw.mainGoal : null,
     };
   }
 
@@ -188,7 +189,7 @@
   }
 
   // ---- running a scene: apply(state, action) → state ----
-  // The run state is { sceneId, name, mode, notes, mainGoal, elements (copied from the saved scene when the run
+  // The run state is { sceneId, name, mode, place, notes, mainGoal, elements (copied from the saved scene when the run
   // starts, plus any added during it), track: { [element id]: tracking }, initiative: { conflict, phase, round },
   // notices, conditions (the scene's own: conditions.js) }. An element's tracking is { luck (null without), size (a
   // squad's, else null), wounds, defeated, progress, dealt (marked Dealt with by hand), deteriorating (0 to 4),
@@ -246,7 +247,8 @@
     start(state, { scene }) {
       const elements = structuredClone(scene.elements);
       return {
-        sceneId: scene.id, name: scene.name, mode: scene.mode, notes: scene.notes, mainGoal: scene.mainGoal, elements,
+        sceneId: scene.id, name: scene.name, mode: scene.mode, place: PLACES().cleanPlace(scene.place), notes: scene.notes,
+        mainGoal: scene.mainGoal, elements,
         track: Object.fromEntries(elements.map((e) => [e.id, newTrack(e)])),
         initiative: startInitiative(scene.mode === "conflict"), roundsStarted: 1, notices: [], conditions: [],
       };
@@ -347,7 +349,8 @@
       .map((n) => (n.irreparable === true ? { id: n.id, irreparable: true } : { id: n.id, deteriorating: count(n.deteriorating, MAX_DETERIORATING) }));
     const initiative = OVERLAY().cleanInitiative(raw.initiative);
     return {
-      sceneId: str(raw.sceneId), name: str(raw.name), mode: MODES.includes(raw.mode) ? raw.mode : "legwork", notes: str(raw.notes),
+      sceneId: str(raw.sceneId), name: str(raw.name), mode: MODES.includes(raw.mode) ? raw.mode : "legwork",
+      place: PLACES().cleanPlace(raw.place), notes: str(raw.notes),
       mainGoal: ids.has(raw.mainGoal) ? raw.mainGoal : null, elements, track,
       initiative, roundsStarted: Math.max(initiative.round, whole(raw.roundsStarted, 1, 99999, 1)), notices,
       conditions: CONDITIONS().conditions(raw),

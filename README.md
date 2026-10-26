@@ -130,6 +130,7 @@ node --test tests/dice.test.cjs tests/discord.test.cjs tests/characters.test.cjs
 | `databank.js` | The Databank tab's text from the rulebook's Equipment chapter: gear, tool sets, weapons, armor, vehicles, gear and weapon keywords with their restrictions (testable in Node) |
 | `tables.js` | The GM Screen tab's tables: random gear keywords, liabilities, and distinctive visual traits (General); sample objectives (Objectives); obstacles (Obstacles); the complications (Complications); security system tiers with each defense's description, and the heat alarms add (Scenes); the headline news tables, and rolling them all into a news story (Headlines) (testable in Node) |
 | `enemies.js` | The GM Screen tab's Enemies: every enemy's stat block from the Enemies chapter, with its bust in `portraits/enemies/` (testable in Node) |
+| `places.js` | Where a Scene Runner scene is set: the districts, and the rulebook's types of location with their alternatives (testable in Node) |
 | `hazards.js` | The GM Screen tab's Hazards: the Playtest Packet's example hazards and the hazards in its jobs, each with its difficulty, hit chance and damage (testable in Node) |
 | `gear.js` | Gear rules from `databank.js`: built-in keywords, which keywords an item can take, damage and impact, labels, rules text, and Create's starting gear (testable in Node) |
 | `gear-ui.js` | Gear on the page: item rows, keyword chips, rules text, and the keyword picker the gear dialog and Create share |

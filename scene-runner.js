@@ -12,6 +12,7 @@
   const ADMIN = window.NCD_ADMIN;
   const DICE = window.NCD_DICE;
   const INITIATIVE = window.NCD_INITIATIVE;
+  const P = window.NCD_PLACES;
   const { NO_CONFLICT, PHASES, PHASE_NAMES, stepInitiative } = window.NCD_OVERLAY;
   const { formatDescription } = window.NCD_FORMAT;
   const { svg: icon } = window.NCD_ICONS;
@@ -347,6 +348,7 @@
     $("scene-detail").innerHTML = `<section class="sheet-column databank-section scene-card">
         <h2>${esc(s.name || "Untitled scene")}</h2>
         <p class="ability-tag">${modeName(s.mode)}${running ? " · Running" : ""}</p>
+        ${P.placeLabel(s.place) ? `<p class="scene-where">${esc(P.placeLabel(s.place))}</p>` : ""}
         ${s.notes ? rich(s.notes) : ""}
         ${s.elements.length ? `<ul class="scene-elements">${s.elements.map((e) => `<li${e.id === s.mainGoal ? ' class="main-goal"' : ""}>
             <strong>${esc(e.name)}</strong>${sourceName(e)}${e.id === s.mainGoal ? ' <span class="goal-badge">Main Goal</span>' : ""}
@@ -435,6 +437,26 @@
     if (rerender) renderBuilder();
   };
 
+  // Where the scene is set: District, Type of Place and Alternative (its type's), each a list from places.js (the
+  // options' values are their places in the lists), a Location typed in, and Randomize for the three lists.
+  function placeFields(place) {
+    const p = P.cleanPlace(place);
+    const select = (field, label, list, value, extra = "") => `<wa-select size="s" label="${label}" placeholder="None" with-clear
+        value="${list.indexOf(value) < 0 ? "" : list.indexOf(value)}" data-place-field="${field}"${extra}>
+        ${list.map((name, i) => `<wa-option value="${i}">${esc(name)}</wa-option>`).join("")}</wa-select>`;
+    const alternatives = P.alternatives(p.type);
+    return `<div class="scene-place">
+        ${select("district", "District", P.DISTRICTS, p.district)}
+        ${select("type", "Type of Place", P.TYPES.map((t) => t.name), p.type)}
+        ${select("alternative", "Alternative", alternatives, p.alternative, alternatives.length ? "" : " disabled")}
+        <wa-input size="s" label="Location" value="${esc(p.location)}" data-place-field="location" autocomplete="off"></wa-input>
+        <wa-button size="s" appearance="outlined" data-place-random><wa-icon slot="start" name="dice"></wa-icon>Randomize</wa-button>
+      </div>`;
+  }
+  // The list a place field picks from, to turn an option's value back into its name.
+  const placeList = (field, place) => (field === "district" ? P.DISTRICTS
+    : field === "type" ? P.TYPES.map((t) => t.name) : P.alternatives(P.cleanPlace(place).type));
+
   function builderRow(e, scene) {
     const goal = scene.mainGoal === e.id;
     const copyField = e.kind === "enemy"
@@ -467,6 +489,7 @@
           <h2>${sceneById(scene.id) ? "Edit scene" : "New scene"}</h2>
           <wa-input label="Name" value="${esc(scene.name)}" data-scene-field="name" autocomplete="off"></wa-input>
           <wa-radio-group label="Kind" orientation="horizontal" value="${scene.mode}" data-scene-field="mode" data-radios="mode"></wa-radio-group>
+          ${placeFields(scene.place)}
           <wa-textarea label="Notes" value="${esc(scene.notes)}" rows="3" resize="auto" data-scene-field="notes"></wa-textarea>
           <p class="scene-hint">Mark one element as the Main Goal; everything else is an obstacle. Obstacles can be objectives or
             enemies, as the rulebook suggests (an antagonist or a size 5 squad for one obstacle, a minor villain or a size 10 squad for two).</p>
@@ -507,6 +530,15 @@
   const onBuilderField = (e) => {
     const sceneField = e.target.closest("[data-scene-field]")?.dataset.sceneField;
     if (sceneField) { changeDraft({ ...draft(), [sceneField]: e.target.value }); return; }
+    const placeField = e.target.closest("[data-place-field]")?.dataset.placeField;
+    if (placeField === "location") { changeDraft({ ...draft(), place: P.changePlace(draft().place, { location: e.target.value }) }); return; }
+    if (placeField) {
+      // a list's pick draws the Builder again on change (a new type of place has its own alternatives)
+      if (e.type !== "change") return;
+      const name = e.target.value === "" || e.target.value == null ? "" : placeList(placeField, draft().place)[Number(e.target.value)] ?? "";
+      changeDraft({ ...draft(), place: P.changePlace(draft().place, { [placeField]: name }) }, true);
+      return;
+    }
     const elField = e.target.closest("[data-el-field]")?.dataset.elField;
     if (!elField) return;
     const id = e.target.closest("[data-el]").dataset.el;
@@ -520,6 +552,7 @@
   builder.addEventListener("click", (e) => {
     if (e.target.closest("#builder-save")) { if (saveDraft()) { renderAll(); show("scenes-list"); APP.toast("Scene saved.", "success"); } return; }
     if (e.target.closest("#builder-discard")) { setOpen(null); renderAll(); show("scenes-list"); return; }
+    if (e.target.closest("[data-place-random]")) { changeDraft({ ...draft(), place: P.randomPlace(draft().place) }, true); return; }
     const row = e.target.closest("[data-el]");
     if (row && e.target.closest("[data-el-goal]")) {
       const id = row.dataset.el;
@@ -628,6 +661,7 @@
     $("runner-head").innerHTML = `<section class="runner-head">
         <div><h2>${esc(state.name || "Untitled scene")}</h2>
           <p class="ability-tag">${modeName(state.mode)}${state.mode === "legwork" && conflict ? " · now a conflict" : ""}${linked ? "" : " · counting turns here (no overlay)"}</p>
+          ${P.placeLabel(state.place) ? `<p class="scene-where">${esc(P.placeLabel(state.place))}</p>` : ""}
           ${state.notes ? rich(state.notes) : ""}
           ${runConditions(state, "")}</div>
         ${conflict ? `<div class="initiative-cycle runner-initiative" data-phase="${phase}">

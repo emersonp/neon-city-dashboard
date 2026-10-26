@@ -8,6 +8,7 @@ require("../enemies.js");
 require("../hazards.js");
 require("../overlay-rules.js");
 require("../conditions.js");
+require("../places.js");
 require("../scene-rules.js");
 
 const S = globalThis.NCD_SCENES;
@@ -488,4 +489,15 @@ test("run: setting the round by hand starts no rounds, and the overlay echoing i
   assert.equal(run(state, ...step(4)).initiative.round, 6);
   assert.equal(track(run(state, ...step(4)), "cams").deteriorating, 1);
   assert.equal(run(state, { type: "setRound", round: "junk" }).initiative.round, 1);
+});
+
+test("scenes: a scene has a place, kept through cleaning and copied into a run", () => {
+  assert.deepEqual(S.newScene("n").place, { district: "", type: "", alternative: "", location: "" });
+  const place = { district: "D03 - Financial District", type: "Bars", alternative: "Speakeasy", location: "The Rusty Nail" };
+  const scene = { ...heist(), place };
+  assert.deepEqual(S.cleanScene(scene).place, place);
+  assert.deepEqual(S.cleanScene({ ...scene, place: { type: "Bars", alternative: "Fight club" } }).place,
+    { district: "", type: "Bars", alternative: "", location: "" });
+  assert.deepEqual(S.cleanScene({ ...scene, place: undefined }).place, S.newScene("n").place);
+  assert.deepEqual(started(scene).place, place);
 });
