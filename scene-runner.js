@@ -740,13 +740,19 @@
     const hiddenSwitch = $("runner-hidden");
     const hidden = hiddenSwitch.checked;
     hiddenSwitch.checked = false;
+    const damage = a.damage != null ? `${a.damage}${a.type ? ` ${a.type}` : ""} damage` : null;
     const what = a.hit == null ? `a plain roll (the text doesn't say a hit chance): ${a.text}`
-      : `${a.hit}%${a.damage != null ? `, ${a.damage}${a.type ? ` ${a.type}` : ""} damage on a hit` : ""}`;
+      : `${a.hit}%${damage ? `, ${damage} on a hit` : ""}`;
+    // An enemy's roll goes to Discord as the enemy, naming the attack; a hazard's as the Administrator, naming the hazard.
+    const e = run().elements.find((x) => x.id === id);
+    const as = e.kind === "enemy" ? { name: e.name, portrait: e.def.portrait && `enemies/${e.def.portrait}` } : null;
     $("runner-roll-label").textContent = `${a.label}: ${what}${hidden ? " · kept hidden" : ""}`;
     try {
       const pools = { advantage: $("runner-adv").value, challenge: $("runner-chal").value };
       $("runner-adv").value = $("runner-chal").value = "0";
-      await APP.playRoll(DICE.roll({ target: a.hit, ...pools }), { result: $("runner-result"), skill: a.label, hidden });
+      await APP.playRoll(DICE.roll({ target: a.hit, ...pools }), {
+        result: $("runner-result"), skill: as ? a.name : a.label, hidden, as, damage,
+      });
     } finally {
       rolling = false;
     }

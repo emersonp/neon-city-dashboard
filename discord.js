@@ -48,14 +48,16 @@
   // The three lines: small intro, big result (with the impact, on a success with one), and a subtle footer.
   // `luck` and `influence` are null for the GM (or with no character open), so the footer can end up empty.
   // `skill` is the skill's name, if any. A pushed roll (dice.js's push) says how much Luck it spent. With `initiative` (an Initiative skill), they're initiativeLines, and
-  // `handle` names the character going Fast or Slow.
-  function lines(r, { player, emoji, luck = null, influence = null, skill, initiative = false, handle } = {}) {
+  // `handle` names the character going Fast or Slow. `damage` is what an attack (the Scene Runner's) does on a hit
+  // ("45 physical damage"), shown after the total when it hits.
+  function lines(r, { player, emoji, luck = null, influence = null, skill, initiative = false, handle, damage } = {}) {
     if (initiative) return initiativeLines(r, { player, emoji, skill, handle });
     const verdict = { success: "Success!", failure: "Failure.", none: "" }[outcomeOf(r)];
     return {
       intro: `${player} rolled${skill ? ` *${skill}*` : ""}${r.target == null ? "" : ` against ${r.target}`}${
         r.pushed ? `, pushed ${r.pushed.luck} Luck,` : ""} and got a`,
-      result: [verdict, String(r.total)].filter(Boolean).join(" ") + (r.impact ? ` · Impact ${r.impact}` : "") + netSuffix(r, emoji),
+      result: [verdict, String(r.total)].filter(Boolean).join(" ") + (r.impact ? ` · Impact ${r.impact}` : "")
+        + (damage && r.success ? ` · ${damage}` : "") + netSuffix(r, emoji),
       detail: [luck != null && `Luck: ${luck}`, influence != null && `Influence: ${influence}`, rolledText(r, emoji)]
         .filter(Boolean).join(" · "),
     };
@@ -69,8 +71,8 @@
     allowed_mentions: NO_PINGS,
   });
 
-  function buildMessage(r, player, { emoji, username, avatarUrl, luck, influence, skill, initiative, handle } = {}) {
-    const l = lines(r, { player, emoji, luck, influence, skill, initiative, handle });
+  function buildMessage(r, player, { emoji, username, avatarUrl, luck, influence, skill, initiative, handle, damage } = {}) {
+    const l = lines(r, { player, emoji, luck, influence, skill, initiative, handle, damage });
     const accent = initiative && r.success != null ? TURN_COLORS[r.success ? "fast" : "slow"] : COLORS[outcomeOf(r)];
     return {
       ...from({ username, avatarUrl }),

@@ -232,11 +232,13 @@
   // haven't picked one. Discord fetches it itself, so it needs a public link: the site's own address on GitHub Pages
   // (https), or publicUrl in config.js. Locally, no avatar is sent.
   function avatarUrl(character) {
+    return portraitLink(SESSION.gm ? C.ADMIN_PORTRAIT
+      : character && (C.portraitFile(character, C.availablePortraits(window.NCD_PORTRAITS)) ?? C.DEFAULT_PORTRAIT));
+  }
+  // A file in portraits/ as a public link, or undefined locally (or with no file).
+  function portraitLink(file) {
     const base = window.NCD_CONFIG?.publicUrl || (location.protocol === "https:" ? location.href : "");
-    const file = SESSION.gm ? C.ADMIN_PORTRAIT
-      : character && (C.portraitFile(character, C.availablePortraits(window.NCD_PORTRAITS)) ?? C.DEFAULT_PORTRAIT);
-    if (!file || !base) return undefined;
-    return new URL(C.PORTRAIT_DIR + file, base).href;
+    return file && base ? new URL(C.PORTRAIT_DIR + file, base).href : undefined;
   }
 
   // Who a message is from: the character open in the Character tab (its handle and portrait), "Administrator"
@@ -264,10 +266,12 @@
   }
 
   // initiative is { handle } for an Initiative roll (the character going Fast or Slow), or null.
-  function postRoll(r, skill, initiative = null) {
-    const { character, username, avatarUrl } = sender();
-    return post(buildMessage(r, playerName(), {
-      skill, emoji, username, avatarUrl, initiative: Boolean(initiative), handle: initiative?.handle,
+  // `as` is { name, portrait (a file in portraits/, or none) } for a roll made as someone else (an enemy in the Scene
+  // Runner): the message is from them, under their name and face. `damage` is what the attack does on a hit.
+  function postRoll(r, skill, initiative = null, { as = null, damage = null } = {}) {
+    const { character, ...from } = as ? { character: null, username: as.name, avatarUrl: portraitLink(as.portrait) } : sender();
+    return post(buildMessage(r, as ? as.name : playerName(), {
+      skill, emoji, ...from, damage, initiative: Boolean(initiative), handle: initiative?.handle,
       luck: character ? C.luck(character).current : null,
       influence: character ? C.influence(character).current : null,
     }), "Rolled");
@@ -296,8 +300,8 @@
   // posted to Discord. `hidden` keeps it to `result` alone (the Scene Runner's keep-hidden rolls). `scroll` brings the
   // result into view where it's off screen (on phones it stacks below the roll button). `onRoll` runs once the result
   // shows; `skill` names the skill for the message, if any; `initiative` is { handle } for an Initiative roll (so the
-  // message says Fast or Slow), else null.
-  async function playRoll(r, { result, scroll = false, onRoll = () => {}, skill, initiative = null, hidden = false }) {
+  // message says Fast or Slow), else null. `as` and `damage` are postRoll's.
+  async function playRoll(r, { result, scroll = false, onRoll = () => {}, skill, initiative = null, hidden = false, as = null, damage = null }) {
     const reveal = () => { if (scroll) result.scrollIntoView({ block: "nearest" }); };
     if (!hidden) window.NCD_ADMIN.send("roll", r);
     result.hidden = false;
@@ -307,7 +311,7 @@
     showResult(r, true, result);
     reveal();
     onRoll(r);
-    if (!hidden) await postRoll(r, skill, initiative);
+    if (!hidden) await postRoll(r, skill, initiative, { as, damage });
   }
 
   // A roll button's whole job: roll, reset the pools, then play it (playRoll). One roll at a time.

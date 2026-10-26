@@ -163,3 +163,12 @@ test("a pushed roll says how much Luck it spent", () => {
   const r = { ...roll({ target: 30 }, () => 4), success: true, pushed: { luck: 20, dice: 2, adv: 0 } };
   assert.equal(lines(r, { player: "Parker", skill: "Hack" }).intro, "Parker rolled *Hack* against 30, pushed 20 Luck, and got a");
 });
+
+test("an attack's damage shows on the main line on a hit, and not on a miss", () => {
+  const hit = roll({ target: 75 }, seq(3, 2));
+  assert.equal(lines(hit, { player: "Vex", skill: "Shock Knuckles", damage: "45 physical damage" }).result, "Success! 32 · 45 physical damage");
+  assert.equal(lines(roll({ target: 20 }, seq(3, 2)), { player: "Vex", damage: "45 physical damage" }).result, "Failure. 32");
+  assert.equal(lines(hit, { player: "Vex" }).result, "Success! 32");
+  const message = buildMessage(hit, "Vex", { damage: "10 damage" });
+  assert.match(message.components[0].components[0].content, /## Success! 32 · 10 damage$/);
+});
