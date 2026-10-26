@@ -397,8 +397,9 @@
   });
 
   // ================= Adding copies (the Builder, and the Runner mid-run) =================
-  // A kind and an item from the lists (rulebook and custom), and Add. extra is more HTML before the button.
-  const pickerItems = (kind) => lib[LISTS[kind]].map((i) => `<wa-option value="${esc(i.id)}">${esc(i.name)}${
+  // A kind and an item from the lists (rulebook and custom; the enemies by name), and Add. extra is more HTML before the button.
+  const pickerList = (kind) => kind === "enemy" ? [...lib.enemies].sort((a, b) => a.name.localeCompare(b.name)) : lib[LISTS[kind]];
+  const pickerItems = (kind) => pickerList(kind).map((i) => `<wa-option value="${esc(i.id)}">${esc(i.name)}${
     i.source === "custom" ? " (custom)" : kind === "enemy" ? ` · ${esc(i.type)}` : kind === "objective" ? ` · ${i.difficulty}` : ""}</wa-option>`).join("");
   const addPicker = (where, extra = "") => `<div class="add-picker" data-add-picker="${where}">
       <wa-radio-group label="Add" orientation="horizontal" value="enemy" data-add-kind></wa-radio-group>

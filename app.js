@@ -511,7 +511,8 @@
     ].join("");
 
     // The Enemies subtab (enemies.js): every enemy's stat block, with its face from the book's art where it has one, and
-    // the Administrator's own enemies (scene-runner.js) on the same card. Sorted by name. The Type filter hides every card
+    // the Administrator's own enemies (scene-runner.js) on the same card. Order puts them in the book's order (the custom
+    // ones after) or sorted by name. The Type filter hides every card
     // but that type's (or but the custom ones); the checkboxes hide the Network threats and the Dramatic Enemies.
     const ENEMIES = window.NCD_ENEMIES;
     const abilities = (list) => rich(list.map(([name, text]) => `**${name}:** ${text}`).join("\n\n"));
@@ -552,10 +553,17 @@
     const byName = (a, b) => a.name.localeCompare(b.name);
     // custom is { enemies, hazards }: the Administrator's own, each with source "custom" (scene-runner.js calls this
     // again whenever they change).
-    showCustomLists = (custom = { enemies: [], hazards: [] }) => {
-      $("tables-enemies").innerHTML = [...ENEMIES.enemies, ...custom.enemies].sort(byName).map(enemyCard).join("");
-      $("tables-hazards").innerHTML = [...HAZARDS.hazards, ...custom.hazards].sort(byName).map(hazardCard).join("");
+    let customEnemies = [];
+    const showEnemies = () => {
+      const all = [...ENEMIES.enemies, ...customEnemies];
+      $("tables-enemies").innerHTML = ($("enemy-order").value === "name" ? all.sort(byName) : all).map(enemyCard).join("");
       filterEnemies();
+    };
+    $("enemy-order").addEventListener("change", showEnemies);
+    showCustomLists = (custom = { enemies: [], hazards: [] }) => {
+      customEnemies = custom.enemies;
+      showEnemies();
+      $("tables-hazards").innerHTML = [...HAZARDS.hazards, ...custom.hazards].sort(byName).map(hazardCard).join("");
     };
     showCustomLists();
 
