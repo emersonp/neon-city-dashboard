@@ -287,6 +287,7 @@
           <wa-tab panel="tables-complications">Complications</wa-tab>
           <wa-tab panel="tables-scenes">Scenes</wa-tab>
           <wa-tab panel="tables-enemies">Enemies</wa-tab>
+          <wa-tab panel="tables-hazards">Hazards</wa-tab>
           <wa-tab panel="tables-headlines">Headlines</wa-tab>
           <wa-tab-panel name="tables-general"><div class="cheat-sheet databank" id="tables-general"></div></wa-tab-panel>
           <wa-tab-panel name="tables-objectives"><div class="cheat-sheet databank" id="tables-objectives"></div></wa-tab-panel>
@@ -303,6 +304,8 @@
             </div>
             <div class="cheat-sheet databank" id="tables-enemies"></div>
           </wa-tab-panel>
+          <!-- the rulebook's hazards (hazards.js) and the Administrator's own (scene-runner.js) -->
+          <wa-tab-panel name="tables-hazards"><div class="cheat-sheet databank" id="tables-hazards"></div></wa-tab-panel>
           <wa-tab-panel name="tables-headlines">
             <!-- the headline news tables (tables.js); Generate news rolls them all, in order, into the first card -->
             <div class="enemy-filters">
@@ -939,6 +942,7 @@
   <script src="databank.js"></script>
   <script src="tables.js"></script>
   <script src="enemies.js"></script>
+  <script src="hazards.js"></script>
   <script src="gear.js"></script>
   <script src="advancement.js"></script>
   <script src="profiles.js"></script>

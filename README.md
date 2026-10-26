@@ -103,7 +103,7 @@ jump about and whatever goes under it stays put.
 ## Tests
 
 ```
-node --test tests/dice.test.cjs tests/discord.test.cjs tests/characters.test.cjs tests/format.test.cjs tests/abilities.test.cjs tests/rules.test.cjs tests/databank.test.cjs tests/tables.test.cjs tests/enemies.test.cjs tests/gear.test.cjs tests/overlay-rules.test.cjs tests/advancement.test.cjs tests/profiles.test.cjs
+node --test tests/dice.test.cjs tests/discord.test.cjs tests/characters.test.cjs tests/format.test.cjs tests/abilities.test.cjs tests/rules.test.cjs tests/databank.test.cjs tests/tables.test.cjs tests/enemies.test.cjs tests/hazards.test.cjs tests/gear.test.cjs tests/overlay-rules.test.cjs tests/advancement.test.cjs tests/profiles.test.cjs
 ```
 
 ## What's here
@@ -127,6 +127,7 @@ node --test tests/dice.test.cjs tests/discord.test.cjs tests/characters.test.cjs
 | `databank.js` | The Databank tab's text from the rulebook's Equipment chapter: gear, tool sets, weapons, armor, vehicles, gear and weapon keywords with their restrictions (testable in Node) |
 | `tables.js` | The GM Screen tab's tables: random gear keywords, liabilities, and distinctive visual traits (General); sample objectives (Objectives); obstacles (Obstacles); the complications (Complications); security system tiers with each defense's description, and the heat alarms add (Scenes); the headline news tables, and rolling them all into a news story (Headlines) (testable in Node) |
 | `enemies.js` | The GM Screen tab's Enemies: every enemy's stat block from the Enemies chapter, with its bust in `portraits/enemies/` (testable in Node) |
+| `hazards.js` | The GM Screen tab's Hazards: the Playtest Packet's example hazards and the hazards in its jobs, each with its difficulty, hit chance and damage (testable in Node) |
 | `gear.js` | Gear rules from `databank.js`: built-in keywords, which keywords an item can take, damage and impact, labels, rules text, and Create's starting gear (testable in Node) |
 | `gear-ui.js` | Gear on the page: item rows, keyword chips, rules text, and the keyword picker the gear dialog and Create share |
 | `format.js` | Turns ability descriptions into HTML: paragraphs, bold, italic, lists, icon tokens (testable in Node) |
@@ -178,7 +179,12 @@ checkboxes hide the Network's threats and the enemies with the Dramatic Enemy pe
 outside the Network has its bust from the book's art, 256 pixels square, in `portraits/enemies/` (the Network's
 threats have no art), ready to be a Discord avatar like a character's portrait. `tests/enemies.test.cjs` checks them.
 
-A seventh subtab, **Headlines**, has the rulebook's six headline news tables from `tables.js`, each with its dice button.
+A seventh subtab, **Hazards**, comes from `hazards.js`: the Playtest Packet's example hazards (falling concrete, intense
+heat, strong winds, narcotic smoke) and the hazards inside its jobs, each with its page, difficulty, hit chance and damage.
+Unless the book says otherwise, a hazard has difficulty 50, hits 50% of the time, and deals 10 × the round's number.
+`tests/hazards.test.cjs` checks them.
+
+An eighth subtab, **Headlines**, has the rulebook's six headline news tables from `tables.js`, each with its dice button.
 **Generate news** rolls all six in order into a card above them, rolling again on Table X-1 where a row says to (the
 victim, or the third party a motive sabotages). The subject, event, and victim read as one sentence ("C04: The Digital
 Security Firm publicly denounced C15: The Software Firm."), and the other three show each roll beside its result. The
