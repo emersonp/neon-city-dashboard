@@ -104,7 +104,7 @@ jump about and whatever goes under it stays put.
 ## Tests
 
 ```
-node --test tests/dice.test.cjs tests/discord.test.cjs tests/characters.test.cjs tests/format.test.cjs tests/abilities.test.cjs tests/rules.test.cjs tests/databank.test.cjs tests/tables.test.cjs tests/enemies.test.cjs tests/hazards.test.cjs tests/gear.test.cjs tests/overlay-rules.test.cjs tests/advancement.test.cjs tests/profiles.test.cjs tests/scene-rules.test.cjs
+node --test tests/dice.test.cjs tests/discord.test.cjs tests/characters.test.cjs tests/format.test.cjs tests/abilities.test.cjs tests/rules.test.cjs tests/databank.test.cjs tests/tables.test.cjs tests/enemies.test.cjs tests/hazards.test.cjs tests/gear.test.cjs tests/overlay-rules.test.cjs tests/advancement.test.cjs tests/profiles.test.cjs tests/scene-rules.test.cjs tests/sheet-pdf.test.cjs
 ```
 
 ## What's here
@@ -135,7 +135,9 @@ node --test tests/dice.test.cjs tests/discord.test.cjs tests/characters.test.cjs
 | `gear.js` | Gear rules from `databank.js`: built-in keywords, which keywords an item can take, damage and impact, labels, rules text, and Create's starting gear (testable in Node) |
 | `gear-ui.js` | Gear on the page: item rows, keyword chips, rules text, and the keyword picker the gear dialog and Create share |
 | `format.js` | Turns ability descriptions into HTML: paragraphs, bold, italic, lists, icon tokens (testable in Node) |
-| `docs/character-sheet.md` | Markdown version of the paper character sheet |
+| `sheet-pdf.js` | The character sheet PDF's layout: both pages as drawing ops, with the skills block where the official sheet has it so Quick Shell and Quick Avatar overlays line up (testable in Node) |
+| `sheet-pdf-ui.js` | Draws that layout with pdf-lib (fetched from cdnjs the first time) and saves `<handle>.pdf`; the Character tab's **PDF** button |
+| `docs/character-sheet.md` | Markdown version of the paper character sheet (the two-page one with overlay sheets) |
 | `discord.js` | Builds the Discord message and posts it to the webhook |
 | `emoji/` | Boon and Drawback PNGs to upload as Discord server emoji |
 | `icons.js`, `icons/` | Game icons (advantage die, challenge die, boon, drawback, heat, influence) |

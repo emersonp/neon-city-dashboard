@@ -487,6 +487,11 @@
                 <wa-icon slot="start" name="play"></wa-icon>
                 <span data-run-label>Run</span>
               </wa-button>
+              <!-- the two-page character sheet, laid out to take the official overlay sheets (sheet-pdf.js) -->
+              <wa-button data-sheet-action="pdf" appearance="outlined">
+                <wa-icon slot="start" name="file-pdf"></wa-icon>
+                PDF
+              </wa-button>
               <!-- bottom only: copyActions leaves data-bottom-only buttons out of the top bar -->
               <wa-button data-sheet-action="close" appearance="outlined" data-bottom-only>
                 <wa-icon slot="start" name="xmark"></wa-icon>
@@ -1055,6 +1060,8 @@
   <script src="admin-initiative.js"></script>
   <script src="app.js"></script>
   <script src="gear-ui.js"></script>
+  <script src="sheet-pdf.js"></script>
+  <script src="sheet-pdf-ui.js"></script>
   <script src="create.js"></script>
   <script src="conditions-ui.js"></script>
   <script src="roster.js"></script>

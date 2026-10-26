@@ -445,9 +445,16 @@
     state = "running";
     render();
   }
+  // PDF: the character sheet, saved as "<handle>.pdf" (sheet-pdf-ui.js fetches pdf-lib the first time).
+  function downloadPdf() {
+    window.NCD_SHEET_PDF_UI.download(current).catch((err) => {
+      console.error(err);
+      APP.toast(`Couldn't make the PDF. ${err.message}`, "danger");
+    });
+  }
   const SHEET_ACTIONS = { edit: enter("editing"), run, stop: toDisplay, "discard-edit": toDisplay,
     close: closeCharacter, "end-session": endSession, "finish-job": enter("finishing"),
-    "confirm-finish": confirmFinish, "spend-done": openSpendConfirm };
+    "confirm-finish": confirmFinish, "spend-done": openSpendConfirm, pdf: downloadPdf };
   $("character-card").addEventListener("click", (e) => SHEET_ACTIONS[e.target.closest("[data-sheet-action]")?.dataset.sheetAction]?.());
   function copyActions() {
     const topActions = $("character-actions-top");
