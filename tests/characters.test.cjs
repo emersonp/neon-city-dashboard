@@ -156,14 +156,22 @@ test("export is pretty JSON with a filename from the handle", () => {
 
 // ---- skills ----
 
-test("31 skills from the sheet: 20 mental, 11 physical, unique ids", () => {
-  assert.equal(C.SKILLS.length, 33);
+test("32 skills from the sheet: 20 mental, 12 physical, unique ids", () => {
+  assert.equal(C.SKILLS.length, 34);
   assert.equal(C.SKILLS.filter((s) => s.type === "mental").length, 20);
-  assert.equal(C.SKILLS.filter((s) => s.type === "physical").length, 11);
+  assert.equal(C.SKILLS.filter((s) => s.type === "physical").length, 12);
   assert.equal(C.SKILLS.filter((s) => s.type === "initiative").length, 2);
-  assert.equal(new Set(C.SKILLS.map((s) => s.id)).size, 33);
+  assert.equal(new Set(C.SKILLS.map((s) => s.id)).size, 34);
   assert.equal(C.SKILLS[0].name, "Analyze Data");
   assert.equal(C.SKILLS.find((s) => s.name === "Tough It Out").type, "physical");
+});
+
+test("Gossip with AI is mental, after Goad Someone; Heal Someone is physical, after Drive or Pilot Something", () => {
+  const ids = C.SKILLS.map((s) => s.id);
+  assert.equal(C.SKILLS.find((s) => s.id === "gossip-with-ai").type, "mental");
+  assert.equal(ids.indexOf("gossip-with-ai"), ids.indexOf("goad-someone") + 1);
+  assert.equal(C.SKILLS.find((s) => s.id === "heal-someone").type, "physical");
+  assert.equal(ids.indexOf("heal-someone"), ids.indexOf("drive-or-pilot-something") + 1);
 });
 
 test("a skill with no entry is null with no dice, and shows as 50", () => {
@@ -322,8 +330,9 @@ test("portrait labels come from the file name", () => {
 // ---- knows something about ----
 
 test("known topics come back in sheet order, ignoring unknown ones", () => {
-  assert.equal(C.KNOWLEDGE.length, 16);
-  assert.deepEqual(C.knows({ knows: ["Weapons", "Citizens", "Cooking"] }), ["Citizens", "Weapons"]);
+  assert.equal(C.KNOWLEDGE.length, 17);
+  assert.equal(C.KNOWLEDGE[0], "AI");
+  assert.deepEqual(C.knows({ knows: ["Weapons", "Citizens", "Cooking", "AI"] }), ["AI", "Citizens", "Weapons"]);
   assert.deepEqual(C.knows({}), []);
   assert.deepEqual(C.newCharacter().knows, []);
 });

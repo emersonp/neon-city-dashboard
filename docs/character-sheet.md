@@ -1,9 +1,13 @@
 # Neon City Outlaws: Character Sheet
 
-A structural transcription of the one-page character sheet (`Character Sheet.pdf`), for reference
-while building the dashboard. Layout and art are omitted. Blank fields are shown as `____`.
+A structural transcription of the two-page landscape character sheet, from the filled-in examples in
+`Character_and_Shell_Sheets.pdf`, for reference while building the dashboard. It replaces the older one-page
+`Character Sheet.pdf`: that sheet had no Gossip with AI, put Heal Someone in the first block, had no AI to know
+about, and called Body Perks "Body Augmentations". Layout and art are omitted. Blank fields are shown as `____`.
 
-## Identity
+## Front
+
+### Identity
 
 | Field | Value |
 | --- | --- |
@@ -15,17 +19,18 @@ while building the dashboard. Layout and art are omitted. Blank fields are shown
 | Current Luck | ____ |
 | Maximum Luck | ____ |
 
-## Initiative
+### Initiative
 
 | | % |
 | --- | --- |
 | Initiative in the World | ____ % |
 | Initiative in the Network | ____ % |
 
-## Things You Know About
+### Things You Know About
 
 Checkboxes, mark any that apply:
 
+- [ ] AI
 - [ ] Citizens
 - [ ] Computers
 - [ ] Corporations
@@ -43,7 +48,7 @@ Checkboxes, mark any that apply:
 - [ ] Vehicles
 - [ ] Weapons
 
-## Skills
+### Skills
 
 Every skill row has the same parts:
 
@@ -54,7 +59,7 @@ Every skill row has the same parts:
 The sheet prints the skills in two blocks: the first block is left-aligned, the second right-aligned.
 The sheet doesn't label either block.
 
-### First block
+#### First block
 
 | ☐ | Skill | % |
 | --- | --- | --- |
@@ -66,10 +71,10 @@ The sheet doesn't label either block.
 | ☐ | Distract Someone | ____ |
 | ☐ | Fix or Modify Something | ____ |
 | ☐ | Goad Someone | ____ |
+| ☐ | Gossip with AI | ____ |
 | ☐ | Gossip with Citizens | ____ |
 | ☐ | Gossip with Corporates | ____ |
 | ☐ | Gossip with Criminals | ____ |
-| ☐ | Heal Someone | ____ |
 | ☐ | Infiltrate a System | ____ |
 | ☐ | Intimidate Someone | ____ |
 | ☐ | Lie to Someone | ____ |
@@ -79,7 +84,7 @@ The sheet doesn't label either block.
 | ☐ | Size Someone Up | ____ |
 | ☐ | Throw Money at the Problem | ____ |
 
-### Second block
+#### Second block
 
 | ☐ | Skill | % |
 | --- | --- | --- |
@@ -87,6 +92,7 @@ The sheet doesn't label either block.
 | ☐ | Climb, Jump, or Tumble | ____ |
 | ☐ | Conceal an Object | ____ |
 | ☐ | Drive or Pilot Something | ____ |
+| ☐ | Heal Someone | ____ |
 | ☐ | Lift or Move Something | ____ |
 | ☐ | Run Like Hell | ____ |
 | ☐ | Shoot Someone | ____ |
@@ -95,7 +101,7 @@ The sheet doesn't label either block.
 | ☐ | Throw Something | ____ |
 | ☐ | Tough It Out | ____ |
 
-### Anything Else
+#### Anything Else
 
 | Skill | % |
 | --- | --- |
@@ -103,19 +109,19 @@ The sheet doesn't label either block.
 
 This is the only pre-filled value on the sheet. It has no checkbox and no tracker icons.
 
-## Character Perks
+### Character Perks
 
 Free-form text box.
 
-## Appearance
+### Appearance
 
 Free-form text box.
 
-## Body Augmentations
+### Body Perks
 
 Free-form text box.
 
-## Weapons
+### Weapons
 
 Two weapon slots, each with:
 
@@ -125,8 +131,26 @@ Two weapon slots, each with:
 | Damage | ____ |
 | ▶ Keywords | ____ (text box) |
 
-## Wounds
+### Wounds
 
 - Four wound boxes (drawn as corner-bracket squares, unlabeled)
 - [ ] Unconscious
 - [ ] Dead
+
+## Back
+
+### Liability
+
+Free-form text box.
+
+### Additional Traits
+
+Free-form text box.
+
+### Other Notes
+
+Free-form text box.
+
+### Gear
+
+Two columns, each headed **Starting**, of ten lines. Each line has a checkbox and a blank (`☐ ____`).

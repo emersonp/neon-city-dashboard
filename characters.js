@@ -8,12 +8,12 @@
   // ---- skills (from the character sheet: mental, physical, and the two initiatives) ----
   const slug = (name) => name.toLowerCase().replace(/[^a-z]+/g, "-").replace(/^-|-$/g, "");
   const MENTAL = ["Analyze Data", "Case the Joint", "Convince Someone", "Cover Your Tracks", "Crash a System",
-    "Distract Someone", "Fix or Modify Something", "Goad Someone", "Gossip with Citizens", "Gossip with Corporates",
-    "Gossip with Criminals", "Heal Someone", "Infiltrate a System", "Intimidate Someone", "Lie to Someone",
+    "Distract Someone", "Fix or Modify Something", "Goad Someone", "Gossip with AI", "Gossip with Citizens",
+    "Gossip with Corporates", "Gossip with Criminals", "Infiltrate a System", "Intimidate Someone", "Lie to Someone",
     "Override a System", "Play a Game", "Read the Situation", "Size Someone Up", "Throw Money at the Problem"];
   const PHYSICAL = ["Break or Destroy Something", "Climb, Jump, or Tumble", "Conceal an Object", "Drive or Pilot Something",
-    "Lift or Move Something", "Run Like Hell", "Shoot Someone", "Slash, Stab, or Strike Someone", "Sneak Around",
-    "Throw Something", "Tough It Out"];
+    "Heal Someone", "Lift or Move Something", "Run Like Hell", "Shoot Someone", "Slash, Stab, or Strike Someone",
+    "Sneak Around", "Throw Something", "Tough It Out"];
   const INITIATIVE = ["Initiative in the World", "Initiative in the Network"];
   const SKILLS = [
     ...MENTAL.map((name) => ({ id: slug(name), name, type: "mental" })),
@@ -122,8 +122,8 @@
   const withStory = (character, text) => ({ ...character, story: String(text ?? "").trim() });
 
   // ---- things the character knows something about (checkboxes on the sheet) ----
-  const KNOWLEDGE = ["Citizens", "Computers", "Corporations", "Criminals", "Cybernetics", "Executives", "Genetics", "Government",
-    "Medicine", "Military", "Network", "Psionics", "Robotics", "Security", "Vehicles", "Weapons"];
+  const KNOWLEDGE = ["AI", "Citizens", "Computers", "Corporations", "Criminals", "Cybernetics", "Executives", "Genetics",
+    "Government", "Medicine", "Military", "Network", "Psionics", "Robotics", "Security", "Vehicles", "Weapons"];
   // The checked ones, in sheet order; anything not on the list is dropped.
   const knows = (character) => KNOWLEDGE.filter((k) => Array.isArray(character?.knows) && character.knows.includes(k));
 
