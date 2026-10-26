@@ -432,3 +432,24 @@ test("run: the overlay reporting the initiative it already has changes nothing",
   const state = run(started(), ...round(), ...round());
   assert.equal(run(state, { type: "initiative", initiative: { ...state.initiative } }), state);
 });
+
+test("run: stepping back into the last round and on again doesn't start the round a second time", () => {
+  const timed = S.changeElement(heist(), "lock", { timing: "timed" });
+  let state = run(started(timed), ...round());
+  assert.deepEqual([track(state, "lock").deteriorating, track(state, "cams").deteriorating], [1, 1]);
+  state = run(state, ...step(-1), ...step(1), ...step(-1), ...step(1));
+  assert.deepEqual([track(state, "lock").deteriorating, track(state, "cams").deteriorating], [1, 1]);
+  assert.equal(state.initiative.round, 2);
+  // the overlay going back a round and on again is the same
+  state = run(state, { type: "initiative", initiative: { conflict: true, phase: "slow", round: 1 } },
+    { type: "initiative", initiative: { conflict: true, phase: "hazard", round: 2 } });
+  assert.equal(track(state, "lock").deteriorating, 1);
+  // and a round it hasn't reached yet still starts as usual
+  assert.equal(run(state, ...round()).track.lock.deteriorating, 2);
+});
+
+test("run: a villain at 0 luck fights on with wounds, so it's out of the way only when Defeated or dealt with by hand", () => {
+  const state = run(started(), { type: "luck", id: "exec", delta: -275 });
+  assert.equal(S.dealtWith(state, "exec"), false);
+  assert.equal(S.done(run(state, { type: "defeated", id: "exec" }), "exec"), true);
+});

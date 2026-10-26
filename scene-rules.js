@@ -193,6 +193,8 @@
   // notices }. An element's tracking is { luck (null without), size (a squad's, else null), wounds, defeated, progress,
   // dealt (marked Dealt with by hand), deteriorating (0 to 4), irreparable, progressed (this round) }.
   // notices are what the last round's start did to objectives: [{ id, deteriorating }] or [{ id, irreparable: true }].
+  // roundsStarted is the furthest round the run has reached, so stepping back into a round and on again doesn't start
+  // the next one a second time.
   const OVERLAY = () => root.NCD_OVERLAY;
   const MAX_DETERIORATING = 4;
 
@@ -234,8 +236,8 @@
     const { conflict, phase, round } = state.initiative;
     if (next.conflict === conflict && next.phase === phase && next.round === round) return state;
     let out = { ...state, initiative: next, notices: [] };
-    for (let r = state.initiative.round; r < next.round; r++) out = { ...newRound(out), initiative: next };
-    return out;
+    for (let r = state.roundsStarted; r < next.round; r++) out = { ...newRound(out), initiative: next };
+    return { ...out, roundsStarted: Math.max(state.roundsStarted, next.round) };
   }
 
   const ACTIONS = {
@@ -244,7 +246,7 @@
       return {
         sceneId: scene.id, name: scene.name, mode: scene.mode, notes: scene.notes, mainGoal: scene.mainGoal, elements,
         track: Object.fromEntries(elements.map((e) => [e.id, newTrack(e)])),
-        initiative: startInitiative(scene.mode === "conflict"), notices: [],
+        initiative: startInitiative(scene.mode === "conflict"), roundsStarted: 1, notices: [],
       };
     },
     luck: (state, { id, delta }) => retrack(state, id, (t, e) => (t.luck == null ? {} : { luck: clamp(t.luck + delta, 0, e.def.luck) })),
@@ -260,7 +262,7 @@
     // ...or what the overlay says it is, when it does.
     initiative: (state, { initiative }) => toInitiative(state, initiative),
     // A Legwork scene escalating: initiative on, at Hazard, round 1.
-    conflict: (state) => ({ ...state, initiative: startInitiative(true), notices: [] }),
+    conflict: (state) => ({ ...state, initiative: startInitiative(true), roundsStarted: 1, notices: [] }),
     // A copy added to this run only (an id already in it changes nothing).
     add: (state, { element: e }) => (element(state, e.id) ? state
       : { ...state, elements: [...state.elements, structuredClone(e)], track: { ...state.track, [e.id]: newTrack(e) } }),
@@ -275,11 +277,12 @@
   }
 
   // ---- what the run state says ----
-  // Whether an element is dealt with: marked by hand, or its progress full, or its luck or squad size down to 0.
+  // Whether an element is dealt with: marked by hand, or its progress full, or its luck (unless it's a villain, who
+  // fights on taking wounds until marked Defeated) or squad size down to 0.
   function dealtWith(state, id) {
     const e = element(state, id), t = state.track[id];
     if (!e) return false;
-    return t.dealt || (e.kind === "enemy" ? t.luck === 0 || t.size === 0 : t.progress >= e.difficulty);
+    return t.dealt || (e.kind === "enemy" ? (t.luck === 0 && !isVillain(e.def)) || t.size === 0 : t.progress >= e.difficulty);
   }
   // Out of the way: dealt with, or a villain defeated.
   const done = (state, id) => dealtWith(state, id) || Boolean(state.track[id]?.defeated);
@@ -329,10 +332,11 @@
     const ids = new Set(elements.map((e) => e.id));
     const notices = (Array.isArray(raw.notices) ? raw.notices : []).filter((n) => ids.has(n?.id))
       .map((n) => (n.irreparable === true ? { id: n.id, irreparable: true } : { id: n.id, deteriorating: count(n.deteriorating, MAX_DETERIORATING) }));
+    const initiative = OVERLAY().cleanInitiative(raw.initiative);
     return {
       sceneId: str(raw.sceneId), name: str(raw.name), mode: MODES.includes(raw.mode) ? raw.mode : "legwork", notes: str(raw.notes),
       mainGoal: ids.has(raw.mainGoal) ? raw.mainGoal : null, elements, track,
-      initiative: OVERLAY().cleanInitiative(raw.initiative), notices,
+      initiative, roundsStarted: Math.max(initiative.round, whole(raw.roundsStarted, 1, 99999, 1)), notices,
     };
   }
 

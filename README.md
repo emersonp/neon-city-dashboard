@@ -213,7 +213,8 @@ Its page code is `scene-runner.js`; the rules are in `scene-rules.js`, and `test
 - **Runner** (only while running): one click rolls any attack, its hit chance read from the attack's text ("75%; 45
   physical damage"), a squad's damage from its size now, a hazard's from 10 × the round. The roll goes where Dashboard rolls
   go, labelled "Vex — Shock Pistol", unless **Keep the next roll hidden** is on. Each element tracks luck, squad size,
-  wounds and Defeated (villains), progress, Dealt with (automatic at full progress, 0 luck or squad size 0), and
+  wounds and Defeated (villains), progress, Dealt with (automatic at full progress, squad size 0, or 0 luck for anyone but a
+  villain, who fights on with wounds until marked Defeated), and
   Deteriorating: at the start of each round an Urgent objective not progressed in the round before, and every Timed one,
   gains or worsens it, and past ×4 becomes Irreparable (no more progress; add heat). The Main Goal shows how many
   obstacles are left. The turn arrows step the overlay's initiative like the Initiative card, so the two stay in step;
