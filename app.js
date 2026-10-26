@@ -74,6 +74,10 @@
   });
   webhookInput.addEventListener("input", () => { store.set("webhook", text(webhookInput.value)); checkWebhook(); });
   discordSwitch.addEventListener("change", () => { store.set("discord", discordSwitch.checked ? "1" : "0"); checkWebhook(); });
+  // The PDF character sheet's style (sheet-pdf-ui.js reads it when it makes one).
+  const punkSwitch = $("sheet-punk");
+  if (store.get("sheetPunk") === "1") punkSwitch.setAttribute("checked", "");
+  punkSwitch.addEventListener("change", () => store.set("sheetPunk", punkSwitch.checked ? "1" : null));
   checkWebhook();
 
   // ---- tabs ----

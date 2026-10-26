@@ -136,7 +136,8 @@ node --test tests/dice.test.cjs tests/discord.test.cjs tests/characters.test.cjs
 | `gear-ui.js` | Gear on the page: item rows, keyword chips, rules text, and the keyword picker the gear dialog and Create share |
 | `format.js` | Turns ability descriptions into HTML: paragraphs, bold, italic, lists, icon tokens (testable in Node) |
 | `sheet-pdf.js` | The character sheet PDF's layout: both pages as drawing ops, with the skills block where the official sheet has it so Quick Shell and Quick Avatar overlays line up (testable in Node) |
-| `sheet-pdf-ui.js` | Draws that layout with pdf-lib (fetched from cdnjs the first time) and saves `<handle>.pdf`; the Character tab's **PDF** button |
+| `sheet-pdf-ui.js` | Draws that layout with pdf-lib and its font add-on (fetched from a CDN the first time) and saves `<handle>.pdf`; the Character tab's **PDF** button. Settings' **Character sheet is PUNK** adds the official sheet's heavy grey background art |
+| `fonts/` | The PDF's fonts, Chakra Petch and Barlow Semi Condensed, with their SIL Open Font License files |
 | `docs/character-sheet.md` | Markdown version of the paper character sheet (the two-page one with overlay sheets) |
 | `discord.js` | Builds the Discord message and posts it to the webhook |
 | `emoji/` | Boon and Drawback PNGs to upload as Discord server emoji |

@@ -83,7 +83,7 @@ test("Influence prints as current / starting; Luck, XP, archetype and origin pri
   const c = { ...base(), startingInfluence: 3, currentInfluence: 1, maxLuck: 100, currentLuck: 40, xpAvailable: 4, xpSpent: 6 };
   const text = allText(layout(c).pages);
   for (const s of ["1 / 3", "40", "100", "Bruiser", "Synthetic"]) assert.ok(text.includes(s), s);
-  assert.ok(/\b4\b/.test(text) && text.includes("6 spent"));
+  assert.ok(/\b4\b/.test(text) && text.includes("6 SPENT"));
 });
 
 test("wounds fill that many of the four boxes", () => {
@@ -150,6 +150,15 @@ test("descriptions: [advantage] and friends become icons; bold markers are dropp
   const words = lines.flatMap((l) => l.words);
   assert.ok(words.some((w) => w.icon === "advantage-die"));
   assert.ok(!words.some((w) => String(w.text ?? "").includes("*")));
+});
+
+test("punk adds the grey background art and moves nothing: the skills block is the same", () => {
+  const c = C.withSkill(base(), "shoot-someone", { value: 65, adv: 1 });
+  const plain = layout(c).pages[0], punk = P.layout(c, { abilities: ABILITIES, measure, punk: true }).pages[0];
+  assert.ok(!plain.some((o) => o.fill === "wash"));
+  assert.ok(punk.some((o) => o.fill === "wash"));
+  const skillOps = (ops) => JSON.stringify(ops.filter((o) => o.kind === "icon" || (o.kind === "path" && o.stroke === 0.6 && o.closed)));
+  assert.equal(skillOps(punk), skillOps(plain));
 });
 
 test("the PDF is named after the handle", () => {
