@@ -1,10 +1,10 @@
-// The GM Screen tab's Adversaries: the rulebook's Enemies chapter, every enemy's stat block in the book's order.
+// The GM Screen tab's Enemies: the rulebook's Enemies chapter, every enemy's stat block in the book's order.
 // No page code here, so it can be tested in Node. Text uses the format.js description format, like tables.js.
 //
 // TYPES       the kinds of enemy, weakest first, as the stat blocks name them
-// adversaries { name, type (one of TYPES), page (its page in the rulebook), luck (null for a minion squad), network (a threat in the Network: its stats
+// enemies     { name, type (one of TYPES), page (its page in the rulebook), luck (null for a minion squad), network (a threat in the Network: its stats
 //             are only for scenes there), portrait (its face from the book's art, 256 pixels square, in
-//             portraits/adversaries/; the Network threats have no art), text, attacks: [[name, text]],
+//             portraits/enemies/; the Network threats have no art), text, attacks: [[name, text]],
 //             perks: [[name, text]] }
 (function (root) {
   const TYPES = ["Minion squad", "Antagonist", "Minor villain", "Major villain"];
@@ -28,7 +28,7 @@
   const anything = (damage) => ["Anything Else", `50%, ${damage} damage`];
   const SQUAD_ELSE = ["Anything Else", "50%, damage equal to the squad's size x5"];
 
-  const adversaries = [
+  const enemies = [
     {
       name: "Private Security Guards", type: "Minion squad", page: 169, portrait: "private-security-guards.png",
       text: "On equal footing with the city's police in terms of authority, and far outstripping them in resources and personnel, private security companies dispatch guards to protect the interests of their corporate clients. They answer only to the executives and have a well-earned reputation for being bullies and stooges of their corporate fascist employers.",
@@ -385,5 +385,5 @@
     },
   ];
 
-  root.NCD_ADVERSARIES = { TYPES, adversaries };
+  root.NCD_ENEMIES = { TYPES, enemies };
 })(globalThis);

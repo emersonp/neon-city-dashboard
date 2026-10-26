@@ -103,7 +103,7 @@ jump about and whatever goes under it stays put.
 ## Tests
 
 ```
-node --test tests/dice.test.cjs tests/discord.test.cjs tests/characters.test.cjs tests/format.test.cjs tests/abilities.test.cjs tests/rules.test.cjs tests/databank.test.cjs tests/tables.test.cjs tests/adversaries.test.cjs tests/gear.test.cjs tests/overlay-rules.test.cjs tests/advancement.test.cjs tests/profiles.test.cjs
+node --test tests/dice.test.cjs tests/discord.test.cjs tests/characters.test.cjs tests/format.test.cjs tests/abilities.test.cjs tests/rules.test.cjs tests/databank.test.cjs tests/tables.test.cjs tests/enemies.test.cjs tests/gear.test.cjs tests/overlay-rules.test.cjs tests/advancement.test.cjs tests/profiles.test.cjs
 ```
 
 ## What's here
@@ -126,7 +126,7 @@ node --test tests/dice.test.cjs tests/discord.test.cjs tests/characters.test.cjs
 | `profiles.js` | The Databank's Archetypes and Origins pages, built from `rules.js`, `abilities.js` and `advancement.js`; Create's archetype panel uses its text too (testable in Node) |
 | `databank.js` | The Databank tab's text from the rulebook's Equipment chapter: gear, tool sets, weapons, armor, vehicles, gear and weapon keywords with their restrictions (testable in Node) |
 | `tables.js` | The GM Screen tab's tables: random gear keywords, liabilities, and distinctive visual traits (General); sample objectives (Objectives); obstacles (Obstacles); the complications (Complications); security system tiers with each defense's description, and the heat alarms add (Scenes); the headline news tables, and rolling them all into a news story (Headlines) (testable in Node) |
-| `adversaries.js` | The GM Screen tab's Adversaries: every enemy's stat block from the Enemies chapter, with its bust in `portraits/adversaries/` (testable in Node) |
+| `enemies.js` | The GM Screen tab's Enemies: every enemy's stat block from the Enemies chapter, with its bust in `portraits/enemies/` (testable in Node) |
 | `gear.js` | Gear rules from `databank.js`: built-in keywords, which keywords an item can take, damage and impact, labels, rules text, and Create's starting gear (testable in Node) |
 | `gear-ui.js` | Gear on the page: item rows, keyword chips, rules text, and the keyword picker the gear dialog and Create share |
 | `format.js` | Turns ability descriptions into HTML: paragraphs, bold, italic, lists, icon tokens (testable in Node) |
@@ -171,12 +171,12 @@ Network security systems as objectives), **Complications**
 die ("d100") gets a dice button in its card's title that rolls it and lights up the row; the security tiers table links
 each defense to its description. `tests/tables.test.cjs` checks them.
 
-A sixth subtab, **Adversaries**, comes from `adversaries.js`: every enemy's stat block from the Enemies chapter, sorted by
+A sixth subtab, **Enemies**, comes from `enemies.js`: every enemy's stat block from the Enemies chapter, sorted by
 name, each with its type, luck, skills and attacks, perks, and page in the rulebook. A Type filter shows one type
 (minion squad, antagonist, minor villain, major villain) or all of them, and the Hide Network and Hide Dramatic
 checkboxes hide the Network's threats and the enemies with the Dramatic Enemy perk. Every enemy
-outside the Network has its bust from the book's art, 256 pixels square, in `portraits/adversaries/` (the Network's
-threats have no art), ready to be a Discord avatar like a character's portrait. `tests/adversaries.test.cjs` checks them.
+outside the Network has its bust from the book's art, 256 pixels square, in `portraits/enemies/` (the Network's
+threats have no art), ready to be a Discord avatar like a character's portrait. `tests/enemies.test.cjs` checks them.
 
 A seventh subtab, **Headlines**, has the rulebook's six headline news tables from `tables.js`, each with its dice button.
 **Generate news** rolls all six in order into a card above them, rolling again on Table X-1 where a row says to (the
