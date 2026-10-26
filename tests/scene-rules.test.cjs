@@ -474,3 +474,18 @@ test("run: enemies and the scene itself have conditions, cleaned like a characte
   const id = state.conditions[0].id;
   assert.deepEqual(run(state, { type: "conditions", conditions: K.withoutCondition(state, id).conditions }).conditions, []);
 });
+
+test("run: setting the round by hand starts no rounds, and the overlay echoing it back changes nothing", () => {
+  const conflict = started();
+  const state = run(conflict, { type: "setRound", round: 5 });
+  assert.deepEqual(state.initiative, { conflict: true, phase: "hazard", round: 5 });
+  assert.equal(track(state, "cams").deteriorating, 0);
+  assert.equal(run(state, { type: "initiative", initiative: state.initiative }), state);
+  // back down, then on into a round already reached: it doesn't start again
+  const back = run(state, { type: "setRound", round: 2 }, ...step(4));
+  assert.deepEqual([back.initiative.round, track(back, "cams").deteriorating], [3, 0]);
+  // past it, rounds start as usual
+  assert.equal(run(state, ...step(4)).initiative.round, 6);
+  assert.equal(track(run(state, ...step(4)), "cams").deteriorating, 1);
+  assert.equal(run(state, { type: "setRound", round: "junk" }).initiative.round, 1);
+});

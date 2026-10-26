@@ -95,7 +95,7 @@
                 </div>
                 <div class="initiative-track-row">
                   <ol class="initiative-track" id="initiative-track"></ol>
-                  <span class="initiative-round" id="initiative-round">Round 1</span>
+                  <button type="button" class="initiative-round" id="initiative-round" data-set-round title="Set the round">Round <b>1</b></button>
                 </div>
               </div>
             </wa-card>
@@ -827,6 +827,13 @@
       <wa-icon slot="start" name="floppy-disk"></wa-icon>
       Save
     </wa-button>
+  </wa-dialog>
+
+  <!-- Set the round by hand (admin-initiative.js), from the round's number on the Initiative card or in the Scene Runner -->
+  <wa-dialog id="round-dialog" label="Set round" light-dismiss>
+    <form id="round-form"><wa-input id="round-value" type="number" min="1" label="Round" autocomplete="off" autofocus></wa-input></form>
+    <wa-button slot="footer" data-dialog="close">Cancel</wa-button>
+    <wa-button slot="footer" id="round-set" variant="brand">Set</wa-button>
   </wa-dialog>
 
   <!-- New condition (conditions-ui.js): on a character or a gear item (Run and Edit), or an enemy or the scene (the

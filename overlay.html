@@ -457,9 +457,11 @@
   /* the track, with the round's number beside it */
   .turn-row { display: flex; align-items: flex-end; gap: 1.2vw; width: 100%; }
   .round {
-    flex: none; font-family: var(--font-display); font-weight: 700; font-size: 1.1vw; letter-spacing: 0.18em; line-height: 1;
+    flex: none; display: flex; align-items: baseline; gap: 0.5vw;
+    font-family: var(--font-display); font-weight: 700; font-size: 1.1vw; letter-spacing: 0.18em; line-height: 1;
     color: var(--color-ink); text-shadow: 0 0 6px var(--tc);
   }
+  .round b { font-size: 2.6vw; letter-spacing: 0.04em; color: var(--tc); text-shadow: 0 0 8px var(--tc), 0 0 20px var(--tc); }
   .turn-track { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.6vw; flex: 1; }
   .turn-track li {
     --c: var(--color-turn-hazard);
@@ -563,7 +565,7 @@
     <div class="turn glitch" id="turn" data-text="HAZARD">HAZARD</div>
     <div class="turn-row">
       <ol class="turn-track" id="turnTrack"></ol>
-      <div class="round" id="round">ROUND 1</div>
+      <div class="round" id="round">ROUND <b>1</b></div>
     </div>
   </section>
 
@@ -908,7 +910,7 @@
 
   function renderInitiative(animate) {
     const { conflict, phase, round } = initiative;
-    roundEl.textContent = `ROUND ${round}`;
+    roundEl.querySelector("b").textContent = round;
     const changed = initEl.dataset.phase !== phase || !panelEl.classList.contains("conflict");
     panelEl.classList.toggle("conflict", conflict);
     initEl.dataset.phase = phase;

@@ -153,10 +153,15 @@ html.gm [data-player] { display: none !important; }
 /* the round's number beside the track */
 .initiative-track-row { display: flex; align-items: flex-end; gap: var(--wa-space-s); }
 .initiative-track-row .initiative-track { flex: 1; min-width: 0; }
+/* a button that looks like a label: clicking it sets the round by hand (admin-initiative.js) */
 .initiative-round {
-  flex: none; font-family: var(--font-display); font-weight: 700; font-size: var(--wa-font-size-2xs);
-  letter-spacing: 0.06em; text-transform: uppercase; color: var(--wa-color-text-normal);
+  flex: none; display: inline-flex; align-items: baseline; gap: 0.4em; padding: 0; border: 0; background: none; cursor: pointer;
+  font-family: var(--font-display); font-weight: 700; font-size: var(--wa-font-size-2xs);
+  letter-spacing: 0.06em; text-transform: uppercase; color: var(--wa-color-text-quiet);
 }
+.initiative-round b { font-family: var(--font-mono); font-size: var(--wa-font-size-xl); line-height: 1; color: var(--wa-color-text-normal); }
+.initiative-round:hover b, .initiative-round:focus-visible b { color: var(--tc, var(--color-accent)); }
+.initiative-round:disabled { cursor: default; }
 .obs-status { margin: 0; font-size: var(--wa-font-size-s); color: var(--color-bad); }
 .obs-status.ok { color: var(--color-good); }
 .obs-status:empty { display: none; }

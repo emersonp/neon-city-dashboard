@@ -11,6 +11,7 @@
   const APP = window.NCD_APP;
   const ADMIN = window.NCD_ADMIN;
   const DICE = window.NCD_DICE;
+  const INITIATIVE = window.NCD_INITIATIVE;
   const { NO_CONFLICT, PHASES, PHASE_NAMES, stepInitiative } = window.NCD_OVERLAY;
   const { formatDescription } = window.NCD_FORMAT;
   const { svg: icon } = window.NCD_ICONS;
@@ -557,6 +558,15 @@
     setOpen(null);
   }
   // A turn on or back: through the overlay when it's linked (the run follows what it reports), else here.
+  // The round set by hand (here, or on the Initiative card): a correction, so no round starts anew. Then the overlay's
+  // round too, when there's a link; its report back then changes nothing.
+  function setRound(round) {
+    if (open?.mode !== "run") return;
+    dispatch({ type: "setRound", round });
+    sendInitiative(run().initiative);
+  }
+  INITIATIVE.onRoundSet((round) => { if (open?.mode === "run") dispatch({ type: "setRound", round }); });
+
   function stepTurn(step) {
     if (!sendInitiative(stepInitiative(run().initiative, step))) dispatch({ type: "step", step });
   }
@@ -627,7 +637,7 @@
               <wa-button size="s" appearance="outlined" data-turn-step="1"><wa-icon name="arrow-right" label="Next turn"></wa-icon></wa-button>
             </div>
             <div class="initiative-track-row"><ol class="initiative-track">${PHASES.map((p) => `<li data-phase="${p}"${p === phase ? ' class="on"' : ""}>${PHASE_NAMES[p]}</li>`).join("")}</ol>
-              <span class="initiative-round">Round ${round}</span></div>
+              <button type="button" class="initiative-round" data-set-round title="Set the round">Round <b>${round}</b></button></div>
           </div>` : ""}
         <div class="scene-actions">
           ${conflict ? "" : `<wa-button appearance="outlined" id="runner-conflict"><wa-icon slot="start" name="bolt"></wa-icon>Make it a conflict</wa-button>`}
@@ -658,6 +668,10 @@
     if (open?.mode !== "run") return;
     const stepBy = Number(e.target.closest("[data-turn-step]")?.dataset.turnStep);
     if (stepBy) { stepTurn(stepBy); return; }
+    if (e.target.closest("[data-set-round]")) {
+      INITIATIVE.openSetRound({ round: run().initiative.round, set: setRound });
+      return;
+    }
     if (e.target.closest("#runner-conflict")) { dispatch({ type: "conflict" }); sendInitiative(run().initiative); return; }
     if (e.target.closest("#runner-end")) {
       confirm("End run", `End the run of “${run().name || "Untitled scene"}”? Everything tracked is cleared; the saved scene stays as it is.`, "End run", () => {

@@ -268,6 +268,11 @@
     step: (state, { step }) => toInitiative(state, OVERLAY().stepInitiative(state.initiative, step)),
     // ...or what the overlay says it is, when it does.
     initiative: (state, { initiative }) => toInitiative(state, initiative),
+    // The round set by hand (a correction): no round starts anew, going forward or back.
+    setRound: (state, { round }) => {
+      const next = OVERLAY().cleanInitiative({ ...state.initiative, round });
+      return { ...state, initiative: next, roundsStarted: Math.max(state.roundsStarted, next.round), notices: [] };
+    },
     // A Legwork scene escalating: initiative on, at Hazard, round 1.
     conflict: (state) => ({ ...state, initiative: startInitiative(true), roundsStarted: 1, notices: [] }),
     // A copy added to this run only (an id already in it changes nothing).
