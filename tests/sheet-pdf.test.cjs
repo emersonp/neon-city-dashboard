@@ -152,13 +152,11 @@ test("descriptions: [advantage] and friends become icons; bold markers are dropp
   assert.ok(!words.some((w) => String(w.text ?? "").includes("*")));
 });
 
-test("punk adds the grey background art and moves nothing: the skills block is the same", () => {
-  const c = C.withSkill(base(), "shoot-someone", { value: 65, adv: 1 });
-  const plain = layout(c).pages[0], punk = P.layout(c, { abilities: ABILITIES, measure, punk: true }).pages[0];
-  assert.ok(!plain.some((o) => o.fill === "wash"));
-  assert.ok(punk.some((o) => o.fill === "wash"));
-  const skillOps = (ops) => JSON.stringify(ops.filter((o) => o.kind === "icon" || (o.kind === "path" && o.stroke === 0.6 && o.closed)));
-  assert.equal(skillOps(punk), skillOps(plain));
+test("the grey background art never sits over a skill row: the rows are drawn after it, filled white", () => {
+  const ops = layout(base()).pages[0];
+  const lastArt = ops.map((o) => o.fill === "wash" || o.strokeColor === "wash").lastIndexOf(true);
+  const firstRow = ops.findIndex((o) => o.kind === "path" && o.closed && o.stroke === 0.6 && o.fill === "paper");
+  assert.ok(lastArt >= 0 && firstRow > lastArt);
 });
 
 test("the PDF is named after the handle", () => {

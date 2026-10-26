@@ -1,7 +1,6 @@
 // Draws sheet-pdf.js's layout with pdf-lib and saves it as "<handle>.pdf". pdf-lib and its font add-on are only
 // fetched the first time a PDF is made; the fonts are ours (fonts/, SIL Open Font License) and only the letters a
 // sheet uses are embedded. build() returns the PDF's bytes, so they can be posted somewhere as well as downloaded.
-// Settings' "Character sheet is PUNK" (store key sheetPunk) adds the heavy background art.
 (function (root) {
   const P = root.NCD_SHEET_PDF;
   const SCRIPTS = {
@@ -116,7 +115,7 @@
   }
 
   // The character's sheet as PDF bytes (a Uint8Array). Node tooling can pass pdf-lib, fontkit and the fonts in.
-  async function build(character, { L, fontkit, files, punk = root.NCD_STORE?.get("sheetPunk") === "1" } = {}) {
+  async function build(character, { L, fontkit, files } = {}) {
     [L, fontkit, files] = await Promise.all([L ?? loadLibrary("PDFLib"), fontkit ?? loadLibrary("fontkit"), files ?? loadFonts()]);
     const doc = await L.PDFDocument.create();
     doc.registerFontkit(fontkit);
@@ -124,7 +123,7 @@
     // pdf-lib takes the base64 text as it is
     for (const [role, data] of Object.entries(files)) fonts[role] = await doc.embedFont(data, { subset: true });
     const measure = (text, size, role) => (fonts[role] ?? fonts.body).widthOfTextAtSize(text, size);
-    draw(L, doc, fonts, P.layout(character, { abilities: root.NCD_ABILITIES ?? [], measure, punk }));
+    draw(L, doc, fonts, P.layout(character, { abilities: root.NCD_ABILITIES ?? [], measure }));
     doc.setTitle(`${P.winAnsi(String(character?.handle ?? "").trim() || "Character")}: character sheet`);
     doc.setCreator("Neon City Dashboard");
     return doc.save();

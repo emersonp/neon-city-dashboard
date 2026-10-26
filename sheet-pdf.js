@@ -7,9 +7,9 @@
 // needs while wearing a shell goes right of x = 396. Coordinates were read from the official PDF (it's real text and
 // lines), and the dice slots from the Quick Shell scan, where every row shows all four.
 //
-// Look: black-and-white print, technical and angular. Chamfered panels, slanted title tabs whose rule runs on as the
-// panel's top edge, a masthead with a barcode, and circuit traces in the gaps. "punk" adds the official sheet's heavy
-// grey background art, shadowed tabs and hatched edge strips; the panels are filled white so their text stays clear.
+// Look: black-and-white print, technical and angular, like the official sheet. Chamfered panels, slanted title tabs
+// with grey shadows whose rule runs on as the panel's top edge, a masthead with a barcode, and the official sheet's
+// heavy grey background art, hatched edge strips and circuit traces. The skill rows are filled white over the art.
 //
 // Ops: text (x, y baseline, size, font, color, align, fitWidth), line, rect, path (points, closed, fill, stroke),
 // circle, check (a box, checked or not), icon (name, x, y top, size). Fonts are roles: display, label, body, strong.
@@ -213,27 +213,26 @@
   // ---- chrome: tabs, panels, the frame, ornaments ----
   const TAB_H = 14.5, CUT = 8;
   // A section's title tab, on the left or right edge, long enough for its title; its rule runs on to `to`, as the top
-  // edge of the panel below. Punk puts a grey shadow tab behind it.
+  // edge of the panel below. A grey shadow tab sits behind it.
   function titleTab(ops, ctx, title, y, side, to) {
     const length = Math.max(132, ctx.measure(title, 10, "display") + 30);
     const bottom = y + TAB_H;
     if (side === "left") {
-      if (ctx.punk) ops.push({ kind: "path", points: [[18, y - 4], [26 + length, y - 4], [34 + length, bottom - 4], [18, bottom - 4]], closed: true, fill: "faint" });
+      ops.push({ kind: "path", points: [[18, y - 4], [26 + length, y - 4], [34 + length, bottom - 4], [18, bottom - 4]], closed: true, fill: "faint" });
       ops.push({ kind: "path", points: [[18, y], [18 + length, y], [18 + length + TAB_H * 0.6, bottom], [18, bottom]], closed: true, fill: "ink" });
       ops.push({ kind: "text", text: title, x: 26, y: y + 10.8, size: 10, font: "display", color: "paper" });
       if (to) ops.push({ kind: "line", x1: 18 + length, y1: bottom, x2: to, y2: bottom, stroke: 1 });
     } else {
-      if (ctx.punk) ops.push({ kind: "path", points: [[774 - length - 8, y - 4], [774, y - 4], [774, bottom - 4], [774 - length - 16, bottom - 4]], closed: true, fill: "faint" });
+      ops.push({ kind: "path", points: [[774 - length - 8, y - 4], [774, y - 4], [774, bottom - 4], [774 - length - 16, bottom - 4]], closed: true, fill: "faint" });
       ops.push({ kind: "path", points: [[774 - length, y], [774, y], [774, bottom], [774 - length - TAB_H * 0.6, bottom]], closed: true, fill: "ink" });
       ops.push({ kind: "text", text: title, x: 766, y: y + 10.8, size: 10, font: "display", color: "paper", align: "right" });
       if (to) ops.push({ kind: "line", x1: to, y1: bottom, x2: 774 - length - TAB_H * 0.6, y2: bottom, stroke: 1 });
     }
   }
-  // A panel below a tab: no top edge (the tab's rule is that), one corner cut on the side away from the tab. Plain panels
-  // are white; punk ones let the grey art show through, as on the official sheet.
-  function panel(ops, ctx, x, y, w, h, side = "left") {
+  // A panel below a tab: no top edge (the tab's rule is that), one corner cut on the side away from the tab. It isn't
+  // filled, so the grey art shows through, as on the official sheet.
+  function panel(ops, x, y, w, h, side = "left") {
     const r = x + w, b = y + h;
-    if (!ctx.punk) ops.push({ kind: "path", closed: true, fill: "paper", stroke: 0, points: [[x, y], [r, y], [r, b], [x, b]] });
     ops.push({ kind: "path", closed: false, stroke: 0.6, points: side === "left"
       ? [[x, y], [x, b], [r - CUT, b], [r, b - CUT], [r, y]]
       : [[r, y], [r, b], [x + CUT, b], [x, b - CUT], [x, y]] });
@@ -275,9 +274,9 @@
     for (const [x, y] of [points[0], points[points.length - 1]]) ops.push({ kind: "circle", x, y, r: 1.6, fill: "paper", stroke: 0.8, strokeColor: color });
   }
 
-  // The punk background: broad grey bands and outlined blocks like the official sheet's art, under everything else.
+  // The background: broad grey bands and outlined blocks like the official sheet's art, under everything else.
   // The skill rows are filled white, so none of it ever sits behind a skill.
-  function punkArt(ops, page) {
+  function backgroundArt(ops, page) {
     const band = (points) => ops.push({ kind: "path", closed: true, fill: "wash", points });
     const outline = (points, stroke = 5) => ops.push({ kind: "path", closed: true, stroke, strokeColor: "wash", points });
     if (page === 1) {
@@ -304,9 +303,9 @@
   const abilityParas = (list) => list.flatMap((a) => [heading(a.name), ...paragraphs(a.description)]);
 
   // ---- the layout ----
-  // options: abilities (the catalog, NCD_ABILITIES); measure(text, size, font) -> width in points; punk (heavy art).
-  function layout(character, { abilities = [], measure, punk = false }) {
-    const ctx = { measure, punk };
+  // options: abilities (the catalog, NCD_ABILITIES); measure(text, size, font) -> width in points.
+  function layout(character, { abilities = [], measure }) {
+    const ctx = { measure };
     const page1 = [], page2 = [];
     const boxes = {};
     const continued = [];   // [title, paragraphs] that didn't fit on page 1, for Other Notes
@@ -319,7 +318,7 @@
     const handle = winAnsi(String(character.handle ?? "").trim());
     const sheetMark = (n) => `NC-OUTLAWS // ${handle.toUpperCase() || "OPERATIVE"} // SHEET 0${n}`;
 
-    if (punk) punkArt(page1, 1);
+    backgroundArt(page1, 1);
     frame(page1, ctx, "PRINT AT 100% (ACTUAL SIZE) // OVERLAY SHEETS LINE UP WITH THE SKILLS", sheetMark(1));
 
     // Masthead and identity (left).
@@ -344,7 +343,7 @@
     field("MAXIMUM LUCK", String(luck.max), 121, 97.2, 173.9);
 
     titleTab(page1, ctx, "THINGS YOU KNOW ABOUT", 199.2, "left", 222);
-    panel(page1, ctx, 18, 213.7, 204, 137);
+    panel(page1, 18, 213.7, 204, 137);
     // Two columns, 15 pt apart as on the sheet, closer if the list is ever longer than the room above Character Perks.
     const known = C.knows(character), perColumn = Math.ceil(C.KNOWLEDGE.length / 2);
     const step = Math.min(15, (338 - 222) / (perColumn - 1));
@@ -355,7 +354,7 @@
     });
 
     titleTab(page1, ctx, "CHARACTER PERKS", 355.8, "left", 222);
-    panel(page1, ctx, 18, 370.3, 204, 226);
+    panel(page1, 18, 370.3, 204, 226);
     const all = C.abilities(character, abilities);
     const perks = all.filter((a) => a.type === "perk"), augmentations = all.filter((a) => a.type !== "perk");
     const perksLeft = flow(page1, "perks", { x: 26, y: 376, w: 188, h: 214 }, abilityParas(perks));
@@ -372,7 +371,6 @@
       const value = C.skill(character, id).value ?? C.UNTRAINED;
       page1.push({ kind: "text", text: `${value}%`, x: x + 29.5, y: 56.9, size: 9, font: "strong", align: "right" });
     }
-    if (!punk) trace(page1, [[552, 46], [574, 46], [588, 32], [610, 32]]);
     skillsBlock(character, page1);
 
     // Right column (an overlay covers it): appearance, body perks, weapons, wounds.
@@ -380,7 +378,7 @@
     hatch(page1, 748, 13, 24, 24);
 
     titleTab(page1, ctx, "APPEARANCE", 47.3, "right", 576);
-    panel(page1, ctx, 576, 61.8, 198, 104, "right");
+    panel(page1, 576, 61.8, 198, 104, "right");
     const look = C.appearance(character);
     const appearanceParas = [["PRONOUNS", look.pronouns], ["PHYSICAL APPEARANCE", look.physical], ["NETWORK DEFAULT", look.network]]
       .flatMap(([title, text]) => [label(title), ...(String(text).trim() ? paragraphs(text) : [])]);
@@ -388,12 +386,12 @@
     if (lookLeft.length) continued.push(["APPEARANCE (CONTINUED)", lookLeft]);
 
     titleTab(page1, ctx, "BODY PERKS", 169.6, "right", 576);
-    panel(page1, ctx, 576, 184.1, 198, 141, "right");
+    panel(page1, 576, 184.1, 198, 141, "right");
     const bodyLeft = flow(page1, "body", { x: 583, y: 189, w: 184, h: 132 }, abilityParas(augmentations));
     if (bodyLeft.length) continued.push(["BODY PERKS (CONTINUED)", bodyLeft]);
 
     titleTab(page1, ctx, "WEAPONS", 329.4, "right", 576);
-    panel(page1, ctx, 576, 343.9, 198, 140, "right");
+    panel(page1, 576, 343.9, 198, 140, "right");
     const gear = C.gear(character);
     const weapons = gear.filter((g) => g.kind === "weapon").slice(0, 2);
     const gearName = (g) => winAnsi(String(g.description ?? "").trim() || G.defaultName(g)) + (g.quantity > 1 ? ` ×${g.quantity}` : "");
@@ -413,7 +411,7 @@
     });
 
     titleTab(page1, ctx, "WOUNDS", 488, "right", 576);
-    panel(page1, ctx, 576, 502.5, 198, 62, "right");
+    panel(page1, 576, 502.5, 198, 62, "right");
     const wounds = C.wounds(character);
     for (let i = 0; i < 4; i++) {
       page1.push({ kind: "check", group: "wounds", checked: i < wounds, x: 590 + i * 27, y: 517, size: 19, corners: true });
@@ -424,24 +422,23 @@
     page1.push({ kind: "text", text: "DEAD", x: 716, y: 539.5, size: 7, font: "label" });
 
     // Page 2: liability, conditions, notes, gear.
-    if (punk) punkArt(page2, 2);
+    backgroundArt(page2, 2);
     frame(page2, ctx, "REPERCUSSIONS, GEAR AND EVERYTHING THAT DIDN'T FIT", sheetMark(2));
-    if (!punk) trace(page2, [[200, 18], [236, 18], [246, 28], [560, 28], [570, 18], [610, 18]]);
     dots(page2, 360, 17, 10);
 
     titleTab(page2, ctx, "LIABILITY", 24.9, "left", 385);
-    panel(page2, ctx, 18, 39.4, 367, 136);
+    panel(page2, 18, 39.4, 367, 136);
     flow(page2, "liability", { x: 26, y: 46, w: 351, h: 124 }, paragraphs(C.liability(character)), { sizes: [9, 8.5, 8, 7.5, 7, 6.5, 6] });
 
     titleTab(page2, ctx, "ADDITIONAL TRAITS", 179.9, "left", 385);
-    panel(page2, ctx, 18, 194.4, 367, 201);
+    panel(page2, 18, 194.4, 367, 201);
     const conditionLines = CO.conditions(character).map((x) =>
       body([x.name, CO.severityLabel(x.severity), x.intrinsic ? "(intrinsic)" : ""].filter(Boolean).join(" ")));
     const traitsLeft = flow(page2, "traits", { x: 26, y: 201, w: 351, h: 188 }, conditionLines, { sizes: [9, 8.5, 8, 7.5, 7, 6.5, 6] });
     if (traitsLeft.length) continued.push(["ADDITIONAL TRAITS (CONTINUED)", traitsLeft]);
 
     titleTab(page2, ctx, "GEAR", 400.7, "left", 774);
-    panel(page2, ctx, 18, 415.2, 756, 181);
+    panel(page2, 18, 415.2, 756, 181);
     const rest = gear.filter((g) => !weapons.includes(g));
     const GEAR_ROWS = 10;
     for (const [col, x, lineX1, lineX2] of [[0, 28, 42, 385.2], [1, 398, 412, 764]]) {
@@ -460,7 +457,7 @@
     if (gearLeft.length) continued.push(["GEAR (CONTINUED)", gearLeft.map((g) => body(`${gearName(g)}${g.starter ? " (starting)" : ""}`))]);
 
     titleTab(page2, ctx, "OTHER NOTES", 24.9, "right", 400);
-    panel(page2, ctx, 400, 39.4, 374, 356, "right");
+    panel(page2, 400, 39.4, 374, 356, "right");
     const notes = [label("REPERCUSSIONS AND STORY REWARDS"), ...paragraphs(C.story(character))];
     for (const [title, paras] of continued) notes.push(label(title), ...paras);
     let notesLeft = flow(page2, "notes", { x: 408, y: 46, w: 358, h: 343 }, notes, { sizes: [8.5, 8, 7.5, 7, 6.5, 6] });
@@ -471,7 +468,7 @@
       const page = [];
       frame(page, ctx, "CONTINUED", sheetMark(pages.length + 1));
       titleTab(page, ctx, "OTHER NOTES (CONTINUED)", 24.9, "left", 774);
-      panel(page, ctx, 18, 39.4, 756, 556);
+      panel(page, 18, 39.4, 756, 556);
       const before = notesLeft;
       notesLeft = flow(page, `notes${pages.length + 1}`, { x: 26, y: 46, w: 740, h: 543 }, notesLeft, { sizes: [7.5] });
       pages.push(page);
