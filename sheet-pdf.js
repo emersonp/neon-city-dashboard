@@ -12,8 +12,9 @@
 // heavy grey background art, hatched edge strips and circuit traces. The skill rows are filled white over the art.
 //
 // Ops: text (x, y baseline, size, font, color, align, fitWidth), line, rect, path (points, closed, fill, stroke),
-// circle, check (a box, checked or not), icon (name, x, y top, size). Fonts are roles: display, label, body, strong.
-// Colors are roles: ink, muted, faint, wash, paper. sheet-pdf-ui.js maps both to real fonts and greys.
+// circle, check (a box, checked or not), icon (name, x, y top, size, color). Fonts are roles: display, label, body,
+// strong. Colors are roles: ink, muted, faint, empty (an unmarked dice slot), wash, paper. sheet-pdf-ui.js maps both
+// to real fonts and greys.
 (function (root) {
   const C = root.NCD_CHARACTERS, G = root.NCD_GEAR, CO = root.NCD_CONDITIONS;
   const { ICON_TOKENS } = root.NCD_FORMAT;
@@ -47,6 +48,8 @@
     label: { scale: 0.85, gap: 0.7, font: "label", color: "muted" },
   };
   const LEADING = 1.2;
+  // Writing lines for pencil: about the spacing of school paper. Printed text sits RULE_LIFT above its line.
+  const RULE = 15, RULE_LIFT = 2.8;
   const ICON_SCALE = 1.05;
   const plainWords = (text) => winAnsi(text).split(" ").filter(Boolean).map((t) => ({ text: t }));
   const para = (style, words) => ({ style, words });
@@ -107,34 +110,35 @@
   }
 
   // Lays paragraphs into a box at the largest size that fits, from `sizes`. At the smallest, the paragraphs (or the end
-  // of one) that don't fit come back as `overflow`; a heading never stays behind on its own at the bottom.
-  function fit(paras, box, measure, { sizes = [7, 6.5, 6], name } = {}) {
+  // of one) that don't fit come back as `overflow`; a heading never stays behind on its own at the bottom. `bottom` is
+  // where the text ends. With `ruled` (a line pitch), every line of text sits on a writing line, `ruled` apart.
+  function fit(paras, box, measure, { sizes = [7, 6.5, 6], name, ruled } = {}) {
     let placed;
     for (const size of sizes) {
-      placed = place(paras, box, size, measure, name);
+      placed = place(paras, box, size, measure, name, ruled);
       if (!placed.overflow.length) break;
     }
     return placed;
   }
-  function place(paras, box, size, measure, name) {
+  function place(paras, box, size, measure, name, ruled) {
     const ops = [];
     let y = box.y;
     for (let i = 0; i < paras.length; i++) {
-      const p = paras[i], st = STYLE[p.style], s = size * st.scale, lh = s * LEADING;
-      if (i > 0) y += size * st.gap;
+      const p = paras[i], st = STYLE[p.style], s = size * st.scale, lh = ruled ?? s * LEADING;
+      if (i > 0 && !ruled) y += size * st.gap;
       const lines = wrap(p, box.w, size, measure);
       // keep a heading or label with the first line of what follows it
       const needed = ["heading", "label"].includes(p.style) && paras[i + 1] ? lh * lines.length + size * LEADING : lh;
-      if (y + needed > box.y + box.h + 0.01) return { ops, size, overflow: paras.slice(i) };
+      if (y + needed > box.y + box.h + 0.01) return { ops, size, bottom: y, overflow: paras.slice(i) };
       for (const [k, line] of lines.entries()) {
         if (y + lh > box.y + box.h + 0.01) {
-          return { ops, size, overflow: [{ ...p, words: p.words.slice(line.first), style: p.style === "bullet" && k > 0 ? "body" : p.style }, ...paras.slice(i + 1)] };
+          return { ops, size, bottom: y, overflow: [{ ...p, words: p.words.slice(line.first), style: p.style === "bullet" && k > 0 ? "body" : p.style }, ...paras.slice(i + 1)] };
         }
-        drawLine(ops, line, box.x, y + s, s, st, name);
+        drawLine(ops, line, box.x, ruled ? y + ruled - RULE_LIFT : y + s, s, st, name);
         y += lh;
       }
     }
-    return { ops, size, overflow: [] };
+    return { ops, size, bottom: y, overflow: [] };
   }
   // One wrapped line: neighbouring words are joined into one text op, icons are their own ops.
   function drawLine(ops, line, x0, baseline, size, st, box) {
@@ -197,12 +201,11 @@
         ops.push({ kind: "text", text: `${st.value}%`, x: mental ? MENTAL.percentX : PHYSICAL.percentX, y: textInRow(row.top), size: 8, font: "strong" });
       }
       const slots = (mental ? MENTAL : PHYSICAL).dice[row.kind];
-      const marked = [...Array(st.adv).fill(["advantage-die", 0]), ...Array(st.chal).fill(["challenge-die", 2])];
-      let adv = 0, chal = 0;
-      for (const [icon, first] of marked) {
-        const slot = first + (icon === "advantage-die" ? adv++ : chal++);
-        ops.push({ kind: "icon", name: icon, x: slots[slot], y: row.top + 1.8, size: DIE });
-      }
+      // Two advantage slots, then two challenge slots. Marked dice are inked; the rest are faint, to fill in with pencil.
+      ["advantage-die", "advantage-die", "challenge-die", "challenge-die"].forEach((icon, slot) => {
+        const marked = slot < 2 ? slot < st.adv : slot - 2 < st.chal;
+        ops.push({ kind: "icon", name: icon, x: slots[slot], y: row.top + 1.8, size: DIE, ...(marked ? {} : { ghost: true, color: "empty" }) });
+      });
     }
     const a = ANYTHING_ELSE;
     ops.push(rowPath({ left: a.left, right: a.right, top: a.top }, false));
@@ -296,7 +299,6 @@
       outline([[420, 190], [600, 190], [600, 330], [576, 354], [420, 354]]);
       hatch(ops, 11, 180, 7, 150, 4, 1.2, "faint");
       hatch(ops, 775, 60, 7, 130, 4, 1.2, "faint");
-      trace(ops, [[160, 400], [200, 400], [220, 380], [380, 380]], "faint", 1.4);
     }
   }
 
@@ -309,9 +311,18 @@
     const page1 = [], page2 = [];
     const boxes = {};
     const continued = [];   // [title, paragraphs] that didn't fit on page 1, for Other Notes
-    const flow = (ops, name, box, paras, opts) => {
+    // Fills a box with paragraphs. ruled: text on writing lines, the rest of the lines left blank. lined: dense text
+    // (book text, like perks), then blank writing lines below it.
+    const flow = (ops, name, box, paras, opts = {}) => {
       boxes[name] = box;
       const placed = fit(paras, box, measure, { ...opts, name });
+      const pitch = opts.ruled ?? opts.lined;
+      if (pitch) {
+        const first = opts.ruled ? box.y + pitch : placed.bottom + (paras.length ? 4 : 0) + pitch;
+        for (let y = first; y <= box.y + box.h + 0.01; y += pitch) {
+          ops.push({ kind: "line", x1: box.x, y1: y, x2: box.x + box.w, y2: y, stroke: 0.4, color: "faint" });
+        }
+      }
       ops.push(...placed.ops);
       return placed.overflow;
     };
@@ -327,19 +338,24 @@
     const barX = 18 + measure("NEON CITY OUTLAWS", 13, "display") + 12;
     barcode(page1, handle || "operative", barX, 17, 218 - barX, 13);
     const luck = C.luck(character), influence = C.influence(character), xp = C.xp(character);
+    // What changes in play is left blank for pencil: current luck, current influence, XP to spend.
     const field = (labelText, value, x, w, lineY, size = 15, font = "display") => {
       page1.push({ kind: "line", x1: x, y1: lineY, x2: x + w, y2: lineY, stroke: 0.6 });
       if (value !== "") page1.push({ kind: "text", text: winAnsi(value), x: x + w / 2, y: lineY - 3.5, size, font, align: "center", fitWidth: w - 4 });
       page1.push({ kind: "text", text: labelText, x: x + w / 2, y: lineY + 7.5, size: 6, font: "label", color: "muted", align: "center", fitWidth: w });
     };
+    // "____ / 3": the left of the line is for pencil, the fixed part is printed on the right.
+    const outOf = (labelText, of, x, w, lineY) => {
+      field(labelText, "", x, w, lineY);
+      page1.push({ kind: "text", text: `/ ${of}`, x: x + w * 0.56, y: lineY - 3.5, size: 15, font: "display" });
+    };
     field("NAME", String(character.name ?? "").trim(), 18, 200, 56, 12, "strong");
     field("HANDLE", handle, 18, 200.2, 85.5, 20);
     field("ARCHETYPE", character.archetype ?? "", 18, 97.2, 114.1);
     field("ORIGIN", character.origin ?? "", 121, 97.2, 114.1);
-    field("INFLUENCE  CURRENT / STARTING", `${influence.current} / ${influence.starting}`, 18, 97.2, 144.0);
-    field("XP", String(xp.available), 121, 97.2, 144.0);
-    if (xp.spent) page1.push({ kind: "text", text: `${xp.spent} SPENT`, x: 218.2, y: 140.5, size: 5.5, font: "label", color: "muted", align: "right" });
-    field("CURRENT LUCK", String(luck.current), 18, 97.2, 173.9);
+    outOf("INFLUENCE  CURRENT / STARTING", influence.starting, 18, 97.2, 144.0);
+    outOf("XP  AVAILABLE / EARNED", xp.total, 121, 97.2, 144.0);
+    field("CURRENT LUCK", "", 18, 97.2, 173.9);
     field("MAXIMUM LUCK", String(luck.max), 121, 97.2, 173.9);
 
     titleTab(page1, ctx, "THINGS YOU KNOW ABOUT", 199.2, "left", 222);
@@ -357,7 +373,7 @@
     panel(page1, 18, 370.3, 204, 226);
     const all = C.abilities(character, abilities);
     const perks = all.filter((a) => a.type === "perk"), augmentations = all.filter((a) => a.type !== "perk");
-    const perksLeft = flow(page1, "perks", { x: 26, y: 376, w: 188, h: 214 }, abilityParas(perks));
+    const perksLeft = flow(page1, "perks", { x: 26, y: 376, w: 188, h: 214 }, abilityParas(perks), { lined: RULE });
     if (perksLeft.length) continued.push(["CHARACTER PERKS (CONTINUED)", perksLeft]);
 
     // Initiative and skills (middle).
@@ -379,15 +395,26 @@
 
     titleTab(page1, ctx, "APPEARANCE", 47.3, "right", 576);
     panel(page1, 576, 61.8, 198, 104, "right");
+    // Pronouns and Network Default get one line each, so Physical Appearance has four lines to write on.
     const look = C.appearance(character);
-    const appearanceParas = [["PRONOUNS", look.pronouns], ["PHYSICAL APPEARANCE", look.physical], ["NETWORK DEFAULT", look.network]]
-      .flatMap(([title, text]) => [label(title), ...(String(text).trim() ? paragraphs(text) : [])]);
-    const lookLeft = flow(page1, "appearance", { x: 583, y: 66, w: 184, h: 96 }, appearanceParas, { sizes: [7.5, 7, 6.5, 6] });
+    const lookLeft = [];
+    const oneLine = (title, text, y, name) => {
+      const labelW = measure(title, 6, "label") + 6;
+      page1.push({ kind: "text", text: title, x: 583, y, size: 6, font: "label", color: "muted" });
+      page1.push({ kind: "line", x1: 583 + labelW, y1: y + 0.5, x2: 767, y2: y + 0.5, stroke: 0.4, color: "faint" });
+      const left = flow(page1, name, { x: 583 + labelW + 2, y: y - 9, w: 184 - labelW - 2, h: 10 }, paragraphs(text), { sizes: [8, 7, 6, 5.5] });
+      if (left.length) lookLeft.push(label(title), ...left);
+    };
+    oneLine("PRONOUNS", look.pronouns, 76, "pronouns");
+    page1.push({ kind: "text", text: "PHYSICAL APPEARANCE", x: 583, y: 88, size: 6, font: "label", color: "muted" });
+    const physicalLeft = flow(page1, "physical", { x: 583, y: 89, w: 184, h: 58 }, paragraphs(look.physical), { sizes: [8, 7.5, 7, 6.5], ruled: 14.5 });
+    if (physicalLeft.length) lookLeft.push(label("PHYSICAL APPEARANCE"), ...physicalLeft);
+    oneLine("NETWORK DEFAULT", look.network, 159, "network");
     if (lookLeft.length) continued.push(["APPEARANCE (CONTINUED)", lookLeft]);
 
     titleTab(page1, ctx, "BODY PERKS", 169.6, "right", 576);
     panel(page1, 576, 184.1, 198, 141, "right");
-    const bodyLeft = flow(page1, "body", { x: 583, y: 189, w: 184, h: 132 }, abilityParas(augmentations));
+    const bodyLeft = flow(page1, "body", { x: 583, y: 189, w: 184, h: 132 }, abilityParas(augmentations), { lined: RULE });
     if (bodyLeft.length) continued.push(["BODY PERKS (CONTINUED)", bodyLeft]);
 
     titleTab(page1, ctx, "WEAPONS", 329.4, "right", 576);
@@ -407,14 +434,14 @@
       page1.push({ kind: "text", text: gearName(w), x: 584, y: 365.3 + dy, size: 9, font: "strong", fitWidth: 150 });
       page1.push({ kind: "text", text: `+${G.stats(w).damage ?? 0}`, x: 766, y: 365.3 + dy, size: 10, font: "display", align: "right" });
       const kw = G.keywordsOf(w);
-      if (kw.length) flow(page1, `weapon${slot + 1}`, { x: 586, y: 389, w: 172, h: 20 }, [body(kw.join(", "))], { sizes: [7.5, 7, 6.5, 6, 5.5] });
+      if (kw.length) flow(page1, `weapon${slot + 1}`, { x: 586, y: 389 + dy, w: 172, h: 20 }, [body(kw.join(", "))], { sizes: [7.5, 7, 6.5, 6, 5.5] });
     });
 
     titleTab(page1, ctx, "WOUNDS", 488, "right", 576);
     panel(page1, 576, 502.5, 198, 62, "right");
-    const wounds = C.wounds(character);
-    for (let i = 0; i < 4; i++) {
-      page1.push({ kind: "check", group: "wounds", checked: i < wounds, x: 590 + i * 27, y: 517, size: 19, corners: true });
+    // Wounds, Unconscious and Dead change in play: always blank, for pencil.
+    for (let i = 0; i < C.MAX_WOUNDS; i++) {
+      page1.push({ kind: "check", group: "wounds", checked: false, x: 590 + i * 27, y: 517, size: 19, corners: true });
     }
     page1.push({ kind: "check", group: "state", label: "Unconscious", checked: false, x: 706, y: 518.5, size: 6.4 });
     page1.push({ kind: "text", text: "UNCONSCIOUS", x: 716, y: 524.4, size: 7, font: "label" });
@@ -428,13 +455,14 @@
 
     titleTab(page2, ctx, "LIABILITY", 24.9, "left", 385);
     panel(page2, 18, 39.4, 367, 136);
-    flow(page2, "liability", { x: 26, y: 46, w: 351, h: 124 }, paragraphs(C.liability(character)), { sizes: [9, 8.5, 8, 7.5, 7, 6.5, 6] });
+    flow(page2, "liability", { x: 26, y: 44, w: 351, h: 128 }, paragraphs(C.liability(character)), { sizes: [8.5, 8, 7.5, 7, 6.5, 6], ruled: RULE });
 
     titleTab(page2, ctx, "ADDITIONAL TRAITS", 179.9, "left", 385);
     panel(page2, 18, 194.4, 367, 201);
-    const conditionLines = CO.conditions(character).map((x) =>
-      body([x.name, CO.severityLabel(x.severity), x.intrinsic ? "(intrinsic)" : ""].filter(Boolean).join(" ")));
-    const traitsLeft = flow(page2, "traits", { x: 26, y: 201, w: 351, h: 188 }, conditionLines, { sizes: [9, 8.5, 8, 7.5, 7, 6.5, 6] });
+    // Only intrinsic conditions are printed: they last. The rest come and go in play, in pencil.
+    const conditionLines = CO.conditions(character).filter((x) => x.intrinsic).map((x) =>
+      body([x.name, CO.severityLabel(x.severity), "(intrinsic)"].filter(Boolean).join(" ")));
+    const traitsLeft = flow(page2, "traits", { x: 26, y: 199, w: 351, h: 191 }, conditionLines, { sizes: [8.5, 8, 7.5, 7, 6.5, 6], ruled: RULE });
     if (traitsLeft.length) continued.push(["ADDITIONAL TRAITS (CONTINUED)", traitsLeft]);
 
     titleTab(page2, ctx, "GEAR", 400.7, "left", 774);
@@ -460,7 +488,7 @@
     panel(page2, 400, 39.4, 374, 356, "right");
     const notes = [label("REPERCUSSIONS AND STORY REWARDS"), ...paragraphs(C.story(character))];
     for (const [title, paras] of continued) notes.push(label(title), ...paras);
-    let notesLeft = flow(page2, "notes", { x: 408, y: 46, w: 358, h: 343 }, notes, { sizes: [8.5, 8, 7.5, 7, 6.5, 6] });
+    let notesLeft = flow(page2, "notes", { x: 408, y: 44, w: 358, h: 346 }, notes, { sizes: [8.5, 8, 7.5, 7, 6.5, 6], ruled: RULE });
 
     // Anything that still doesn't fit goes on extra pages, so nothing is cut off.
     const pages = [page1, page2];

@@ -47,11 +47,20 @@ test("skill rows sit at the official sheet's coordinates", () => {
 
 test("dice: only marked dice are drawn, advantage first, in the row's slots", () => {
   const c = C.withSkill(C.withSkill(base(), "analyze-data", { adv: 2, chal: 1 }), "case-the-joint", { chal: 2 });
-  const dice = layout(c).pages[0].filter((o) => o.kind === "icon" && /-die$/.test(o.name));
+  const dice = layout(c).pages[0].filter((o) => o.kind === "icon" && /-die$/.test(o.name) && !o.ghost);
   const inRow = (top) => dice.filter((o) => o.y > top && o.y < top + 15).map((o) => [o.name, o.x]);
   assert.deepEqual(inRow(85.2), [["advantage-die", 429.7], ["advantage-die", 439.3], ["challenge-die", 448.4]]);
   assert.deepEqual(inRow(100.3), [["challenge-die", 491.4], ["challenge-die", 501.0]]);
   assert.equal(dice.length, 5);
+});
+
+test("every skill row has all four dice slots, the unmarked ones faint, to fill in with pencil", () => {
+  const c = C.withSkill(base(), "analyze-data", { adv: 1 });
+  const icons = layout(c).pages[0].filter((o) => o.kind === "icon" && /-die$/.test(o.name));
+  assert.equal(icons.length, P.skillRows().length * 4);
+  const row = icons.filter((o) => o.y > 85.2 && o.y < 100.3);
+  assert.deepEqual(row.map((o) => [o.name, Boolean(o.ghost)]),
+    [["advantage-die", false], ["advantage-die", true], ["challenge-die", true], ["challenge-die", true]]);
 });
 
 test("trained skills print their %, untrained ones print nothing; Anything Else is 50%", () => {
@@ -79,16 +88,27 @@ test("Handle and Name both print; Appearance has Pronouns, Physical Appearance a
     "NETWORK DEFAULT", "A paper crane."]) assert.ok(text.includes(s), s);
 });
 
-test("Influence prints as current / starting; Luck, XP, archetype and origin print", () => {
+test("what changes in play is left for pencil: current luck and influence blank, XP and influence as ____ / most", () => {
   const c = { ...base(), startingInfluence: 3, currentInfluence: 1, maxLuck: 100, currentLuck: 40, xpAvailable: 4, xpSpent: 6 };
-  const text = allText(layout(c).pages);
-  for (const s of ["1 / 3", "40", "100", "Bruiser", "Synthetic"]) assert.ok(text.includes(s), s);
-  assert.ok(/\b4\b/.test(text) && text.includes("6 SPENT"));
+  const texts = layout(c).pages[0].filter((o) => o.kind === "text").map((o) => o.text);
+  for (const s of ["/ 3", "/ 10", "100", "Bruiser", "Synthetic"]) assert.ok(texts.includes(s), s);
+  for (const s of ["40", "1", "4", "1 / 3"]) assert.ok(!texts.includes(s), `${s} is printed`);
 });
 
-test("wounds fill that many of the four boxes", () => {
-  const boxes = layout({ ...base(), wounds: 3 }).pages[0].filter((o) => o.kind === "check" && o.group === "wounds");
-  assert.deepEqual(boxes.map((o) => o.checked), [true, true, true, false]);
+test("wounds, Unconscious and Dead are always blank, for pencil", () => {
+  const boxes = layout({ ...base(), wounds: 3 }).pages[0].filter((o) => o.kind === "check" && ["wounds", "state"].includes(o.group));
+  assert.equal(boxes.length, 6);
+  assert.ok(boxes.every((o) => !o.checked));
+});
+
+test("each weapon's keywords sit in its own box", () => {
+  const weapon = (description, keywords) => C.newGear({ kind: "weapon", description, category: "Shotgun", keywords });
+  const c = { ...base(), gear: [weapon("Pump shotgun", ["Close Range"]), weapon("Sawn-off", ["Compact"])] };
+  const { pages, boxes } = layout(c);
+  const kw = (text) => pages[0].find((o) => o.kind === "text" && o.text.includes(text));
+  assert.equal(kw("Close Range").box, "weapon1");
+  assert.equal(kw("Compact").box, "weapon2");
+  assert.ok(boxes.weapon2.y - boxes.weapon1.y > 60);
 });
 
 test("perks go in Character Perks, augmentations in Body Perks", () => {
@@ -132,11 +152,22 @@ test("gear: starting items are checked; the first two weapons fill the Weapons s
   assert.ok(page1.includes("Pistol A") && page1.includes("Pistol B") && !page1.includes("Pistol C"));
 });
 
-test("conditions go in Additional Traits; Repercussions and Story Rewards and Liability print", () => {
+test("intrinsic conditions go in Additional Traits, passing ones don't; Repercussions and Story Rewards and Liability print", () => {
   const c = { ...base(), liability: "Owes the Tanaka family.", story: "Burned a contact.",
     conditions: [{ name: "Exhausted", severity: 2 }, { name: "Armored", severity: 1, intrinsic: true }] };
   const text = allText([layout(c).pages[1]]);
-  for (const s of ["Owes the Tanaka family.", "Burned a contact.", "Exhausted x2", "Armored (intrinsic)"]) assert.ok(text.includes(s), s);
+  for (const s of ["Owes the Tanaka family.", "Burned a contact.", "Armored (intrinsic)"]) assert.ok(text.includes(s), s);
+  assert.ok(!text.includes("Exhausted"));
+});
+
+test("the writing boxes are ruled for pencil, about 15 pt apart, and printed text sits on the lines", () => {
+  const c = { ...base(), liability: "Owes the Tanaka family." };
+  const { pages, boxes } = layout(c);
+  const b = boxes.liability;
+  const rules = pages[1].filter((o) => o.kind === "line" && o.color === "faint" && o.x1 === b.x && o.y1 > b.y && o.y1 <= b.y + b.h + 0.01);
+  assert.equal(rules.length, Math.floor(b.h / 15));
+  const line = pages[1].find((o) => o.kind === "text" && o.text.startsWith("Owes"));
+  assert.ok(Math.abs(rules[0].y1 - line.y) < 4, "the text sits just above the first line");
 });
 
 test("winAnsi: keeps what the standard fonts can draw and replaces the rest", () => {

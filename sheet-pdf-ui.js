@@ -14,7 +14,7 @@
   // page is opened from disk.
   const FONTS_SCRIPT = "fonts/sheet-fonts.js";
   // The layout's colour roles, as greys: it all prints in black and white.
-  const GREYS = { ink: 0.11, muted: 0.42, faint: 0.7, wash: 0.9, paper: 1 };
+  const GREYS = { ink: 0.11, muted: 0.42, faint: 0.7, empty: 0.8, wash: 0.9, paper: 1 };
 
   // Adds a <script> once and resolves with the global it defines. The CDN ones are checked against their hashes.
   const loading = {};
@@ -105,7 +105,7 @@
             const x = o.x - icon.x * scale, y = o.y - icon.y * scale;
             for (const p of icon.paths) {
               if (p.role === "paper-stroke") svg(page, p.d, { x, y, scale, stroke: color("paper"), strokeWidth: p.width * scale });
-              else svg(page, p.d, { x, y, scale, fill: color(p.role === "paper" ? "paper" : "ink"), evenOdd: p.evenOdd });
+              else svg(page, p.d, { x, y, scale, fill: color(p.role === "paper" ? "paper" : o.color), evenOdd: p.evenOdd });
             }
             break;
           }
