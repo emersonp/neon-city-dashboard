@@ -19,6 +19,9 @@
   const RULEBOOK = { enemies: window.NCD_ENEMIES.enemies, tables: window.NCD_TABLES, hazards: window.NCD_HAZARDS.hazards };
   const ENEMY_TYPES = window.NCD_ENEMIES.TYPES;
   const { damageLabel } = window.NCD_HAZARDS;
+  const { PORTRAIT_DIR } = window.NCD_CHARACTERS;
+  const K = window.NCD_CONDITIONS;
+  const CUI = window.NCD_CONDITIONS_UI;
 
   const ICON_COLOR = { "advantage-die": "adv", boon: "adv", "challenge-die": "chal", drawback: "chal" };
   const rich = (s) => `<div class="ability-text">${formatDescription(s, (name) => icon(name, ICON_COLOR[name] ?? ""))}</div>`;
@@ -567,6 +570,10 @@
       <wa-input size="s" type="number" min="1" placeholder="${label}" aria-label="${label}"></wa-input>
       <wa-button size="s" type="submit" appearance="outlined">${sign < 0 ? "Take" : "Add"}</wa-button></form>`;
 
+  // An enemy's conditions (of its id), or the scene's (of ""): the chips, each opening its dialog, and a button to add one.
+  const runConditions = (holder, of) => `<div class="run-conditions">${CUI.chipsHTML(holder, { clickable: true, of })}
+      <wa-button size="s" appearance="plain" data-add-condition="${esc(of)}"><wa-icon slot="start" name="plus"></wa-icon>condition</wa-button></div>`;
+
   function runCard(e, state, on) {
     const t = state.track[e.id];
     const goal = state.mainGoal === e.id;
@@ -579,6 +586,7 @@
         parts.push(stepper("wounds", e.id, t.wounds, [-1, 1], "Wounds"),
           `<wa-switch size="s" data-run-toggle="defeated" data-id="${esc(e.id)}" ${t.defeated ? "checked" : ""}>Defeated</wa-switch>`);
       }
+      parts.push(runConditions(t, e.id));
     } else {
       parts.push(stepper("progress", e.id, `${t.progress} / ${e.difficulty}`, [-10, -1, 1, 10], "Progress"));
       if (!t.irreparable) parts.push(quick("progress", e.id, "Progress", 1));
@@ -595,8 +603,9 @@
       ? [e.def.text && `*${e.def.text}*`, ...e.def.attacks.map(([n, x]) => `**${n}:** ${x}`), ...e.def.perks.map(([n, x]) => `**${n}:** ${x}`)]
       : [e.def.text, e.kind === "hazard" && e.def.effect];
     return `<article class="run-element${done ? " done" : ""}${on ? " on" : ""}${goal ? " main-goal" : ""}" data-kind="${e.kind}" data-turn="${e.kind === "hazard" ? "hazard" : "antagonists"}">
-        <header><h3>${esc(e.name)}${goal ? ' <span class="goal-badge">Main Goal</span>' : ""}</h3>
-          <p class="ability-tag">${esc([e.def.name !== e.name && e.def.name, elementTag(e)].filter(Boolean).join(" · "))}</p></header>
+        <header>${e.kind === "enemy" && e.def.portrait ? `<img class="portrait run-portrait" src="${PORTRAIT_DIR}enemies/${esc(e.def.portrait)}" alt="" width="256" height="256" loading="lazy">` : ""}
+          <div><h3>${esc(e.name)}${goal ? ' <span class="goal-badge">Main Goal</span>' : ""}</h3>
+          <p class="ability-tag"><span class="kind-badge" data-kind="${e.kind}">${KIND_NAMES[e.kind]}</span> ${esc([e.def.name !== e.name && e.def.name, elementTag(e)].filter(Boolean).join(" · "))}</p></div></header>
         ${rollButtons}${parts.join("")}
         <details class="run-details"><summary>${e.kind === "enemy" ? "Stat block" : "Description"}</summary>${rich(statBlock.filter(Boolean).join("\n\n") || "*No description.*")}</details>
       </article>`;
@@ -609,7 +618,8 @@
     $("runner-head").innerHTML = `<section class="runner-head">
         <div><h2>${esc(state.name || "Untitled scene")}</h2>
           <p class="ability-tag">${modeName(state.mode)}${state.mode === "legwork" && conflict ? " · now a conflict" : ""}${linked ? "" : " · counting turns here (no overlay)"}</p>
-          ${state.notes ? rich(state.notes) : ""}</div>
+          ${state.notes ? rich(state.notes) : ""}
+          ${runConditions(state, "")}</div>
         ${conflict ? `<div class="initiative-cycle runner-initiative" data-phase="${phase}">
             <div class="initiative-turn">
               <wa-button size="s" appearance="outlined" data-turn-step="-1"><wa-icon name="arrow-left" label="Previous turn"></wa-icon></wa-button>
@@ -666,6 +676,10 @@
     }
     const roll = e.target.closest("[data-roll]");
     if (roll) { rollAttack(roll.dataset.roll, Number(roll.dataset.attack)); return; }
+    const addCondition = e.target.closest("[data-add-condition]");
+    if (addCondition) { openAddCondition(addCondition.dataset.addCondition || null); return; }
+    const chip = e.target.closest(".condition[data-condition]");
+    if (chip) { openCondition(chip.dataset.conditionOf || null, chip.dataset.condition); return; }
     const picker = e.target.closest("[data-add-picker]");
     if (picker && e.target.closest("[data-add-go]")) {
       const element = pickedCopy(picker, { elements: run().elements });
@@ -698,7 +712,25 @@
     if (form && e.key === "Enter") { e.preventDefault(); form.requestSubmit(); }
   });
 
-  // One click rolls an attack: its hit chance as the target (a plain d100 when its text can't be read). It goes where
+  // ---- conditions: an enemy's (id) or the scene's (id null), through conditions-ui.js's dialogs ----
+  const conditionHolder = (id) => (open?.mode !== "run" ? null : id == null ? run() : run().track[id] ?? null);
+  const conditionFor = (id) => (id == null ? "The scene" : run().elements.find((e) => e.id === id)?.name ?? "");
+  function applyCondition(id, fn) {
+    const holder = conditionHolder(id);
+    if (!holder) return false;
+    dispatch({ type: "conditions", id, conditions: fn(holder).conditions });
+    return true;
+  }
+  const openAddCondition = (id) => CUI.openAdd({
+    forText: conditionFor(id), suggestions: K.SUGGESTIONS[id == null ? "scene" : "enemy"], intrinsic: false,
+    apply: (fn) => applyCondition(id, fn),
+  });
+  const openCondition = (id, conditionId) => CUI.openChange({
+    id: conditionId, forText: conditionFor(id), holder: () => conditionHolder(id), apply: (fn) => applyCondition(id, fn),
+  });
+
+  // One click rolls an attack: its hit chance as the target (a plain d100 when its text can't be read), with the
+  // advantage and challenge dice picked beside the roll (reset after each roll, like the Dashboard's). It goes where
   // Dashboard rolls go (the overlay, and Discord with Send to Discord on), unless Keep hidden is on for it.
   let rolling = false;
   async function rollAttack(id, index) {
@@ -712,7 +744,9 @@
       : `${a.hit}%${a.damage != null ? `, ${a.damage}${a.type ? ` ${a.type}` : ""} damage on a hit` : ""}`;
     $("runner-roll-label").textContent = `${a.label}: ${what}${hidden ? " · kept hidden" : ""}`;
     try {
-      await APP.playRoll(DICE.roll({ target: a.hit }), { result: $("runner-result"), skill: a.label, hidden });
+      const pools = { advantage: $("runner-adv").value, challenge: $("runner-chal").value };
+      $("runner-adv").value = $("runner-chal").value = "0";
+      await APP.playRoll(DICE.roll({ target: a.hit, ...pools }), { result: $("runner-result"), skill: a.label, hidden });
     } finally {
       rolling = false;
     }

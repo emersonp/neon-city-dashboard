@@ -1173,13 +1173,20 @@ html:not(.bevel).wa-dark .portrait-frame { filter: drop-shadow(0 0 6px color-mix
   border: 1px solid var(--color-rule); border-radius: var(--wa-border-radius-m); background: var(--color-paper-2);
   transition: opacity var(--dur-normal) var(--ease-out), box-shadow var(--dur-normal) var(--ease-out);
 }
+/* its kind's color down the left edge, like the Builder's kind badges */
+.run-element { --kc: var(--color-turn-antagonists); box-shadow: inset 3px 0 0 var(--kc); }
+.run-element[data-kind="objective"] { --kc: var(--color-holo-text); }
+.run-element[data-kind="hazard"] { --kc: var(--color-turn-hazard); }
+.run-element header { display: flex; align-items: center; gap: var(--wa-space-s); }
 .run-element header h3 { margin: 0; }
 .run-element header .ability-tag { margin: 0; }
+.run-element header .kind-badge { margin-right: var(--wa-space-2xs); }
+.run-portrait { flex: none; width: 4rem; }
 .run-element.main-goal { border-color: var(--color-accent); }
 /* defeated or dealt with: still there, to see and undo */
 .run-element.done { opacity: 0.45; }
 /* whose turn it is */
-.run-element.on { --tc: var(--color-turn-hazard); border-color: var(--tc); box-shadow: 0 0 0 1px var(--tc), 0 0 14px color-mix(in oklch, var(--tc) 40%, transparent); }
+.run-element.on { --tc: var(--color-turn-hazard); border-color: var(--tc); box-shadow: inset 3px 0 0 var(--kc), 0 0 0 1px var(--tc), 0 0 14px color-mix(in oklch, var(--tc) 40%, transparent); }
 .run-element.on[data-turn="antagonists"] { --tc: var(--color-turn-antagonists); }
 .run-stepper { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--wa-space-2xs) var(--wa-space-s); }
 .run-steps { display: flex; align-items: center; gap: var(--wa-space-2xs); }
@@ -1190,6 +1197,8 @@ html:not(.bevel).wa-dark .portrait-frame { filter: drop-shadow(0 0 6px color-mix
 .run-status.irreparable { color: var(--color-bad); font-weight: 700; }
 .run-attacks { display: flex; flex-wrap: wrap; gap: var(--wa-space-2xs); }
 .run-attack-numbers { margin-left: var(--wa-space-2xs); color: var(--wa-color-text-quiet); font-family: var(--font-mono); font-size: var(--wa-font-size-2xs); }
+.run-conditions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--wa-space-2xs); }
+.runner-head .run-conditions { margin-top: var(--wa-space-xs); }
 .run-details summary { cursor: pointer; color: var(--wa-color-text-quiet); font-size: var(--wa-font-size-s); }
 
 /* Influence is the second light: cyan wherever its icon appears (stat boxes, rules text, the Databank), as on the

@@ -6,6 +6,7 @@
 // ever shown in Create (create.js), never Edit or Run.
 (function () {
   const C = window.NCD_CHARACTERS;
+  const CUI = window.NCD_CONDITIONS_UI;
   const APP = window.NCD_APP;
   const store = window.NCD_STORE;
   const SESSION = window.NCD_SESSION;
@@ -486,7 +487,7 @@
             <wa-button size="s" appearance="plain" variant="danger" data-gear-action="remove" title="Remove">
               <wa-icon name="trash" label="Remove"></wa-icon></wa-button>` : ""}
           ${GEAR_UI.keywordChipsHTML(g)}
-          ${conditionsHTML(g, { clickable: changeable, gearId: g.id })}
+          ${CUI.chipsHTML(g, { clickable: changeable, of: g.id })}
         </li>`).join("")}</ul>`
       : `<p class="gear-empty">None</p>`;
   }
@@ -702,22 +703,10 @@
     removing = null;
   });
 
-  // ---- conditions: chips on the character and under gear; in Run and Edit a chip opens its dialog ----
+  // ---- conditions: chips on the character and under gear; in Run and Edit a chip opens its dialog (conditions-ui.js) ----
   // Run saves each change right away; Edit keeps them in the draft until Save. Nothing posts to Discord.
-  function conditionsHTML(holder, { clickable = false, gearId = null } = {}) {
-    const list = C.conditions(holder);
-    if (!list.length) return "";
-    return `<div class="condition-list">${list.map((x) => {
-      const name = x.intrinsic ? `<i title="Intrinsic">${escapeHTML(x.name)}</i>` : escapeHTML(x.name);
-      const sev = C.severityLabel(x.severity);
-      const inner = `${name}${sev ? ` <span class="condition-severity">${sev}</span>` : ""}`;
-      return clickable
-        ? `<button type="button" class="condition" data-severity="${x.severity}" data-condition="${escapeHTML(x.id)}" data-gear-of="${escapeHTML(gearId ?? "")}">${inner}</button>`
-        : `<span class="condition" data-severity="${x.severity}">${inner}</span>`;
-    }).join("")}</div>`;
-  }
   function renderConditions(el, holder, options = {}) {
-    el.innerHTML = conditionsHTML(holder, options) || `<p class="gear-empty">None</p>`;
+    el.innerHTML = CUI.chipsHTML(holder, options) || `<p class="gear-empty">None</p>`;
   }
 
   // The character (gearId null) or one of its gear items, from the draft while editing.
@@ -746,78 +735,14 @@
     refreshConditions();
     return true;
   }
-  const showSeverity = (stepper, severity) => {
-    stepper.querySelector("[data-severity-value]").textContent = `x${severity}`;
-    stepper.querySelector('[data-severity="-1"]').disabled = severity <= 1;
-    stepper.querySelector('[data-severity="1"]').disabled = severity >= C.MAX_SEVERITY;
-  };
-  const showFor = (el, gearId) => {
-    el.hidden = gearId == null;
-    el.textContent = gearId == null ? "" : holderOf(gearId)?.description ?? "";
-  };
-
-  const addDialog = $("condition-add-dialog");
-  const addName = $("condition-name");
-  const addSeverity = $("condition-add-severity");
-  const addIntrinsic = $("condition-intrinsic");
-  let adding = { gearId: null, severity: 1 };
-  function openAddCondition(gearId = null) {
-    adding = { gearId, severity: 1 };
-    showFor($("condition-add-for"), gearId);
-    $("condition-suggestions").innerHTML = C.CONDITION_SUGGESTIONS[gearId == null ? "character" : "gear"]
-      .map((name) => `<button type="button" class="condition" data-suggestion="${escapeHTML(name)}">${escapeHTML(name)}</button>`).join("");
-    addName.value = "";
-    addIntrinsic.checked = false;
-    showSeverity(addSeverity, 1);
-    addDialog.open = true;
-  }
-  function addCondition() {
-    const name = text(addName.value);
-    if (!name) { addName.focus(); return; }
-    if (!changeHolder(adding.gearId, (h) => C.withCondition(h, { name, severity: adding.severity, intrinsic: addIntrinsic.checked }))) return;
-    addDialog.open = false;
-  }
-  $("condition-suggestions").addEventListener("click", (e) => {
-    const chip = e.target.closest("[data-suggestion]");
-    if (!chip) return;
-    addName.value = chip.dataset.suggestion;
-    addName.focus();
+  // A gear item's conditions name it in their dialogs.
+  const forText = (gearId) => (gearId == null ? "" : holderOf(gearId)?.description ?? "");
+  const openAddCondition = (gearId = null) => CUI.openAdd({
+    forText: forText(gearId), suggestions: C.CONDITION_SUGGESTIONS[gearId == null ? "character" : "gear"],
+    apply: (fn) => changeHolder(gearId, fn),
   });
-  addSeverity.addEventListener("click", (e) => {
-    const step = Number(e.target.closest("[data-severity]")?.dataset.severity);
-    if (!step) return;
-    adding.severity = Math.max(1, Math.min(C.MAX_SEVERITY, adding.severity + step));
-    showSeverity(addSeverity, adding.severity);
-  });
-  $("condition-add").addEventListener("click", addCondition);
-  addName.addEventListener("keydown", (e) => { if (e.key === "Enter") addCondition(); });
-
-  const conditionDialog = $("condition-dialog");
-  const conditionSeverity = $("condition-severity");
-  let changing = { gearId: null, id: null };
-  const changingCondition = () => C.conditions(holderOf(changing.gearId)).find((x) => String(x.id) === String(changing.id)) ?? null;
-  function showConditionDialog() {
-    const x = changingCondition();
-    if (!x) { conditionDialog.open = false; return; }
-    conditionDialog.label = x.name;
-    showFor($("condition-for"), changing.gearId);
-    $("condition-intrinsic-note").hidden = !x.intrinsic;
-    showSeverity(conditionSeverity, x.severity);
-  }
-  function openCondition(gearId, id) {
-    changing = { gearId, id };
-    showConditionDialog();
-    conditionDialog.open = true;
-  }
-  conditionSeverity.addEventListener("click", (e) => {
-    const step = Number(e.target.closest("[data-severity]")?.dataset.severity);
-    const x = changingCondition();
-    if (!step || !x) return;
-    if (changeHolder(changing.gearId, (h) => C.withSeverity(h, x.id, x.severity + step))) showConditionDialog();
-  });
-  $("condition-remove").addEventListener("click", () => {
-    const x = changingCondition();
-    if (x && changeHolder(changing.gearId, (h) => C.withoutCondition(h, x.id))) conditionDialog.open = false;
+  const openCondition = (gearId, id) => CUI.openChange({
+    id, forText: forText(gearId), holder: () => holderOf(gearId), apply: (fn) => changeHolder(gearId, fn),
   });
 
   for (const el of [running, form]) {
@@ -826,7 +751,7 @@
       const add = e.target.closest('[data-gear-action="condition"]');
       if (add) { openAddCondition(add.closest("[data-gear]").dataset.gear); return; }
       const chip = e.target.closest(".condition[data-condition]");
-      if (chip) openCondition(chip.dataset.gearOf || null, chip.dataset.condition);
+      if (chip) openCondition(chip.dataset.conditionOf || null, chip.dataset.condition);
     });
   }
 

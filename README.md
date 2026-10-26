@@ -119,8 +119,10 @@ node --test tests/dice.test.cjs tests/discord.test.cjs tests/characters.test.cjs
 | `app.js` | Theme, tabs, settings, the dice pools, the roller and result panel, posting to Discord, and the Databank and GM Screen tabs |
 | `config.js` | Shared settings for everyone: Discord emoji codes and the published address (no webhook) |
 | `dice.js` | Dice rules (no page code, so it's testable in Node) |
-| `characters.js` | Archetypes, origins, random handles and names, gear items and conditions, Create's choices, saving characters (needs `dice.js`; testable in Node) |
-| `roster.js` | Roster tab and the Character tab, including the condition chips and dialogs |
+| `characters.js` | Archetypes, origins, random handles and names, gear items and their conditions, Create's choices, saving characters (needs `dice.js` and `conditions.js`; testable in Node) |
+| `conditions.js` | Conditions on anything that holds them (a character, a gear item, an enemy or a scene in the Scene Runner): adding, worsening, severity, removing, and the suggestions for each (testable in Node) |
+| `conditions-ui.js` | Conditions on the page: the chips, the New condition dialog and a condition's dialog, shared by the Character tab and the Scene Runner |
+| `roster.js` | Roster tab and the Character tab, including where its conditions go |
 | `create.js` | Create mode: a new character built step by step from `rules.js` (step header, the archetype and origin picked so far, Back/Next/Finish, Discard, each step's controls) |
 | `abilities.js` | The perk and augmentation catalog; edit it to add abilities |
 | `rules.js` | Rulebook data for Create and the Databank: archetype intros and "on the job" text, skills, initiative, knows, starting gear templates; origin intros, options, Advancement text and augmentation gear; the sentences every archetype or origin section repeats (`text`) (needs `characters.js`; testable in Node) |

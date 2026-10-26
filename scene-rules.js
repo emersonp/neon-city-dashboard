@@ -190,18 +190,20 @@
   // ---- running a scene: apply(state, action) → state ----
   // The run state is { sceneId, name, mode, notes, mainGoal, elements (copied from the saved scene when the run
   // starts, plus any added during it), track: { [element id]: tracking }, initiative: { conflict, phase, round },
-  // notices }. An element's tracking is { luck (null without), size (a squad's, else null), wounds, defeated, progress,
-  // dealt (marked Dealt with by hand), deteriorating (0 to 4), irreparable, progressed (this round) }.
+  // notices, conditions (the scene's own: conditions.js) }. An element's tracking is { luck (null without), size (a
+  // squad's, else null), wounds, defeated, progress, dealt (marked Dealt with by hand), deteriorating (0 to 4),
+  // irreparable, progressed (this round), conditions (an enemy's) }.
   // notices are what the last round's start did to objectives: [{ id, deteriorating }] or [{ id, irreparable: true }].
   // roundsStarted is the furthest round the run has reached, so stepping back into a round and on again doesn't start
   // the next one a second time.
   const OVERLAY = () => root.NCD_OVERLAY;
+  const CONDITIONS = () => root.NCD_CONDITIONS;
   const MAX_DETERIORATING = 4;
 
   const newTrack = (e) => ({
     luck: e.kind === "enemy" && !isSquad(e.def) ? e.def.luck : null,
     size: e.kind === "enemy" && isSquad(e.def) ? e.size : null,
-    wounds: 0, defeated: false, progress: 0, dealt: false, deteriorating: 0, irreparable: false, progressed: false,
+    wounds: 0, defeated: false, progress: 0, dealt: false, deteriorating: 0, irreparable: false, progressed: false, conditions: [],
   });
   const startInitiative = (conflict) => ({ ...OVERLAY().NO_CONFLICT, conflict });
   const element = (state, id) => state.elements.find((e) => e.id === id);
@@ -246,7 +248,7 @@
       return {
         sceneId: scene.id, name: scene.name, mode: scene.mode, notes: scene.notes, mainGoal: scene.mainGoal, elements,
         track: Object.fromEntries(elements.map((e) => [e.id, newTrack(e)])),
-        initiative: startInitiative(scene.mode === "conflict"), roundsStarted: 1, notices: [],
+        initiative: startInitiative(scene.mode === "conflict"), roundsStarted: 1, notices: [], conditions: [],
       };
     },
     luck: (state, { id, delta }) => retrack(state, id, (t, e) => (t.luck == null ? {} : { luck: clamp(t.luck + delta, 0, e.def.luck) })),
@@ -257,6 +259,11 @@
     progress: (state, { id, delta }) => retrack(state, id, (t, e) => (e.kind === "enemy" || t.irreparable ? {}
       : { progress: clamp(t.progress + delta, 0, e.difficulty), progressed: t.progressed || delta > 0 })),
     dealt: (state, { id }) => retrack(state, id, (t) => ({ dealt: !t.dealt })),
+    // An enemy's conditions (id), or the scene's (id null), as a whole new list.
+    conditions: (state, { id = null, conditions }) => {
+      const list = CONDITIONS().conditions({ conditions });
+      return id == null ? { ...state, conditions: list } : retrack(state, id, (t, e) => (e.kind === "enemy" ? { conditions: list } : {}));
+    },
     // A turn on (step 1) or back (-1), when the Runner keeps the initiative itself (no OBS)...
     step: (state, { step }) => toInitiative(state, OVERLAY().stepInitiative(state.initiative, step)),
     // ...or what the overlay says it is, when it does.
@@ -327,6 +334,7 @@
         wounds: count(t.wounds), defeated: t.defeated === true, progress: clamp(count(t.progress), 0, e.difficulty ?? 0),
         dealt: t.dealt === true, deteriorating: count(t.deteriorating, MAX_DETERIORATING),
         irreparable: t.irreparable === true, progressed: t.progressed === true,
+        conditions: e.kind === "enemy" ? CONDITIONS().conditions(t) : [],
       }];
     }));
     const ids = new Set(elements.map((e) => e.id));
@@ -337,6 +345,7 @@
       sceneId: str(raw.sceneId), name: str(raw.name), mode: MODES.includes(raw.mode) ? raw.mode : "legwork", notes: str(raw.notes),
       mainGoal: ids.has(raw.mainGoal) ? raw.mainGoal : null, elements, track,
       initiative, roundsStarted: Math.max(initiative.round, whole(raw.roundsStarted, 1, 99999, 1)), notices,
+      conditions: CONDITIONS().conditions(raw),
     };
   }
 

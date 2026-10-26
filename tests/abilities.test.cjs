@@ -2,6 +2,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 require("../dice.js");
+require("../conditions.js");
 require("../characters.js");
 require("../abilities.js");
 require("../shared.js");

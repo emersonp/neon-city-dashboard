@@ -148,32 +148,8 @@
   }
   const withoutGear = (character, id) => ({ ...character, gear: gear(character).filter((g) => g.id !== id) });
 
-  // ---- conditions: on a character or a gear item (a "holder"); the name and intrinsic never change once added ----
-  // Severity is 1-4; 1 isn't shown. Suggestions are offered when adding one.
-  const MAX_SEVERITY = 4;
-  const CONDITION_SUGGESTIONS = {
-    character: ["Exhausted", "Memory Loss", "Debilitated", "Overloaded", "Poisoned", "Sickened", "Heavily Encumbered"],
-    gear: ["Damaged", "Hard to Work On", "Not Quite Right", "Bulky", "Overclocked", "Overloaded"],
-  };
-  const clampSeverity = (v) => clampInt(v, { min: 1, max: MAX_SEVERITY, fallback: 1 });
-  const conditionKey = (name) => String(name ?? "").trim().toLowerCase();
-  const conditions = (holder) => (Array.isArray(holder?.conditions) ? holder.conditions : [])
-    .filter((x) => x && typeof x === "object" && String(x.name ?? "").trim())
-    .map((x) => ({ id: x.id ?? newId(), name: String(x.name).trim(), severity: clampSeverity(x.severity), intrinsic: x.intrinsic === true }));
-  const severityLabel = (severity) => (severity > 1 ? `x${severity}` : "");
-  // Adding a name that's already there (ignoring case) worsens that one instead, as in the rulebook.
-  function withCondition(holder, { name, severity = 1, intrinsic = false }) {
-    const key = conditionKey(name);
-    if (!key) return holder;
-    const list = conditions(holder);
-    const same = list.find((x) => conditionKey(x.name) === key);
-    return { ...holder, conditions: same
-      ? list.map((x) => (x === same ? { ...x, severity: clampSeverity(x.severity + clampSeverity(severity)) } : x))
-      : [...list, { id: newId(), name: String(name).trim(), severity: clampSeverity(severity), intrinsic: intrinsic === true }] };
-  }
-  const withSeverity = (holder, id, severity) =>
-    ({ ...holder, conditions: conditions(holder).map((x) => (x.id === id ? { ...x, severity: clampSeverity(severity) } : x)) });
-  const withoutCondition = (holder, id) => ({ ...holder, conditions: conditions(holder).filter((x) => x.id !== id) });
+  // ---- conditions: on a character or a gear item (the rules are conditions.js's, shared with the Scene Runner) ----
+  const { MAX_SEVERITY, SUGGESTIONS: CONDITION_SUGGESTIONS, conditions, severityLabel, withCondition, withSeverity, withoutCondition } = root.NCD_CONDITIONS;
 
   // ---- abilities (perks and augmentations): ids from the catalog in abilities.js ----
   // The saved ids, without junk or repeats. Ids not in the catalog are kept (a broken abilities.js mustn't erase them);

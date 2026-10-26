@@ -3,6 +3,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 require("../shared.js");
 require("../dice.js");
+require("../conditions.js");
 require("../characters.js");
 require("../format.js");
 require("../databank.js");

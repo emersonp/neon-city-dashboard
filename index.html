@@ -371,7 +371,10 @@
                 <div id="runner-add"></div>
               </div>
               <aside class="runner-side">
-                <!-- the last roll made here; with Keep hidden on, the next roll goes nowhere else -->
+                <!-- the dice the next attack rolls with (app.js fills the pools; they reset after each roll), the last roll
+                     made here, and Keep hidden: with it on, the next roll goes nowhere else -->
+                <wa-radio-group id="runner-adv" class="pool adv" orientation="horizontal" value="0" data-pool="adv"></wa-radio-group>
+                <wa-radio-group id="runner-chal" class="pool chal" orientation="horizontal" value="0" data-pool="chal"></wa-radio-group>
                 <p class="runner-roll-label" id="runner-roll-label" aria-live="polite">Click an attack to roll it.</p>
                 <section class="result" id="runner-result" aria-live="polite" data-steady></section>
                 <wa-switch id="runner-hidden">Keep the next roll hidden</wa-switch>
@@ -826,7 +829,8 @@
     </wa-button>
   </wa-dialog>
 
-  <!-- New condition (Run and Edit), on the character or a gear item. Suggestions fill in the name. -->
+  <!-- New condition (conditions-ui.js): on a character or a gear item (Run and Edit), or an enemy or the scene (the
+       Scene Runner). Suggestions fill in the name. -->
   <wa-dialog id="condition-add-dialog" label="New condition" light-dismiss>
     <div class="condition-form">
       <p class="condition-for" id="condition-add-for" hidden></p>
@@ -848,7 +852,7 @@
     </wa-button>
   </wa-dialog>
 
-  <!-- A condition (clicking its chip in Run or Edit): severity, and remove. Name and intrinsic can't change. -->
+  <!-- A condition (clicking its chip; conditions-ui.js): severity, and remove. Name and intrinsic can't change. -->
   <wa-dialog id="condition-dialog" label="Condition" light-dismiss>
     <div class="condition-form">
       <p class="condition-for" id="condition-for" hidden></p>
@@ -1027,6 +1031,7 @@
   <script src="dice.js"></script>
   <script src="discord.js"></script>
   <script src="abilities.js"></script>
+  <script src="conditions.js"></script>
   <script src="characters.js"></script>
   <script src="rules.js"></script>
   <script src="databank.js"></script>
@@ -1044,6 +1049,7 @@
   <script src="app.js"></script>
   <script src="gear-ui.js"></script>
   <script src="create.js"></script>
+  <script src="conditions-ui.js"></script>
   <script src="roster.js"></script>
   <script src="scene-rules.js"></script>
   <script src="scene-runner.js"></script>

@@ -7,6 +7,7 @@ require("../tables.js");
 require("../enemies.js");
 require("../hazards.js");
 require("../overlay-rules.js");
+require("../conditions.js");
 require("../scene-rules.js");
 
 const S = globalThis.NCD_SCENES;
@@ -394,7 +395,9 @@ test("storage: custom items, scenes and the open scene save and load back, under
 test("storage: a reload mid-run gets back everything being tracked", () => {
   const storage = memory();
   const state = run(started(), { type: "luck", id: "vex", delta: -30 }, { type: "size", id: "squad", size: 2 },
-    { type: "wounds", id: "exec", delta: 1 }, { type: "progress", id: "lock", delta: 10 }, ...round(), ...round(), ...step(2));
+    { type: "wounds", id: "exec", delta: 1 }, { type: "progress", id: "lock", delta: 10 }, ...round(), ...round(), ...step(2),
+    { type: "conditions", id: "vex", conditions: [{ id: "a", name: "Shocked", severity: 2 }] },
+    { type: "conditions", conditions: [{ id: "b", name: "Obscured", severity: 4 }] });
   S.saveOpen(storage, { mode: "run", run: state });
   assert.deepEqual(S.loadOpen(storage), { mode: "run", run: state });
 });
@@ -452,4 +455,22 @@ test("run: a villain at 0 luck fights on with wounds, so it's out of the way onl
   const state = run(started(), { type: "luck", id: "exec", delta: -275 });
   assert.equal(S.dealtWith(state, "exec"), false);
   assert.equal(S.done(run(state, { type: "defeated", id: "exec" }), "exec"), true);
+});
+
+test("run: enemies and the scene itself have conditions, cleaned like a character's; objectives and hazards don't", () => {
+  const K = globalThis.NCD_CONDITIONS;
+  let state = started();
+  assert.deepEqual([state.conditions, track(state, "vex").conditions], [[], []]);
+  state = run(state,
+    { type: "conditions", id: "vex", conditions: K.withCondition(track(state, "vex"), { name: "Shocked", severity: 2 }).conditions },
+    { type: "conditions", conditions: K.withCondition(state, { name: "Obscured", severity: 9 }).conditions },
+    { type: "conditions", id: "cams", conditions: [{ name: "Nope" }] },
+    { type: "conditions", id: "squad", conditions: [null, { name: " " }, { id: "x", name: "Dark" }] });
+  assert.deepEqual(K.conditions(track(state, "vex")).map((x) => [x.name, x.severity]), [["Shocked", 2]]);
+  assert.deepEqual(state.conditions.map((x) => [x.name, x.severity]), [["Obscured", 4]]);
+  assert.deepEqual(track(state, "cams").conditions, []);
+  assert.deepEqual(track(state, "squad").conditions.map((x) => x.name), ["Dark"]);
+  // removing one is a list without it
+  const id = state.conditions[0].id;
+  assert.deepEqual(run(state, { type: "conditions", conditions: K.withoutCondition(state, id).conditions }).conditions, []);
 });
