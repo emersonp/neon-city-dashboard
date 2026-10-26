@@ -10,32 +10,27 @@
     fontkit: { src: "https://cdn.jsdelivr.net/npm/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js",
       integrity: "sha512-nN5LMjOUxjpCutlx3vCE453XaDaDYhjwM+0uYxHMo7wVW9SLhLi6kspqdcuWGrLYHkENUwtkiNeSlVflBQAQGQ==" },
   };
-  // The layout's font roles: Chakra Petch for headings, labels and skill names; Barlow Semi Condensed to read.
-  const FONT_FILES = { display: "fonts/ChakraPetch-Bold.ttf", label: "fonts/ChakraPetch-SemiBold.ttf",
-    body: "fonts/BarlowSemiCondensed-Regular.ttf", strong: "fonts/BarlowSemiCondensed-SemiBold.ttf" };
+  // The layout's font roles (display, label, body, strong), as base64 in fonts/sheet-fonts.js: Chakra Petch for
+  // headings, labels and skill names, Barlow Semi Condensed to read. A <script>, not fetch(), so it also loads when the
+  // page is opened from disk.
+  const FONTS_SCRIPT = "fonts/sheet-fonts.js";
   // The layout's colour roles, as greys: it all prints in black and white.
   const GREYS = { ink: 0.11, muted: 0.42, faint: 0.7, wash: 0.9, paper: 1 };
 
+  // Adds a <script> once and resolves with the global it defines. The CDN ones are checked against their hashes.
   const loading = {};
-  function loadScript(name) {
+  function loadScript(name, attrs, what) {
     if (root[name]) return Promise.resolve(root[name]);
     loading[name] ??= new Promise((resolve, reject) => {
-      const script = Object.assign(document.createElement("script"), { ...SCRIPTS[name], crossOrigin: "anonymous" });
+      const script = Object.assign(document.createElement("script"), attrs);
       script.onload = () => resolve(root[name]);
-      script.onerror = () => { delete loading[name]; script.remove(); reject(new Error("Couldn't load the PDF library.")); };
+      script.onerror = () => { delete loading[name]; script.remove(); reject(new Error(`Couldn't load ${what}.`)); };
       document.head.append(script);
     });
     return loading[name];
   }
-  let fontBytes = null;
-  async function loadFonts() {
-    fontBytes ??= Promise.all(Object.entries(FONT_FILES).map(async ([role, file]) => {
-      const res = await fetch(file);
-      if (!res.ok) throw new Error(`Couldn't load ${file}.`);
-      return [role, await res.arrayBuffer()];
-    })).then(Object.fromEntries).catch((err) => { fontBytes = null; throw err; });
-    return fontBytes;
-  }
+  const loadLibrary = (name) => loadScript(name, { ...SCRIPTS[name], crossOrigin: "anonymous" }, "the PDF library");
+  const loadFonts = () => loadScript("NCD_SHEET_FONTS", { src: FONTS_SCRIPT }, "the PDF's fonts");
 
   // icons.js's markup as paths: { d, role: "ink" | "paper" | "paper-stroke", evenOdd, width }.
   const iconPaths = {};
@@ -120,13 +115,14 @@
     }
   }
 
-  // The character's sheet as PDF bytes (a Uint8Array). Node tooling can pass pdf-lib, fontkit and the font files in.
+  // The character's sheet as PDF bytes (a Uint8Array). Node tooling can pass pdf-lib, fontkit and the fonts in.
   async function build(character, { L, fontkit, files, punk = root.NCD_STORE?.get("sheetPunk") === "1" } = {}) {
-    [L, fontkit, files] = await Promise.all([L ?? loadScript("PDFLib"), fontkit ?? loadScript("fontkit"), files ?? loadFonts()]);
+    [L, fontkit, files] = await Promise.all([L ?? loadLibrary("PDFLib"), fontkit ?? loadLibrary("fontkit"), files ?? loadFonts()]);
     const doc = await L.PDFDocument.create();
     doc.registerFontkit(fontkit);
     const fonts = {};
-    for (const [role, bytes] of Object.entries(files)) fonts[role] = await doc.embedFont(bytes, { subset: true });
+    // pdf-lib takes the base64 text as it is
+    for (const [role, data] of Object.entries(files)) fonts[role] = await doc.embedFont(data, { subset: true });
     const measure = (text, size, role) => (fonts[role] ?? fonts.body).widthOfTextAtSize(text, size);
     draw(L, doc, fonts, P.layout(character, { abilities: root.NCD_ABILITIES ?? [], measure, punk }));
     doc.setTitle(`${P.winAnsi(String(character?.handle ?? "").trim() || "Character")}: character sheet`);
@@ -144,5 +140,5 @@
     setTimeout(() => URL.revokeObjectURL(url), 10000);
   }
 
-  root.NCD_SHEET_PDF_UI = { FONT_FILES, build, download };
+  root.NCD_SHEET_PDF_UI = { build, download };
 })(globalThis);
