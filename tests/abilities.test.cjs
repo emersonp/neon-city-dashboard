@@ -48,23 +48,40 @@ test("catalog: every entry is valid", () => {
   }
 });
 
+// A character in its default body, with no abilities unless given.
+const blank = (fields = {}) => ({ abilities: [], defaultBody: C.newBody(), shell: null, ...fields });
+
 test("abilities: ids in saved order, add and remove", () => {
   const cat = [perk("a"), perk("b")];
-  let c = C.withAbility({}, "b"); c = C.withAbility(c, "a"); c = C.withAbility(c, "a");
+  let c = C.withAbility(blank(), "b"); c = C.withAbility(c, "a"); c = C.withAbility(c, "a");
   assert.deepEqual(c.abilities, ["b", "a"]);
   assert.deepEqual(C.abilities(c, cat).map((a) => a.id), ["b", "a"]);
   assert.deepEqual(C.withoutAbility(c, "b").abilities, ["a"]);
   assert.deepEqual(C.newCharacter().abilities, []);
 });
 
+test("abilities: perks are the mind's, augmentations the body's (the shell's, while one is loaded)", () => {
+  let c = C.withAbility(C.withAbility(blank(), "deadshot"), "synthetic-body");
+  assert.deepEqual(c.abilities, ["deadshot"]);
+  assert.deepEqual(c.defaultBody.augmentations, ["synthetic-body"]);
+  assert.deepEqual(C.abilityIds(c), ["deadshot", "synthetic-body"]);
+  const shelled = { ...c, shell: { ...C.newBody(), augmentations: ["extra-arms"] } };
+  assert.deepEqual(C.abilityIds(shelled), ["deadshot", "extra-arms"]);
+  // adding and removing change the default body, never the shell
+  c = C.withAbility(shelled, "hulking-frame");
+  assert.deepEqual(c.defaultBody.augmentations, ["synthetic-body", "hulking-frame"]);
+  assert.deepEqual(C.withoutAbility(c, "synthetic-body").defaultBody.augmentations, ["hulking-frame"]);
+  assert.deepEqual(C.withoutAbility(c, "extra-arms").shell.augmentations, ["extra-arms"]);
+});
+
 test("abilities: skips unknown and duplicate ids", () => {
-  assert.deepEqual(C.abilities({ abilities: ["a", "gone", "a"] }, [perk("a")]).map((a) => a.id), ["a"]);
+  assert.deepEqual(C.abilities(blank({ abilities: ["a", "gone", "a"] }), [perk("a")]).map((a) => a.id), ["a"]);
 });
 
 test("abilities: tolerates bad saved data", () => {
-  assert.deepEqual(C.abilities({}, [perk("a")]), []);
-  assert.deepEqual(C.abilities({ abilities: "a" }, [perk("a")]), []);
-  assert.deepEqual(C.abilities({ abilities: [null, 3, "a"] }, [perk("a")]).map((a) => a.id), ["a"]);
+  assert.deepEqual(C.abilities(blank({ abilities: undefined }), [perk("a")]), []);
+  assert.deepEqual(C.abilities(blank({ abilities: "a" }), [perk("a")]), []);
+  assert.deepEqual(C.abilities(blank({ abilities: [null, 3, "a"] }), [perk("a")]).map((a) => a.id), ["a"]);
 });
 
 test("abilityTag", () => {
@@ -95,6 +112,6 @@ test("findAbilities: drops empty groups", () => {
 });
 
 test("abilityIds: keeps saved ids the catalog doesn't know, so a broken catalog can't erase them on Save", () => {
-  assert.deepEqual(C.abilityIds({ abilities: ["a", "gone", 3, null, "a"] }), ["a", "gone"]);
-  assert.deepEqual(C.abilityIds({}), []);
+  assert.deepEqual(C.abilityIds(blank({ abilities: ["a", "gone", 3, null, "a"] })), ["a", "gone"]);
+  assert.deepEqual(C.abilityIds(blank({ abilities: undefined })), []);
 });

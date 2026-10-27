@@ -82,7 +82,7 @@ test("every area to know about has a box, and only the known ones are checked", 
 });
 
 test("Handle and Name both print; Appearance has Pronouns, Physical Appearance and Network Default", () => {
-  const c = { ...base(), appearance: { pronouns: "she/her", physical: "Chrome jaw.", network: "A paper crane." } };
+  const c = { ...C.withPhysical(base(), "Chrome jaw."), appearance: { pronouns: "she/her", network: "A paper crane." } };
   const text = allText(layout(c).pages);
   for (const s of ["Glitch", "Mara Voss", "HANDLE", "NAME", "PRONOUNS", "she/her", "PHYSICAL APPEARANCE", "Chrome jaw.",
     "NETWORK DEFAULT", "A paper crane."]) assert.ok(text.includes(s), s);
@@ -109,6 +109,14 @@ test("each weapon's keywords sit in its own box", () => {
   assert.equal(kw("Close Range").box, "weapon1");
   assert.equal(kw("Compact").box, "weapon2");
   assert.ok(boxes.weapon2.y - boxes.weapon1.y > 60);
+});
+
+test("a loaded shell isn't printed: the sheet is the default body's", () => {
+  const c = { ...C.withPhysical(base(), "Chrome jaw."), shell: { ...C.newBody(), type: "quick", name: "Courier", appearance: "Forgettable.",
+    skills: { "shoot-someone": { value: 75 } } } };
+  const text = allText(layout(c).pages);
+  assert.ok(text.includes("Chrome jaw."));
+  assert.ok(!text.includes("Forgettable."));
 });
 
 test("perks go in Character Perks, augmentations in Body Perks", () => {

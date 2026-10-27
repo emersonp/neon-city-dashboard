@@ -174,12 +174,16 @@ test("Gossip with AI is mental, after Goad Someone; Heal Someone is physical, af
   assert.equal(ids.indexOf("heal-someone"), ids.indexOf("drive-or-pilot-something") + 1);
 });
 
+// A character with no skills set, in its default body; `skills` (full states) go through withSkill.
+const blank = (skills = {}, fields = {}) => Object.entries(skills)
+  .reduce((c, [id, s]) => C.withSkill(c, id, s), { skills: {}, defaultBody: C.newBody(), shell: null, ...fields });
+
 test("a skill with no entry is null with no dice, and shows as 50", () => {
-  const s = C.skill({}, "analyze-data");
+  const s = C.skill(blank(), "analyze-data");
   assert.deepEqual(s, { value: null, adv: 0, chal: 0 });
   assert.equal(C.shownValue(s.value), 50);
   assert.equal(C.shownValue(70), 70);
-  assert.deepEqual(C.skill({ skills: { "analyze-data": { value: 60 } } }, "analyze-data"), { value: 60, adv: 0, chal: 0 });
+  assert.deepEqual(C.skill({ ...blank(), skills: { "analyze-data": { value: 60 } } }, "analyze-data"), { value: 60, adv: 0, chal: 0 });
 });
 
 test("only skills with a value or intrinsic dice are shown on the sheet", () => {
@@ -204,23 +208,53 @@ test("incrementing goes up by 5 and stops at 95", () => {
 });
 
 test("withSkill updates one skill without touching the original", () => {
-  const c = { skills: { "run-like-hell": { value: 60, adv: 1, chal: 0 } } };
+  const c = blank({ "run-like-hell": { value: 60, adv: 1, chal: 0 } });
   const next = C.withSkill(c, "run-like-hell", { value: null });
-  assert.deepEqual(next.skills["run-like-hell"], { value: null, adv: 1, chal: 0 });
-  assert.equal(c.skills["run-like-hell"].value, 60);
-  const dice = C.withSkill({}, "heal-someone", { adv: 9, chal: -1 });
-  assert.deepEqual(dice.skills["heal-someone"], { value: null, adv: 2, chal: 0 });
+  assert.deepEqual(C.skill(next, "run-like-hell"), { value: null, adv: 1, chal: 0 });
+  assert.equal(C.skill(c, "run-like-hell").value, 60);
+  const dice = C.withSkill(blank(), "heal-someone", { adv: 9, chal: -1 });
+  assert.deepEqual(C.skill(dice, "heal-someone"), { value: null, adv: 2, chal: 0 });
+});
+
+test("each skill is split between the mind and the default body, as the shell overlay covers it", () => {
+  const c = blank({ "analyze-data": { value: 70, adv: 1, chal: 1 }, "sneak-around": { value: 65, adv: 2, chal: 0 },
+    "initiative-in-the-world": { value: 60 } });
+  // mental: value is the mind's, dice the body's; physical: value is the body's, dice the mind's; initiatives: the mind's
+  assert.deepEqual(c.skills, { "analyze-data": { value: 70 }, "sneak-around": { adv: 2, chal: 0 },
+    "initiative-in-the-world": { value: 60, adv: 0, chal: 0 } });
+  assert.deepEqual(c.defaultBody.skills, { "analyze-data": { adv: 1, chal: 1 }, "sneak-around": { value: 65 } });
+  assert.deepEqual(C.bodySkills({ "analyze-data": { value: 70, adv: 0, chal: 0 }, "sneak-around": { value: 65, adv: 1, chal: 0 } }),
+    { "sneak-around": { value: 65 } });
+});
+
+test("in a shell, the shell's half of each skill counts; withSkill still changes the default body", () => {
+  const c = blank({ "analyze-data": { value: 70, adv: 1, chal: 0 }, "sneak-around": { value: 65, adv: 1, chal: 0 } });
+  const shelled = { ...c, shell: { ...C.newBody(), skills: { "gossip-with-ai": { adv: 2 }, "conceal-an-object": { value: 75 } } } };
+  assert.equal(C.inShell(shelled), true);
+  assert.deepEqual(C.skill(shelled, "analyze-data"), { value: 70, adv: 0, chal: 0 }); // the default body's dice are gone
+  assert.deepEqual(C.skill(shelled, "gossip-with-ai"), { value: null, adv: 2, chal: 0 });
+  assert.deepEqual(C.skill(shelled, "sneak-around"), { value: null, adv: 1, chal: 0 }); // the mind's dice stay
+  assert.equal(C.skill(shelled, "conceal-an-object").value, 75);
+  const edited = C.withSkill(shelled, "sneak-around", { value: 70 });
+  assert.equal(edited.defaultBody.skills["sneak-around"].value, 70);
+  assert.equal(C.skill(edited, "sneak-around").value, null);
+  assert.equal(C.skill(C.withoutShell(edited), "sneak-around").value, 70);
+});
+
+test("a save from before shells throws when it's read", () => {
+  assert.throws(() => C.skill({ handle: "Old", skills: {} }, "analyze-data"), /Old has no default body/);
 });
 
 test("intrinsic dice go up to 2 of each, and older saves read back clamped", () => {
   assert.equal(C.MAX_INTRINSIC, 2);
-  assert.deepEqual(C.skill({ skills: { "sneak-around": { value: 60, adv: 4, chal: 3 } } }, "sneak-around"),
-    { value: 60, adv: 2, chal: 2 });
+  const c = { ...blank(), skills: { "sneak-around": { adv: 4, chal: 3 } }, defaultBody: { ...C.newBody(), skills: { "sneak-around": { value: 60 } } } };
+  assert.deepEqual(C.skill(c, "sneak-around"), { value: 60, adv: 2, chal: 2 });
 });
 
 test("skills that are back to default are dropped from storage", () => {
-  const next = C.withSkill({ skills: { "sneak-around": { value: 55, adv: 0, chal: 0 } } }, "sneak-around", { value: null });
+  const next = C.withSkill(blank({ "sneak-around": { value: 55, adv: 0, chal: 0 } }), "sneak-around", { value: null });
   assert.equal("sneak-around" in next.skills, false);
+  assert.equal("sneak-around" in next.defaultBody.skills, false);
 });
 
 test("new characters start with no skills set", () => {
@@ -252,12 +286,20 @@ test("current luck stays between 0 and max", () => {
 
 // ---- wounds ----
 
-test("wounds are 0-4, defaulting to 0", () => {
-  assert.equal(C.newCharacter().wounds, 0);
-  assert.equal(C.wounds({}), 0);
-  assert.equal(C.wounds({ wounds: 3 }), 3);
-  assert.equal(C.wounds({ wounds: 9 }), 4);
-  assert.equal(C.wounds({ wounds: -1 }), 0);
+test("wounds are 0-4, defaulting to 0, and each body keeps its own", () => {
+  assert.equal(C.wounds(C.newCharacter()), 0);
+  const at = (n) => blank({}, { defaultBody: { ...C.newBody(), wounds: n } });
+  assert.equal(C.wounds(at(undefined)), 0);
+  assert.equal(C.wounds(at(3)), 3);
+  assert.equal(C.wounds(at(9)), 4);
+  assert.equal(C.wounds(at(-1)), 0);
+  const shelled = { ...at(2), shell: C.newBody() };
+  assert.equal(C.wounds(shelled), 0);
+  const hurt = C.withWounds(shelled, 3);
+  assert.equal(C.wounds(hurt), 3);
+  assert.equal(hurt.defaultBody.wounds, 2);
+  assert.equal(C.wounds(C.withoutShell(hurt)), 2);
+  assert.equal(C.withWounds(at(1), 7).defaultBody.wounds, 4);
 });
 
 test("clicking a wound box marks up to it; clicking the last marked box unmarks it", () => {
@@ -279,11 +321,15 @@ test("skills can be marked used and unmarked, without touching the original", ()
   assert.deepEqual(C.withUsed(used, "sneak-around", false).used, {});
 });
 
-test("only trained skills can be marked used", () => {
-  const c = { skills: { "shoot-someone": { value: 60, adv: 0, chal: 0 }, "heal-someone": { value: null, adv: 2, chal: 0 } } };
+test("only trained skills can be marked used, and in a shell, no physical ones", () => {
+  const c = blank({ "shoot-someone": { value: 60, adv: 0, chal: 0 }, "heal-someone": { value: null, adv: 2, chal: 0 },
+    "analyze-data": { value: 60 } });
   assert.equal(C.canBeUsed(c, "shoot-someone"), true);
   assert.equal(C.canBeUsed(c, "heal-someone"), false);
   assert.equal(C.canBeUsed(c, "anything-else"), false);
+  const shelled = { ...c, shell: { ...C.newBody(), skills: { "shoot-someone": { value: 75 } } } };
+  assert.equal(C.canBeUsed(shelled, "shoot-someone"), false);
+  assert.equal(C.canBeUsed(shelled, "analyze-data"), true);
 });
 
 // ---- influence ----
@@ -345,9 +391,14 @@ test("XP total is spent plus available, both whole and never negative", () => {
   assert.deepEqual(C.xp({ xpSpent: -3 }), { spent: 0, available: 0, total: 0 });
 });
 
-test("appearance fields default to empty text", () => {
-  assert.deepEqual(C.appearance({}), { pronouns: "", physical: "", network: "" });
-  assert.equal(C.appearance({ appearance: { pronouns: "they/them" } }).pronouns, "they/them");
+test("appearance fields default to empty text; the physical one is the body's", () => {
+  assert.deepEqual(C.appearance(blank()), { pronouns: "", physical: "", network: "" });
+  assert.equal(C.appearance(blank({}, { appearance: { pronouns: "they/them" } })).pronouns, "they/them");
+  const tall = C.withPhysical(blank(), " Tall ");
+  assert.equal(C.appearance(tall).physical, "Tall");
+  const shelled = { ...tall, shell: { ...C.newBody(), appearance: "Forgettable" } };
+  assert.equal(C.appearance(shelled).physical, "Forgettable");
+  assert.equal(C.withFeature(shelled, "Solid steel teeth").defaultBody.appearance, "Tall Solid steel teeth.");
 });
 
 test("withTrait adds a trait to the physical appearance as a sentence, and swaps the last one while it's at the end", () => {
@@ -362,14 +413,14 @@ test("withTrait adds a trait to the physical appearance as a sentence, and swaps
 });
 
 test("initiatives are rolled like skills, but never marked used", () => {
-  const c = C.withSkill({}, "initiative-in-the-world", { value: 60 });
+  const c = C.withSkill(blank(), "initiative-in-the-world", { value: 60 });
   assert.equal(C.skill(c, "initiative-in-the-world").value, 60);
   assert.equal(C.canBeUsed(c, "initiative-in-the-world"), false);
 });
 
 // ---- Create mode ----
 const R = globalThis.NCD_RULES, CAT = globalThis.NCD_ABILITIES;
-const make = (changes = {}) => ({ ...C.newCharacter(), handle: "Zed", appearance: { physical: "Tall" }, creation: { ...C.newCreation(), ...changes } });
+const make = (changes = {}) => ({ ...C.withPhysical(C.newCharacter(), "Tall"), handle: "Zed", creation: { ...C.newCreation(), ...changes } });
 const applied = (changes) => C.applyCreation(make(changes), R, CAT);
 const sk = (c, id) => C.skill(c, id);
 const clone = (x) => JSON.parse(JSON.stringify(x));
@@ -407,7 +458,10 @@ test("applyCreation: bumps add 5, untrained becomes 55, capped at 95", () => {
 
 test("applyCreation: abilities are perk, automatic augmentations, chosen augmentations, option perk", () => {
   const c = applied({ archetype: "Assassin", origin: "Synthetic", perk: "deadshot", augmentations: ["extra-arms"], option: "network-native" });
-  assert.deepEqual(c.abilities, ["deadshot", "synthetic-body", "extra-arms", "installation-wizard"]);
+  // perks are the mind's, augmentations the default body's
+  assert.deepEqual(c.abilities, ["deadshot", "installation-wizard"]);
+  assert.deepEqual(c.defaultBody.augmentations, ["synthetic-body", "extra-arms"]);
+  assert.deepEqual(C.abilityIds(c), ["deadshot", "installation-wizard", "synthetic-body", "extra-arms"]);
   assert.equal(c.origin, "Synthetic");
 });
 
@@ -530,7 +584,7 @@ test("stepComplete", () => {
   // details
   assert.equal(ok({}, "details"), true);
   assert.equal(C.stepComplete({ ...make(done), handle: "  " }, "details", R, CAT), false);
-  assert.equal(C.stepComplete({ ...make(done), appearance: { physical: " " } }, "details", R, CAT), false); // physical appearance required
+  assert.equal(C.stepComplete(C.withPhysical(make(done), " "), "details", R, CAT), false); // physical appearance required
   // review
   assert.equal(ok({}, "review"), true);
   assert.equal(ok({ perk: null }, "review"), false);
@@ -665,7 +719,7 @@ test("create gear: origin step needs the augmentation gear picks", () => {
 });
 
 test("create gear: old creation shape still loads", () => {
-  const c = C.applyCreation({ id: "x", creation: { archetype: "Assassin", gear: { 0: 0 } } }, R, CAT);
+  const c = C.applyCreation({ ...blank(), id: "x", creation: { archetype: "Assassin", gear: { 0: 0 } } }, R, CAT);
   assert.equal(c.gear[0].category, "Pistol");
   assert.deepEqual(c.gear[0].keywords, ["Compact", "Rail"]);
 });
@@ -690,7 +744,8 @@ test("jobs: Start Job resets to starting values and saves the starting gear", ()
   const C = globalThis.NCD_CHARACTERS;
   const sword = { ...C.newProp("Sword", true), conditions: [{ id: "d", name: "Damaged" }, { id: "s", name: "Sharp", intrinsic: true }] };
   const loot = C.newProp("Loot");
-  const c = { id: "c", maxLuck: 90, currentLuck: 10, startingInfluence: 3, currentInfluence: 0, wounds: 3,
+  const c = { ...blank({}, { defaultBody: { ...C.newBody(), wounds: 3 }, shell: C.newBody() }),
+    id: "c", maxLuck: 90, currentLuck: 10, startingInfluence: 3, currentInfluence: 0,
     used: { "sneak-around": true }, gear: [sword, loot],
     conditions: [{ id: "e", name: "Exhausted" }, { id: "o", name: "One-eyed", intrinsic: true }] };
   assert.equal(C.inJob(c), false);
@@ -698,7 +753,8 @@ test("jobs: Start Job resets to starting values and saves the starting gear", ()
   assert.equal(C.inJob(s), true);
   assert.equal(s.currentLuck, 90);
   assert.equal(s.currentInfluence, 3);
-  assert.equal(s.wounds, 0);
+  assert.equal(C.wounds(s), 0);
+  assert.equal(C.inShell(s), false); // and back in the default body
   assert.deepEqual(s.used, {});
   assert.deepEqual(C.conditions(s).map((x) => x.name), ["One-eyed"]);
   assert.deepEqual(C.gear(s).map((g) => [g.description, C.conditions(g).map((x) => x.name)]), [["Sword", ["Sharp"]]]);
@@ -710,7 +766,7 @@ test("jobs: Start Job resets to starting values and saves the starting gear", ()
 test("jobs: starting gear lost or changed on the job comes back; Edit's Starter changes count", () => {
   const C = globalThis.NCD_CHARACTERS;
   const sword = C.newProp("Sword", true), deck = C.newProp("Deck", true);
-  let s = C.startJob({ id: "c", gear: [sword, deck] });
+  let s = C.startJob({ ...blank(), id: "c", gear: [sword, deck] });
   s = C.withoutGear(s, sword.id);
   s = C.withGear(s, { ...C.gear(s)[0], quantity: 0, description: "Broken deck" });
   s = C.withGear(s, C.newProp("Loot"));
@@ -727,8 +783,8 @@ test("jobs: starting gear lost or changed on the job comes back; Edit's Starter 
 
 test("jobs: End Session raises each used skill by 1 (to 95) and clears Used", () => {
   const C = globalThis.NCD_CHARACTERS;
-  let c = { id: "c", skills: { "sneak-around": { value: 60 }, "shoot-someone": { value: 95 }, "lie-to-someone": { value: 70 } },
-    used: { "sneak-around": true, "shoot-someone": true } };
+  let c = { ...blank({ "sneak-around": { value: 60 }, "shoot-someone": { value: 95 }, "lie-to-someone": { value: 70 } }),
+    id: "c", used: { "sneak-around": true, "shoot-someone": true } };
   const { character, bumped } = C.endSession(c);
   assert.deepEqual(bumped, ["sneak-around"]);
   assert.equal(C.skill(character, "sneak-around").value, 61);
@@ -736,10 +792,10 @@ test("jobs: End Session raises each used skill by 1 (to 95) and clears Used", ()
   assert.equal(C.skill(character, "lie-to-someone").value, 70);
   assert.deepEqual(character.used, {});
   // the initiatives are never used, so never go up, and aren't offered as untrained skills
-  const init = { skills: { "initiative-in-the-world": { value: 60 } }, used: { "initiative-in-the-world": true } };
+  const init = { ...blank({ "initiative-in-the-world": { value: 60 } }), used: { "initiative-in-the-world": true } };
   assert.equal(C.canBeUsed(init, "initiative-in-the-world"), false);
   assert.deepEqual(C.endSession(init).bumped, []);
-  assert.equal(C.untrainedSkills({}).includes("initiative-in-the-network"), false);
+  assert.equal(C.untrainedSkills(blank()).includes("initiative-in-the-network"), false);
 });
 
 test("liability: free text, asked for by Finish Job only when there's none, and kept after", () => {
@@ -751,7 +807,7 @@ test("liability: free text, asked for by Finish Job only when there's none, and 
   assert.equal(C.liability(c), "Gambling debts");
   assert.equal(C.needsLiability(c), false);
 
-  const run = C.startJob({ id: "c" });
+  const run = C.startJob({ ...blank(), id: "c" });
   const rest = { improvement: "xp", successful: false };
   assert.equal(C.finishMissing(run, rest), "liability");
   assert.equal(C.finishMissing(run, { ...rest, liability: " " }), "liability");
@@ -769,7 +825,7 @@ test("repercussions and story rewards: free text, replaced by Finish Job only wh
   const C = globalThis.NCD_CHARACTERS;
   assert.equal(C.newCharacter().story, "");
   assert.equal(C.story({}), "");
-  const c = C.withStory({ id: "c", liability: "Debts" }, "  Owes Vex a favor.\nKnown at the Lotus. ");
+  const c = C.withStory({ ...blank(), id: "c", liability: "Debts" }, "  Owes Vex a favor.\nKnown at the Lotus. ");
   assert.equal(C.story(c), "Owes Vex a favor.\nKnown at the Lotus.");
 
   const run = C.startJob(c);
@@ -783,9 +839,9 @@ test("repercussions and story rewards: free text, replaced by Finish Job only wh
 test("jobs: Finish Job applies the improvement and reward, and leaves the job", () => {
   const C = globalThis.NCD_CHARACTERS;
   const coat = C.newProp("Coat", true);
-  const base = C.startJob({ id: "c", maxLuck: 100, startingInfluence: 2, xpAvailable: 1, xpSpent: 4, liability: "Debts",
-    skills: { "sneak-around": { value: 60 } }, gear: [coat] });
-  const run = C.withGear(C.withUsed({ ...base, currentLuck: 5, wounds: 2 }, "sneak-around", true), C.newProp("Loot"));
+  const base = C.startJob({ ...blank({ "sneak-around": { value: 60 } }), id: "c", maxLuck: 100, startingInfluence: 2, xpAvailable: 1,
+    xpSpent: 4, liability: "Debts", gear: [coat] });
+  const run = C.withGear(C.withUsed(C.withWounds({ ...base, currentLuck: 5 }, 2), "sneak-around", true), C.newProp("Loot"));
 
   assert.equal(C.finishMissing(run, {}), "improvement");
   assert.equal(C.finishMissing(run, { improvement: "skill", skill: "sneak-around" }), "skill");
@@ -804,7 +860,7 @@ test("jobs: Finish Job applies the improvement and reward, and leaves the job", 
   assert.equal(C.skill(f, "goad-someone").value, 55);
   assert.equal(C.xp(f).available, 4);
   assert.equal(f.currentLuck, 100);
-  assert.equal(f.wounds, 0);
+  assert.equal(C.wounds(f), 0);
   assert.equal(f.lastJobSuccessful, true);
   assert.deepEqual(C.gear(f).map((g) => [g.description, g.starter]), [["Coat", true], ["Lucky coin", true]]);
 
@@ -814,10 +870,13 @@ test("jobs: Finish Job applies the improvement and reward, and leaves the job", 
   assert.deepEqual(C.gear(f)[0].keywords, ["Cybernetic"]);
 
   // a distinctive feature: the trait goes at the end of the physical appearance, as a sentence
-  ({ character: f } = C.finishJob({ ...run, appearance: { physical: "Tall." } }, { improvement: "luck", successful: true, xp: 0, reward: "feature", feature: "Solid steel teeth" }));
+  // (on the default body, even when the job ends in a shell)
+  const tall = { ...C.withPhysical(run, "Tall."), shell: { ...C.newBody(), appearance: "Forgettable" } };
+  ({ character: f } = C.finishJob(tall, { improvement: "luck", successful: true, xp: 0, reward: "feature", feature: "Solid steel teeth" }));
+  assert.equal(C.inShell(f), false);
   assert.equal(C.appearance(f).physical, "Tall. Solid steel teeth.");
   // and not on a failed job
-  ({ character: f } = C.finishJob({ ...run, appearance: { physical: "Tall." } }, { improvement: "luck", successful: false, reward: "feature", feature: "Solid steel teeth" }));
+  ({ character: f } = C.finishJob(tall, { improvement: "luck", successful: false, reward: "feature", feature: "Solid steel teeth" }));
   assert.equal(C.appearance(f).physical, "Tall.");
 
   // failed: 1 XP whatever's entered, and the next job starts with 1 less Influence

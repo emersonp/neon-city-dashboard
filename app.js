@@ -2,7 +2,7 @@
 (function () {
   const DICE = window.NCD_DICE;
   const C = window.NCD_CHARACTERS;
-  const { buildMessage, influenceMessage, isWebhookUrl, send } = window.NCD_DISCORD;
+  const { buildMessage, influenceMessage, shellMessage, isWebhookUrl, send } = window.NCD_DISCORD;
   const { svg: icon } = window.NCD_ICONS;
   const store = window.NCD_STORE;
   const SESSION = window.NCD_SESSION;
@@ -281,6 +281,12 @@
   function postInfluence(delta, remaining) {
     const { username, avatarUrl } = sender();
     return post(influenceMessage(playerName(), delta, remaining, { emoji, username, avatarUrl }), "Influence changed");
+  }
+
+  // A shell loaded, left, or destroyed (discord.js's shellMessage says what `event` holds).
+  function postShell(event) {
+    const { username, avatarUrl } = sender();
+    return post(shellMessage(playerName(), event, { emoji, username, avatarUrl }), "Shell changed");
   }
 
   // ---- rolling ----
@@ -655,6 +661,6 @@
   }
 
   // For the Character tab (roster.js) and the Scene Runner (scene-runner.js).
-  window.NCD_APP = { KINDS, toast, targetField, makeRoller, playRoll, showResult, postRoll, postInfluence, clearResult, emptyResult, tablePicker,
+  window.NCD_APP = { KINDS, toast, targetField, makeRoller, playRoll, showResult, postRoll, postInfluence, postShell, clearResult, emptyResult, tablePicker,
     showCustomLists };
 })();

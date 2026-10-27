@@ -810,6 +810,22 @@ button.condition:hover, button.condition:focus-visible { background: color-mix(i
 .keyword-tip { max-width: 20rem; text-align: start; }
 .keyword-tip p { margin: 0 0 0.5em; }
 .gear-list li:has(.condition-list) { flex-wrap: wrap; }
+/* ---- shells: the loaded one on the sheet, and the Load Shell dialog ---- */
+.shell-banner { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--wa-space-s); margin: 0 0 var(--wa-space-xs); }
+.shell-name { font-weight: var(--wa-font-weight-bold); }
+.shell-perks { margin-top: var(--wa-space-xs); }
+.shell-actions { display: flex; flex-wrap: wrap; gap: var(--wa-space-xs); margin-top: var(--wa-space-s); }
+.shell-edit-note { margin: 0 0 var(--wa-space-m); color: var(--wa-color-text-quiet); font-style: italic; }
+.gear-away { margin-left: var(--wa-space-2xs); }
+.shell-form { display: flex; flex-direction: column; gap: var(--wa-space-m); }
+.shell-form p { margin: 0; }
+.shell-hint, .shell-about { color: var(--wa-color-text-quiet); font-size: var(--wa-font-size-s); }
+.shell-part { display: flex; flex-direction: column; gap: var(--wa-space-xs); }
+.shell-part h4 { margin: 0; }
+.shell-option { display: flex; flex-direction: column; }
+.shell-option-text, .shell-rules { color: var(--wa-color-text-quiet); font-size: var(--wa-font-size-s); }
+.shell-option-text p, .shell-rules p, .shell-perk p { margin: 0; }
+.shell-slots { display: grid; grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr)); gap: var(--wa-space-xs); }
 .condition-form { display: flex; flex-direction: column; gap: var(--wa-space-m); }
 .condition-for, .condition-intrinsic-note { margin: 0; }
 .condition-for { color: var(--wa-color-text-quiet); }

@@ -101,6 +101,23 @@
     };
   }
 
+  // A plain one-line message for a shell (shells.js) while running a character. `action` is "load" (with the Shell
+  // Source: { name, heat, influence } or null, and `remaining` Influence after paying it), "return" (back to the default
+  // body), or "destroyed" (`memoryLoss` is its severity now). `shell` names it ("Night Janitor · Quick Shell").
+  function shellMessage(player, { action, shell, source = null, remaining = null, memoryLoss = 1 }, { emoji, username, avatarUrl } = {}) {
+    let content;
+    if (action === "return") content = `${player} left ${shell} and is back in their default body.`;
+    else if (action === "destroyed") content = `${player}'s shell ${shell} was destroyed: back in their default body, with Memory Loss${memoryLoss > 1 ? ` x${memoryLoss}` : ""}.`;
+    else {
+      const paid = !source ? ""
+        : source.heat ? ` ${source.name}: add ${source.heat} heat to the heat pool.${emoji?.heat ? ` ${Array(source.heat).fill(emoji.heat).join(THIN)}` : ""}`
+        : source.influence ? ` ${source.name}: spent ${count(source.influence, "Influence", "Influence")}.${emoji?.influence ? ` ${emoji.influence}` : ""} ${remaining} remaining.`
+        : ` ${source.name}.`;
+      content = `${player} loaded into ${shell}.${paid}`;
+    }
+    return { ...from({ username, avatarUrl }), content };
+  }
+
   // A Discord webhook address: https://discord.com/api/webhooks/<id>/<token> (discordapp.com, ptb. and canary. work too).
   const isWebhookUrl = (value) =>
     /^https:\/\/(?:(?:ptb|canary)\.)?discord(?:app)?\.com\/api\/(?:v\d+\/)?webhooks\/\d+\/[\w-]+\/?$/.test(String(value ?? "").trim());
@@ -121,5 +138,5 @@
     return res.json();
   }
 
-  root.NCD_DISCORD = { COLORS, lines, buildMessage, influenceMessage, isWebhookUrl, send };
+  root.NCD_DISCORD = { COLORS, lines, buildMessage, influenceMessage, shellMessage, isWebhookUrl, send };
 })(globalThis);

@@ -12,8 +12,9 @@ One group of friends playing live, together, on a Discord video call. That shape
 - **The Administrator's camera is the shared state.** Heat, Group Influence, Day, Planning countdowns and initiative
   show on the OBS overlay on the Administrator's camera, which everyone is watching. They don't need to be posted to
   Discord as well.
-- **Discord gets only rolls and Influence.** The page pushes to a webhook and never reads anything back. Wounds, Luck
-  and conditions are changed on the player's own sheet and said out loud at the table.
+- **Discord gets only rolls, Influence and shells.** The page pushes to a webhook and never reads anything back. Wounds,
+  Luck and conditions are changed on the player's own sheet and said out loud at the table. Loading a shell posts too,
+  since its Shell Source may add heat for the Administrator to put in the pool.
 - **No server, no global state.** Each browser keeps its own characters and settings; there's no syncing between players
   or with the Administrator.
 
@@ -104,7 +105,7 @@ jump about and whatever goes under it stays put.
 ## Tests
 
 ```
-node --test tests/dice.test.cjs tests/discord.test.cjs tests/characters.test.cjs tests/format.test.cjs tests/abilities.test.cjs tests/rules.test.cjs tests/databank.test.cjs tests/tables.test.cjs tests/enemies.test.cjs tests/hazards.test.cjs tests/gear.test.cjs tests/overlay-rules.test.cjs tests/advancement.test.cjs tests/profiles.test.cjs tests/scene-rules.test.cjs tests/sheet-pdf.test.cjs
+node --test tests/dice.test.cjs tests/discord.test.cjs tests/characters.test.cjs tests/format.test.cjs tests/abilities.test.cjs tests/rules.test.cjs tests/databank.test.cjs tests/tables.test.cjs tests/enemies.test.cjs tests/hazards.test.cjs tests/gear.test.cjs tests/overlay-rules.test.cjs tests/advancement.test.cjs tests/profiles.test.cjs tests/scene-rules.test.cjs tests/sheet-pdf.test.cjs tests/shells.test.cjs
 ```
 
 ## What's here
@@ -121,6 +122,8 @@ node --test tests/dice.test.cjs tests/discord.test.cjs tests/characters.test.cjs
 | `dice.js` | Dice rules (no page code, so it's testable in Node) |
 | `characters.js` | Archetypes, origins, random handles and names, gear items and their conditions, Create's choices, saving characters (needs `dice.js` and `conditions.js`; testable in Node) |
 | `conditions.js` | Conditions on anything that holds them (a character, a gear item, an enemy or a scene in the Scene Runner): adding, worsening, severity, removing, and the suggestions for each (testable in Node) |
+| `shells.js` | Shells: the shell sheets (Quick Shell, Mass-Produced Synth, Utility Robot, Total Conversion Cyborg), who can load which, the Load Shell choices, loading, going back and a destroyed shell (needs `characters.js`; testable in Node) |
+| `shell-ui.js` | The Load Shell dialog |
 | `conditions-ui.js` | Conditions on the page: the chips, the New condition dialog and a condition's dialog, shared by the Character tab and the Scene Runner |
 | `roster.js` | Roster tab and the Character tab, including where its conditions go |
 | `create.js` | Create mode: a new character built step by step from `rules.js` (step header, the archetype and origin picked so far, Back/Next/Finish, Discard, each step's controls) |
@@ -317,6 +320,27 @@ that differ by origin in `ORIGIN_COST`, and the rules for each purchase. The Dat
 `tests/advancement.test.cjs` checks it.
 - **Abandon Job** (Roster, for a character on a job) asks first, then ends the job without finishing it: starting
   values and gear, with no XP or improvement.
+
+## Shells
+
+A character is a mind and a default body (`characters.js`). The sheet's right half is the body: the physical skills'
+chances, the mental skills' intrinsic dice, augmentations, the physical appearance, and wounds (`character.defaultBody`).
+The rest is the mind's, on the character. While a shell is loaded (`character.shell`, the same shape plus its type, name,
+choices and own conditions), its half of each skill counts instead, as a shell sheet laid over the right half would.
+Saves from before shells have no default body: opening one says so, and it can only be deleted.
+
+- **Load Shell** (Run's Body section) opens a dialog: pick a shell the character can load (synthetic minds only
+  synthetic shells, human minds only human ones), then make its sheet's choices: Shell Identity, Capabilities (4
+  different skills, then 2 more), the Cyborg's 2 augmentations, Shell Source, a name and an appearance. Loading
+  replaces any shell already loaded. **The Right Kind of People** takes 1 Influence off; **Kidnapping or Larceny**
+  says in the Discord post to add 4 heat. Device Driver skips Shell Source for the Synth and the Utility Robot.
+- In a shell, physical skills can't be marked Used (a covered skill can't be improved), gear with the Cybernetic
+  keyword says **In default body** and can't be rolled, and wounds go on the shell. Edit still changes the default body.
+- **Return to Default Body** and **Shell Destroyed** ask first. A destroyed shell also adds Memory Loss, or worsens it.
+  Start Job, Finish Job and Abandon Job leave the character in their default body. The PDF always prints the default body.
+
+The Total Conversion Cyborg's augmentation list is a placeholder in the book, so it offers every Synthetic
+augmentation except Synthetic Body. `tests/shells.test.cjs` checks the shells.
 
 ## Conditions
 

@@ -402,9 +402,9 @@
 
     const saveDetail = (key, value) => {
       const c = ctx.current();
-      ctx.save(key === "handle" || key === "name"
-        ? { ...c, [key]: text(value) }
-        : { ...c, appearance: { ...C.appearance(c), [key]: text(value) } });
+      ctx.save(key === "handle" || key === "name" ? { ...c, [key]: text(value) }
+        : key === "physical" ? C.withPhysical(c, value)
+        : { ...c, appearance: { ...c.appearance, [key]: text(value) } });
     };
     body.addEventListener("input", (e) => {
       const el = e.target.closest("[data-detail]");

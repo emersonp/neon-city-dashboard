@@ -17,6 +17,8 @@
   const GEAR_UI = window.NCD_GEAR_UI;
   const G = window.NCD_GEAR;
   const DICE = window.NCD_DICE;
+  const S = window.NCD_SHELLS;
+  const SHELL_UI = window.NCD_SHELL_UI;
   // The character helpers take localStorage itself, and handle it being null.
   const storage = store.raw;
 
@@ -46,7 +48,8 @@
 
   let current = null;     // the character in the Character tab
   let state = "display";  // "display" | "editing" | "running" | "finishing" | "spending" | "creating"
-  let draft = null;       // while editing: a copy holding skill, wound, gear, and ability changes until Save
+  let draft = null;       // while editing: a copy holding skill, wound, gear, and ability changes until Save (the
+                          // mind's, and the default body's: never a shell's)
 
   // A character still in creation stays out of SESSION, so Dice-tab rolls don't post as it; Finish sets it.
   const setCurrent = (character) => { current = character; SESSION.character = C.playingAs(character); };
@@ -85,9 +88,10 @@
   // Save runs in this order, so Current Luck and Current Influence are checked against the new Max and Starting values.
   // The sheet's [data-field] boxes show the same `load` values.
   const textField = (name) => ({ name, load: (c) => c[name] ?? "", save: (e, v) => { e[name] = text(v); } });
-  const appearanceField = (name) => ({
-    name, load: (c) => C.appearance(c)[name], save: (e, v) => { e.appearance = { ...C.appearance(e), [name]: text(v) }; },
-  });
+  // Pronouns and the Network default are the mind's; the physical appearance edits the default body's, even in a shell.
+  const appearanceField = (name) => name === "physical"
+    ? { name, load: (c) => C.defaultBody(c).appearance ?? "", save: (e, v) => { e.defaultBody = C.withPhysical(e, v).defaultBody; } }
+    : { name, load: (c) => C.appearance(c)[name], save: (e, v) => { e.appearance = { ...e.appearance, [name]: text(v) }; } };
   const FIELDS = [
     ...["handle", "name", "archetype", "origin"].map(textField),
     { name: "maxLuck", load: (c) => C.luck(c).max, save: (e, v) => { e.maxLuck = C.clampMaxLuck(v); } },
@@ -235,7 +239,15 @@
       : mode === "creating" || mode === "spending" ? "display" : mode;
     tab.hidden = false;
     setLabel(current.handle);
-    render();
+    try {
+      render();
+    } catch (err) {
+      // a save from before shells (characters.js): it can only be deleted
+      console.error(err);
+      APP.toast(err.message, "danger");
+      closeCharacter();
+      return;
+    }
     if (activate) customElements.whenDefined("wa-tab-group").then(() => { tabs.active = "character"; });
   }
 
@@ -261,14 +273,16 @@
       window.NCD_CREATE.render(create, current, createHooks);
     } else if (state === "editing") {
       draft = {
-        skills: { ...(current.skills ?? {}) }, wounds: C.wounds(current), gear: C.gear(current), conditions: C.conditions(current),
+        skills: { ...(current.skills ?? {}) }, defaultBody: { ...C.defaultBody(current) }, shell: null,
+        gear: C.gear(current), conditions: C.conditions(current),
         // all saved ids, even ones not in the catalog: if abilities.js fails to load, Save mustn't erase them
-        abilities: C.abilityIds(current),
+        abilities: Array.isArray(current.abilities) ? [...current.abilities] : [],
       };
+      $("shell-edit-note").hidden = !C.inShell(current);
       for (const f of FIELDS) field(f.name).value = String(f.load(current));
       showPortrait($("portrait-preview"), field("portrait").value);
       showSteppers();
-      woundsEdit.innerHTML = woundBoxes(draft.wounds, true);
+      woundsEdit.innerHTML = woundBoxes(C.wounds(draft), true);
       const known = C.knows(current);
       for (const box of knowsEdit.querySelectorAll("wa-checkbox")) box.checked = known.includes(box.value);
       showXpTotal();
@@ -284,6 +298,8 @@
       renderFields();
       if (state === "display") {
         display.querySelector("[data-run-label]").textContent = C.inJob(current) ? "Run" : "Start Job";
+        $("shell-display-section").hidden = !C.inShell(current);
+        renderShell($("shell-display"));
         renderAppearance($("appearance-display"));
         $("story-display-section").hidden = !C.story(current);
         renderStory($("story-display"));
@@ -294,6 +310,7 @@
         renderGear($("gear-display"), current);
         renderAbilities($("abilities-display"), C.abilities(current, ABILITIES));
       } else {
+        renderShell($("shell-run"), { running: true });
         renderConditions($("conditions-run"), current, { clickable: true });
         renderAppearance($("appearance-run"));
         renderStory($("story-run"));
@@ -369,13 +386,13 @@
   woundsFields.addEventListener("click", (e) => {
     const n = clickedWound(e);
     if (!n || state !== "running") return;
-    if (commit({ ...current, wounds: C.clickWound(C.wounds(current), n) })) renderFields();
+    if (commit(C.withWounds(current, C.clickWound(C.wounds(current), n)))) renderFields();
   });
   woundsEdit.addEventListener("click", (e) => {
     const n = clickedWound(e);
     if (!n) return;
-    draft.wounds = C.clickWound(draft.wounds, n);
-    woundsEdit.innerHTML = woundBoxes(draft.wounds, true);
+    draft = C.withWounds(draft, C.clickWound(C.wounds(draft), n));
+    woundsEdit.innerHTML = woundBoxes(C.wounds(draft), true);
   });
 
   // Running: the −/+ buttons beside a stat (data-<attr>="step"). `value` reads the stat, `clamp` keeps it in range,
@@ -405,11 +422,83 @@
   // ---- appearance: in the Story tab ----
   // The liability goes under it, except in Create's review (it's picked at the first End Session or Finish Job).
   const APPEARANCE = [["pronouns", "Pronouns"], ["physical", "Physical Appearance"], ["network", "Network Default"]];
+  // In a shell, the physical appearance is the shell's, and says so.
   function renderAppearance(el, { liability = true } = {}) {
     const look = C.appearance(current);
-    const field = (title, value, cls = "") => `<div class="sheet-field${cls}"><dt>${title}</dt><dd>${escapeHTML(value.trim() || "—")}</dd></div>`;
-    el.innerHTML = APPEARANCE.map(([key, title]) => field(title, look[key])).join("")
+    const field = (title, value, cls = "") => `<div class="sheet-field${cls}"><dt>${escapeHTML(title)}</dt><dd>${escapeHTML(value.trim() || "—")}</dd></div>`;
+    const titled = (key, title) => (key === "physical" && C.inShell(current) ? `${title} (${S.label(current)})` : title);
+    el.innerHTML = APPEARANCE.map(([key, title]) => field(titled(key, title), look[key])).join("")
       + (liability ? field("Liability", C.liability(current), " liability") : "");
+  }
+
+  // ---- the shell (shells.js): Display and Running show the loaded one; Running loads one, goes back, or loses it ----
+  // Each saves right away and posts to Discord. The shell's own body perks open in the ability dialog.
+  function renderShell(el, { running = false } = {}) {
+    const sheet = S.sheetOf(current);
+    if (!C.inShell(current)) { el.innerHTML = running ? `<p class="gear-empty">Default body</p>` : ""; return; }
+    const source = S.SOURCES[current.shell.source];
+    el.innerHTML = `<p class="shell-banner"><span class="shell-name">${escapeHTML(S.label(current))}</span>
+        <span class="gear-kind">${escapeHTML([sheet?.kind, source?.name].filter(Boolean).join(" · "))}</span></p>
+      ${CUI.chipsHTML(current.shell)}
+      ${sheet?.perks.length ? `<ul class="ability-list shell-perks">${sheet.perks.map((p, i) => `<li>
+        <button type="button" class="ability-name" data-shell-perk="${i}">${escapeHTML(p.name)}</button></li>`).join("")}</ul>` : ""}
+      ${running ? `<div class="shell-actions">
+        <wa-button size="s" appearance="outlined" data-shell-action="return">
+          <wa-icon slot="start" name="house-user"></wa-icon>Return to Default Body</wa-button>
+        <wa-button size="s" appearance="outlined" variant="danger" data-shell-action="destroyed">
+          <wa-icon slot="start" name="skull"></wa-icon>Shell Destroyed</wa-button>
+      </div>` : ""}`;
+  }
+  function openShellPerk(i) {
+    const perk = S.sheetOf(current)?.perks[i];
+    if (!perk) return;
+    abilityDialog.label = perk.name;
+    $("ability-body").innerHTML = `<p class="ability-tag">Body perk · ${escapeHTML(S.sheetOf(current).name)}</p>
+      <div class="ability-text">${formatDescription(perk.text, abilityIcon)}</div>`;
+    abilityDialog.open = true;
+  }
+  function loadShell() {
+    if (state !== "running") return;
+    SHELL_UI.open({ character: current, catalog: ABILITIES, onLoad: ({ character, source }) => {
+      if (!commit(character)) return false;
+      APP.postShell({ action: "load", shell: S.label(current), source: S.SOURCES[source] ?? null, remaining: C.influence(current).current });
+      render();
+      return true;
+    } });
+  }
+  // Going back and a destroyed shell both ask first.
+  const shellConfirm = $("shell-confirm-dialog");
+  let shellConfirming = null; // "return" or "destroyed"
+  function confirmShell(action) {
+    if (state !== "running" || !C.inShell(current)) return;
+    shellConfirming = action;
+    const name = S.label(current);
+    shellConfirm.label = action === "return" ? "Return to default body" : "Shell destroyed";
+    $("shell-confirm-text").textContent = action === "return"
+      ? `Leave ${name} and go back to the default body? The shell is gone once you leave it.`
+      : `${name} is destroyed: you're back in your default body, and gain Memory Loss (or it gets worse).`;
+    $("shell-confirm").textContent = action === "return" ? "Return" : "Shell Destroyed";
+    $("shell-confirm").variant = action === "return" ? "brand" : "danger";
+    shellConfirm.open = true;
+  }
+  $("shell-confirm").addEventListener("click", () => {
+    const action = shellConfirming;
+    shellConfirming = null;
+    shellConfirm.open = false;
+    if (!action || state !== "running" || !C.inShell(current)) return;
+    const shell = S.label(current);
+    if (!commit(action === "return" ? S.returnToDefault(current) : S.destroy(current))) return;
+    const memoryLoss = C.conditions(current).find((x) => x.name === S.MEMORY_LOSS)?.severity ?? 1;
+    APP.postShell({ action, shell, memoryLoss });
+    render();
+  });
+  const SHELL_ACTIONS = { load: loadShell, return: () => confirmShell("return"), destroyed: () => confirmShell("destroyed") };
+  for (const el of [display, running]) {
+    el.addEventListener("click", (e) => {
+      const perk = e.target.closest("[data-shell-perk]");
+      if (perk) { openShellPerk(Number(perk.dataset.shellPerk)); return; }
+      SHELL_ACTIONS[e.target.closest("[data-shell-action]")?.dataset.shellAction]?.();
+    });
   }
 
   // ---- repercussions and story rewards: in Display's and Running's Story tab; Running's pencil changes them in a dialog ----
@@ -479,14 +568,16 @@
     return `<wa-dropdown class="gear-roll" data-gear-roll>${button(`slot="trigger" with-caret`, "Roll…")}${
       skills.map((id) => `<wa-dropdown-item value="${id}">${escapeHTML(skillNameOf(id))}</wa-dropdown-item>`).join("")}</wa-dropdown>`;
   }
+  // In a shell, gear installed in the default body (Cybernetic) says so, and can't be rolled.
   function renderGear(el, character, { editable = false, running = false } = {}) {
     const items = C.gear(character);
     const changeable = editable || running;
+    const away = (g) => C.inShell(character) && S.isInstalled(g);
     el.innerHTML = items.length
       ? `<ul class="gear-list">${items.map((g) => `<li data-gear="${escapeHTML(g.id)}">
           ${GEAR_UI.rowHTML(g, { starter: !editable })}
           ${editable ? `<wa-switch size="small" class="gear-starter-toggle" data-gear-starter ${g.starter ? "checked" : ""}>Starting</wa-switch>` : ""}
-          ${running ? rollButtonHTML(g) : ""}
+          ${away(g) ? `<wa-badge variant="neutral" appearance="outlined" class="gear-away">In default body</wa-badge>` : running ? rollButtonHTML(g) : ""}
           ${changeable ? `<wa-button size="s" appearance="plain" data-gear-action="condition" title="Add a condition">
             <wa-icon slot="start" name="plus"></wa-icon>condition</wa-button>` : ""}
           ${changeable ? `<wa-button size="s" appearance="plain" data-gear-action="edit" title="Change">
@@ -819,7 +910,7 @@
   const search = $("ability-search");
   const choices = $("ability-choices");
   function renderChoices() {
-    const groups = C.findAbilities(ABILITIES, search.value, draft.abilities);
+    const groups = C.findAbilities(ABILITIES, search.value, C.abilityIds(draft));
     choices.innerHTML = groups.length
       ? groups.map((g) => `<h4>${escapeHTML(g.heading)}</h4><ul class="ability-choices">${g.items.map((a) => `<li>
           <button type="button" class="ability-choice" data-ability="${escapeHTML(a.id)}">
@@ -1401,10 +1492,10 @@
 
   form.addEventListener("submit", (e) => {
     e.preventDefault();
-    const edited = { ...current };
+    // the default body first, so the physical appearance field saves onto it
+    const edited = { ...current, defaultBody: draft.defaultBody };
     for (const f of FIELDS) f.save(edited, field(f.name).value);
     edited.knows = [...knowsEdit.querySelectorAll("wa-checkbox")].filter((box) => box.checked).map((box) => box.value);
-    edited.wounds = draft.wounds;
     edited.skills = draft.skills;
     edited.gear = draft.gear;
     edited.conditions = draft.conditions;

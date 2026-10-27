@@ -447,6 +447,13 @@
 
           <!-- Display -->
           <div id="character-display">
+            <!-- The loaded shell, if any (roster.js; the rules are shells.js's) -->
+            <section class="gear shell" id="shell-display-section" hidden>
+              <div class="gear-head">
+                <h3>Shell</h3>
+              </div>
+              <div id="shell-display"></div>
+            </section>
             <section class="gear conditions" id="conditions-display-section">
               <div class="gear-head">
                 <h3>Conditions</h3>
@@ -502,6 +509,17 @@
 
           <!-- Running -->
           <div id="character-running" hidden>
+            <!-- The body the mind is in: the default body, or a loaded shell, with what can be done about it -->
+            <section class="gear shell">
+              <div class="gear-head">
+                <h3>Body</h3>
+                <wa-button size="s" appearance="outlined" data-shell-action="load">
+                  <wa-icon slot="start" name="person-rays"></wa-icon>
+                  Load Shell
+                </wa-button>
+              </div>
+              <div id="shell-run"></div>
+            </section>
             <section class="gear conditions">
               <div class="gear-head">
                 <h3>Conditions</h3>
@@ -646,6 +664,7 @@
 
           <!-- Editing -->
           <form id="character-form" class="character-form" hidden>
+            <p class="shell-edit-note" id="shell-edit-note" hidden>In a shell: Edit changes the default body, not the shell.</p>
             <!-- Same layout as the sheet above: portrait and identity on the left, stat boxes on the right -->
             <div class="sheet-head">
               <div class="sheet-who">
@@ -920,6 +939,23 @@
     </wa-button>
   </wa-dialog>
 
+  <!-- Run: Load Shell (shell-ui.js draws the choices the shell sheet asks for; shells.js has the rules) -->
+  <wa-dialog id="shell-dialog" label="Load Shell" light-dismiss>
+    <div class="shell-form" id="shell-form"></div>
+    <wa-button slot="footer" variant="neutral" data-dialog="close">Cancel</wa-button>
+    <wa-button slot="footer" id="shell-load" variant="brand">
+      <wa-icon slot="start" name="person-rays"></wa-icon>
+      Load
+    </wa-button>
+  </wa-dialog>
+
+  <!-- Run: confirms going back to the default body, or the shell being destroyed, since both save right away -->
+  <wa-dialog id="shell-confirm-dialog" label="Shell">
+    <p id="shell-confirm-text"></p>
+    <wa-button slot="footer" variant="neutral" data-dialog="close">Cancel</wa-button>
+    <wa-button slot="footer" id="shell-confirm" variant="brand"></wa-button>
+  </wa-dialog>
+
   <!-- Create: confirms Discard, which deletes the character being created -->
   <wa-dialog id="discard-dialog" label="Discard character">
     <p id="discard-text"></p>
@@ -1045,6 +1081,7 @@
   <script src="abilities.js"></script>
   <script src="conditions.js"></script>
   <script src="characters.js"></script>
+  <script src="shells.js"></script>
   <script src="rules.js"></script>
   <script src="databank.js"></script>
   <script src="tables.js"></script>
@@ -1064,6 +1101,7 @@
   <script src="sheet-pdf-ui.js"></script>
   <script src="create.js"></script>
   <script src="conditions-ui.js"></script>
+  <script src="shell-ui.js"></script>
   <script src="roster.js"></script>
   <script src="places.js"></script>
   <script src="scene-rules.js"></script>

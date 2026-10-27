@@ -31,10 +31,40 @@
   const MAX_INTRINSIC = 2;
   const clampIntrinsic = (n) => clampInt(n, { max: MAX_INTRINSIC, fallback: 0 });
 
-  // A skill's stored state: value is null (untrained) or 55-95; adv/chal are intrinsic dice, 0-2.
+  // ---- mind and body: the default body, and the shell (shells.js) that overlays it while one is loaded ----
+  // The sheet's right half is the body: the physical skills' values, the mental skills' intrinsic dice, augmentations,
+  // the physical appearance, and wounds. The rest is the mind's, on the character itself (character.skills holds the
+  // mind's half of each skill: mental values, physical dice, the initiatives). A shell is a body with a few more fields.
+  // Saves from before shells have no defaultBody; they aren't migrated, they throw when opened.
+  const BODY_PARTS = { mental: ["adv", "chal"], physical: ["value"], initiative: [] };
+  const typeOf = (id) => SKILLS.find((s) => s.id === id)?.type;
+  const isBodyPart = (id, key) => (BODY_PARTS[typeOf(id)] ?? []).includes(key);
+  const newBody = () => ({ skills: {}, augmentations: [], appearance: "", wounds: 0 });
+  function defaultBody(character) {
+    const b = character?.defaultBody;
+    if (!b || typeof b !== "object") throw new Error(`${label(character)} has no default body (saved before shells): delete them.`);
+    return b;
+  }
+  const inShell = (character) => character?.shell != null && typeof character.shell === "object";
+  // The body in effect: the shell while one is loaded, otherwise the default body.
+  const body = (character) => (inShell(character) ? character.shell : defaultBody(character));
+  const withoutShell = (character) => ({ ...character, shell: null });
+  // A body's half of some full skill states ({ id: { value, adv, chal } }), with skills that add nothing dropped.
+  function bodySkills(full) {
+    const out = {};
+    for (const [id, s] of Object.entries(full ?? {})) {
+      const part = Object.fromEntries(Object.entries(s).filter(([key]) => isBodyPart(id, key)));
+      if (isNotable(part)) out[id] = part;
+    }
+    return out;
+  }
+
+  // A skill's state: value is null (untrained) or 55-95; adv/chal are intrinsic dice, 0-2. Each comes from its owner:
+  // the mind, or the body in effect.
   function skill(character, id) {
-    const s = character?.skills?.[id] ?? {};
-    return { value: s.value ?? null, adv: clampIntrinsic(s.adv), chal: clampIntrinsic(s.chal) };
+    const mind = character?.skills?.[id] ?? {}, own = body(character).skills?.[id] ?? {};
+    const get = (key) => (isBodyPart(id, key) ? own : mind)[key];
+    return { value: get("value") ?? null, adv: clampIntrinsic(get("adv")), chal: clampIntrinsic(get("chal")) };
   }
   const shownValue = (value) => value ?? UNTRAINED;
   const isNotable = (s) => s.value != null || s.adv > 0 || s.chal > 0;
@@ -42,14 +72,20 @@
   const clampValue = (v) => (toInt(v) == null ? null : clampInt(v, { min: MIN_VALUE, max: MAX_VALUE }));
   const increment = (value) => Math.min(MAX_VALUE, value + STEP);
 
-  // Returns a copy of the character with one skill changed. Skills back at the default are dropped.
+  // Returns a copy of the character with one skill changed, in the mind and the default body (never a shell, which is
+  // fixed once loaded). Skills back at the default are dropped.
   function withSkill(character, id, changes) {
-    const next = { ...skill(character, id), ...changes };
+    const next = { ...skill(withoutShell(character), id), ...changes };
     next.adv = clampIntrinsic(next.adv);
     next.chal = clampIntrinsic(next.chal);
-    const skills = { ...(character?.skills ?? {}) };
-    if (isNotable(next)) skills[id] = next; else delete skills[id];
-    return { ...character, skills };
+    const put = (skills, ofBody) => {
+      const part = Object.fromEntries(Object.entries(next).filter(([key]) => isBodyPart(id, key) === ofBody));
+      const out = { ...(skills ?? {}) };
+      if (isNotable(part)) out[id] = part; else delete out[id];
+      return out;
+    };
+    const own = defaultBody(character);
+    return { ...character, skills: put(character.skills, false), defaultBody: { ...own, skills: put(own.skills, true) } };
   }
 
   // ---- luck: current is kept between 0 and max ----
@@ -93,11 +129,13 @@
     return { spent, available, total: spent + available };
   }
 
-  // ---- appearance: free text ----
+  // ---- appearance: free text; the physical appearance is the body's (the shell's, while one is loaded) ----
   const appearance = (character) => {
     const a = character?.appearance ?? {};
-    return { pronouns: String(a.pronouns ?? ""), physical: String(a.physical ?? ""), network: String(a.network ?? "") };
+    return { pronouns: String(a.pronouns ?? ""), physical: String(body(character).appearance ?? ""), network: String(a.network ?? "") };
   };
+  // The default body's physical appearance, set.
+  const withPhysical = (character, text) => ({ ...character, defaultBody: { ...defaultBody(character), appearance: String(text ?? "").trim() } });
   // A distinctive trait (tables.js) as it's added to the physical appearance: a sentence, after a space unless it's the first.
   const asSentence = (trait) => { const t = String(trait ?? "").trim(); return !t || /[.!?]$/.test(t) ? t : `${t}.`; };
   // The physical appearance text with a trait added at the end. With `replacing` (the trait added last time), that trait
@@ -109,8 +147,7 @@
     const add = asSentence(trait);
     return !add ? text : text ? `${text} ${add}` : add;
   }
-  const withFeature = (character, trait) =>
-    ({ ...character, appearance: { ...appearance(character), physical: withTrait(appearance(character).physical, trait) } });
+  const withFeature = (character, trait) => withPhysical(character, withTrait(defaultBody(character).appearance, trait));
 
   // ---- liability: free text, picked (or rolled) from tables.js's table at the first End Session or Finish Job ----
   const liability = (character) => String(character?.liability ?? "").trim();
@@ -152,16 +189,29 @@
   const { MAX_SEVERITY, SUGGESTIONS: CONDITION_SUGGESTIONS, conditions, severityLabel, withCondition, withSeverity, withoutCondition } = root.NCD_CONDITIONS;
 
   // ---- abilities (perks and augmentations): ids from the catalog in abilities.js ----
-  // The saved ids, without junk or repeats. Ids not in the catalog are kept (a broken abilities.js mustn't erase them);
-  // abilities() skips them for display.
-  const abilityIds = (character) => [...new Set((Array.isArray(character?.abilities) ? character.abilities : [])
-    .filter((id) => typeof id === "string"))];
+  // Perks are the mind's (character.abilities); augmentations are the body's (its augmentations). Ids not in the catalog
+  // stay with the mind and are kept (a broken abilities.js mustn't erase them); abilities() skips them for display.
+  const idList = (list) => [...new Set((Array.isArray(list) ? list : []).filter((id) => typeof id === "string"))];
+  // abilities.js is loaded before this file on the page, and after it in some tests, so it's looked up when needed.
+  const isAugmentation = (id) => (root.NCD_ABILITIES ?? []).find((a) => a.id === id)?.type === "augmentation";
+  // The saved ids in effect: the mind's, then the body's (the shell's augmentations while one is loaded).
+  const abilityIds = (character) => idList([...idList(character?.abilities), ...idList(body(character).augmentations)]);
   // The character's abilities as catalog entries, in the order they were added.
   const abilities = (character, catalog) =>
     abilityIds(character).map((id) => catalog.find((a) => a.id === id)).filter(Boolean);
-  const withAbility = (character, id) =>
-    ({ ...character, abilities: abilityIds(character).includes(id) ? abilityIds(character) : [...abilityIds(character), id] });
-  const withoutAbility = (character, id) => ({ ...character, abilities: abilityIds(character).filter((a) => a !== id) });
+  // Adding goes to the mind, or for an augmentation the default body; removing takes it off both.
+  function withAbility(character, id) {
+    if (abilityIds(withoutShell(character)).includes(id)) return character;
+    const own = defaultBody(character);
+    return isAugmentation(id)
+      ? { ...character, defaultBody: { ...own, augmentations: [...idList(own.augmentations), id] } }
+      : { ...character, abilities: [...idList(character.abilities), id] };
+  }
+  function withoutAbility(character, id) {
+    const own = defaultBody(character);
+    return { ...character, abilities: idList(character.abilities).filter((a) => a !== id),
+      defaultBody: { ...own, augmentations: idList(own.augmentations).filter((a) => a !== id) } };
+  }
   // "Augmentation · Cybernetic · Assassin"
   const abilityTag = (a) => [a.type === "perk" ? "Perk" : "Augmentation", a.origin, a.archetype].filter(Boolean).join(" · ");
   // For the picker: abilities whose name contains the query, minus the excluded ids, grouped like the rulebook
@@ -185,7 +235,9 @@
   // ---- used skills: marked while running (by hand, or by rolling the skill) ----
   // Only trained skills (a value above 50) can be used; dice alone don't count. The initiatives are never used.
   const isInitiative = (id) => SKILLS.find((s) => s.id === id)?.type === "initiative";
-  const canBeUsed = (character, id) => !isInitiative(id) && skill(character, id).value != null;
+  // In a shell the physical skills are covered by the overlay, and covered skills can't be marked.
+  const canBeUsed = (character, id) => !isInitiative(id) && skill(character, id).value != null
+    && !(inShell(character) && typeOf(id) === "physical");
   const isUsed = (character, id) => Boolean(character?.used?.[id]);
   function withUsed(character, id, used) {
     const next = { ...(character?.used ?? {}) };
@@ -193,10 +245,15 @@
     return { ...character, used: next };
   }
 
-  // ---- wounds: 0-4; clicking box n marks boxes 1..n, clicking the last marked box unmarks it ----
+  // ---- wounds: 0-4, the body's (each body keeps its own); clicking box n marks boxes 1..n, clicking the last marked box unmarks it ----
   const MAX_WOUNDS = 4;
-  const wounds = (character) => clampInt(character?.wounds, { max: MAX_WOUNDS });
+  const wounds = (character) => clampInt(body(character).wounds, { max: MAX_WOUNDS });
   const clickWound = (current, n) => (n === current ? n - 1 : n);
+  // The body in effect with its wounds set.
+  const withWounds = (character, n) => {
+    const key = inShell(character) ? "shell" : "defaultBody";
+    return { ...character, [key]: { ...body(character), wounds: clampInt(n, { max: MAX_WOUNDS }) } };
+  };
 
   // ---- jobs: Start Job, sessions, and Finish Job (or Abandon Job) ----
   // character.job is set while they're on a job; it holds the starting gear as it was at Start Job, so gear lost or
@@ -211,15 +268,16 @@
     return [...saved, ...now.filter((n) => n.starter && !saved.some((g) => g.id === n.id))];
   }
   const intrinsicOnly = (holder) => ({ ...holder, conditions: conditions(holder).filter((x) => x.intrinsic) });
-  // Luck to max, Influence to starting (less any penalty), no wounds, no Used, only intrinsic conditions, and only the
-  // starting gear. Start Job, Finish Job and Abandon Job all use it.
+  // Luck to max, Influence to starting (less any penalty), no wounds, no Used, only intrinsic conditions, only the
+  // starting gear, and back in the default body. Start Job, Finish Job and Abandon Job all use it.
   function resetToStarting(character, { influencePenalty = 0, starters = starterGear(character) } = {}) {
     const { starting } = influence(character);
     return {
       ...intrinsicOnly(character),
       currentLuck: luck(character).max,
       currentInfluence: Math.max(0, starting - influencePenalty),
-      wounds: 0,
+      defaultBody: { ...defaultBody(character), wounds: 0 },
+      shell: null,
       used: {},
       gear: starters.map(intrinsicOnly),
     };
@@ -256,7 +314,8 @@
   const cyberneticTargets = (character) => starterGear(character).filter((g) => root.NCD_GEAR.canAdd(g, CYBERNETIC));
   // What's missing before Finish Job can be confirmed ("liability", "improvement", "skill", "success", "reward", "feature",
   // "prop", "gear"), or null. A liability is only asked for when the character has none.
-  function finishMissing(character, { liability: picked, improvement, skill: id, successful, reward, feature, prop, gearId } = {}) {
+  function finishMissing(loaded, { liability: picked, improvement, skill: id, successful, reward, feature, prop, gearId } = {}) {
+    const character = withoutShell(loaded); // the job's over: the improvement and reward are the default body's
     if (needsLiability(character) && !String(picked ?? "").trim()) return "liability";
     if (!IMPROVEMENTS.includes(improvement)) return "improvement";
     if (improvement === "skill" && !untrainedSkills(character).includes(id)) return "skill";
@@ -274,6 +333,7 @@
     if (finishMissing(character, choices)) return null;
     const { liability: picked, story: told, improvement, skill: id, successful, xp: earned, reward, feature, prop, gearId } = choices;
     let { character: next, bumped } = endSession(character);
+    next = withoutShell(next);
     if (needsLiability(next)) next = withLiability(next, picked);
     if (told != null) next = withStory(next, told);
     if (improvement === "skill") next = withSkill(next, id, { value: MIN_VALUE });
@@ -349,7 +409,6 @@
       currentLuck: DEFAULT_LUCK,
       startingInfluence: DEFAULT_INFLUENCE,
       currentInfluence: DEFAULT_INFLUENCE,
-      wounds: 0,
       portrait: null,
       knows: [],
       gear: [],
@@ -357,10 +416,12 @@
       abilities: [],
       xpSpent: 0,
       xpAvailable: 0,
-      appearance: { pronouns: "", physical: "", network: "" },
+      appearance: { pronouns: "", network: "" },
       liability: "",
       story: "",
       skills: {},
+      defaultBody: newBody(),
+      shell: null,
       createdAt: now,
       updatedAt: now,
       creation: newCreation(),
@@ -423,11 +484,14 @@
     // starting gear comes from gear.js (loaded after this file, so looked up when it's needed)
     const gear = root.NCD_GEAR.starterSlots(cr, rules).map((s) => s.item);
     const luck = DEFAULT_LUCK + (option?.luck ?? 0);
+    // each skill split between the mind and the default body
+    let split = { ...character, skills: {}, defaultBody: { ...defaultBody(character), skills: {}, augmentations: augs } };
+    for (const [id, s] of Object.entries(skills)) split = withSkill(split, id, s);
     return {
-      ...character,
-      archetype: cr.archetype, origin: cr.origin, skills,
+      ...split,
+      archetype: cr.archetype, origin: cr.origin,
       knows: [...cr.knows],
-      abilities: [cr.perk, ...augs, option?.perk].filter(Boolean),
+      abilities: [cr.perk, option?.perk].filter(Boolean),
       gear,
       maxLuck: luck, currentLuck: luck,
       startingInfluence: DEFAULT_INFLUENCE, currentInfluence: DEFAULT_INFLUENCE,
@@ -520,13 +584,14 @@
     randomHandle, randomName, newCharacter, label, load, save, remove, toExport,
     STEPS, BUMP_COUNT, newCreation, fullCreation, ruleFor, isCreating, playingAs, applyCreation, withCreation, bumpable, placeable, stepComplete, firstIncomplete, finishCreation,
     skill, shownValue, isNotable, clampValue, increment, withSkill,
+    newBody, defaultBody, inShell, body, withoutShell, bodySkills,
     DEFAULT_LUCK, luck, clampMaxLuck, clampCurrentLuck,
     DEFAULT_INFLUENCE, influence, clampInfluence,
-    MAX_WOUNDS, wounds, clickWound,
+    MAX_WOUNDS, wounds, clickWound, withWounds,
     inJob, starterGear, resetToStarting, startJob, abandonJob, endSession,
     IMPROVEMENTS, REWARDS, JOB_LUCK, untrainedSkills, cyberneticTargets, finishMissing, finishJob,
     isInitiative, canBeUsed, isUsed, withUsed,
-    KNOWLEDGE, knows, xp, clampXp, appearance, withTrait, withFeature, liability, needsLiability, withLiability, story, withStory,
+    KNOWLEDGE, knows, xp, clampXp, appearance, withPhysical, withTrait, withFeature, liability, needsLiability, withLiability, story, withStory,
     gear, newGear, newProp, withGear, withoutGear,
     MAX_SEVERITY, CONDITION_SUGGESTIONS, conditions, severityLabel, withCondition, withSeverity, withoutCondition,
     abilityIds, abilities, withAbility, withoutAbility, abilityTag, findAbilities,

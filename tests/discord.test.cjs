@@ -103,6 +103,28 @@ test("influence message: gained or spent, with the icon when configured", () => 
   assert.equal(influenceMessage("Parker", -1, 0, { emoji: { influence: "<:influence:9>" } }).content, "Parker spent an Influence. <:influence:9> 0 remaining.");
 });
 
+test("shell messages: loading with its Shell Source, going back, and a destroyed shell", () => {
+  const { shellMessage } = globalThis.NCD_DISCORD;
+  const shell = "Night Janitor · Quick Shell";
+  assert.deepEqual(shellMessage("Parker", { action: "load", shell, source: { name: "Kidnapping or Larceny", heat: 4 } }, { username: "NullJack" }), {
+    username: "NullJack",
+    allowed_mentions: { parse: [] },
+    content: "Parker loaded into Night Janitor · Quick Shell. Kidnapping or Larceny: add 4 heat to the heat pool.",
+  });
+  assert.equal(shellMessage("Parker", { action: "load", shell, source: { name: "Kidnapping or Larceny", heat: 2 } }, { emoji: { heat: "<:h:1>" } }).content,
+    "Parker loaded into Night Janitor · Quick Shell. Kidnapping or Larceny: add 2 heat to the heat pool. <:h:1> <:h:1>");
+  assert.equal(shellMessage("Parker", { action: "load", shell, source: { name: "The Right Kind of People", influence: 1 }, remaining: 0 },
+    { emoji: { influence: "<:influence:9>" } }).content,
+    "Parker loaded into Night Janitor · Quick Shell. The Right Kind of People: spent one Influence. <:influence:9> 0 remaining.");
+  assert.equal(shellMessage("Parker", { action: "load", shell, source: { name: "Another Scene" } }).content,
+    "Parker loaded into Night Janitor · Quick Shell. Another Scene.");
+  assert.equal(shellMessage("Parker", { action: "load", shell: "Utility Robot" }).content, "Parker loaded into Utility Robot.");
+  assert.equal(shellMessage("Parker", { action: "return", shell }).content, "Parker left Night Janitor · Quick Shell and is back in their default body.");
+  assert.equal(shellMessage("Parker", { action: "destroyed", shell, memoryLoss: 1 }).content,
+    "Parker's shell Night Janitor · Quick Shell was destroyed: back in their default body, with Memory Loss.");
+  assert.equal(shellMessage("Parker", { action: "destroyed", shell, memoryLoss: 2 }).content.endsWith("Memory Loss x2."), true);
+});
+
 test("messages never ping anyone", () => {
   const r = roll({ target: 50 }, seq(2, 4));
   assert.deepEqual(buildMessage(r, "@everyone").allowed_mentions, { parse: [] });

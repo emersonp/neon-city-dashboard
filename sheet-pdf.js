@@ -306,7 +306,9 @@
 
   // ---- the layout ----
   // options: abilities (the catalog, NCD_ABILITIES); measure(text, size, font) -> width in points.
-  function layout(character, { abilities = [], measure }) {
+  // A loaded shell doesn't outlast the job, so the sheet is always the default body's.
+  function layout(loaded, { abilities = [], measure }) {
+    const character = C.withoutShell(loaded);
     const ctx = { measure };
     const page1 = [], page2 = [];
     const boxes = {};

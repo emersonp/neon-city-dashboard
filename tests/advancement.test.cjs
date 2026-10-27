@@ -13,8 +13,10 @@ require("../gear.js");
 require("../advancement.js");
 
 const C = globalThis.NCD_CHARACTERS, A = globalThis.NCD_ADVANCEMENT, CAT = globalThis.NCD_ABILITIES;
-const thief = (changes = {}) => ({ id: "t", archetype: "Thief", origin: "Cybernetic", startingInfluence: 2, xpAvailable: 10, xpSpent: 0,
-  abilities: [], gear: [], skills: {}, ...changes });
+// `skills` (full states) go through withSkill, which splits them between the mind and the default body.
+const thief = ({ skills = {}, ...changes } = {}) => Object.entries(skills).reduce((c, [id, s]) => C.withSkill(c, id, s),
+  { id: "t", archetype: "Thief", origin: "Cybernetic", startingInfluence: 2, xpAvailable: 10, xpSpent: 0,
+    abilities: [], gear: [], skills: {}, defaultBody: C.newBody(), shell: null, ...changes });
 const buy = (c, purchases, options = {}) => A.applyPurchases(c, purchases, { catalog: CAT, ...options });
 
 test("the table: every benefit has text and a cost, and origin costs are noted", () => {
