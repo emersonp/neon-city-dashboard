@@ -19,6 +19,8 @@
   const DICE = window.NCD_DICE;
   const S = window.NCD_SHELLS;
   const SHELL_UI = window.NCD_SHELL_UI;
+  const V = window.NCD_AVATARS;
+  const AVATAR_UI = window.NCD_AVATAR_UI;
   // The character helpers take localStorage itself, and handle it being null.
   const storage = store.raw;
 
@@ -300,6 +302,8 @@
         display.querySelector("[data-run-label]").textContent = C.inJob(current) ? "Run" : "Start Job";
         $("shell-display-section").hidden = !C.inShell(current);
         renderShell($("shell-display"));
+        $("network-display-section").hidden = !C.inNetwork(current);
+        renderNetwork($("network-display"));
         renderAppearance($("appearance-display"));
         $("story-display-section").hidden = !C.story(current);
         renderStory($("story-display"));
@@ -310,7 +314,9 @@
         renderGear($("gear-display"), current);
         renderAbilities($("abilities-display"), C.abilities(current, ABILITIES));
       } else {
+        $("body-run-section").hidden = C.inNetwork(current);
         renderShell($("shell-run"), { actions: $("shell-run-actions") });
+        renderNetwork($("network-run"), { actions: $("network-run-actions") });
         renderConditions($("conditions-run"), current, { clickable: true });
         renderAppearance($("appearance-run"));
         renderStory($("story-run"));
@@ -368,6 +374,8 @@
       button.disabled = Number(button.dataset.influence) < 0 && values.currentInfluence <= 0;
     }
     woundsFields.innerHTML = woundBoxes(C.wounds(current), editable);
+    // In the Network the avatar has no wounds: these are the body's underneath, and say so.
+    $("wounds-label").textContent = C.inNetwork(current) ? `Wounds (${C.inShell(current) ? S.label(current) : "default body"})` : "Wounds";
   }
 
   const SKULL = `<wa-icon name="skull"></wa-icon>`;
@@ -458,7 +466,7 @@
     abilityDialog.open = true;
   }
   function loadShell() {
-    if (state !== "running") return;
+    if (state !== "running" || C.inNetwork(current)) return;
     SHELL_UI.open({ character: current, catalog: ABILITIES, onLoad: ({ character, source }) => {
       if (!commit(character)) return false;
       APP.postShell({ action: "load", shell: S.label(current), source: S.SOURCES[source] ?? null, remaining: C.influence(current).current });
@@ -470,7 +478,7 @@
   const shellConfirm = $("shell-confirm-dialog");
   let shellConfirming = null; // "return" or "destroyed"
   function confirmShell(action) {
-    if (state !== "running" || !C.inShell(current)) return;
+    if (state !== "running" || !C.inShell(current) || C.inNetwork(current)) return;
     shellConfirming = action;
     const name = S.label(current);
     shellConfirm.label = action === "return" ? "Return to default body" : "Shell destroyed";
@@ -498,6 +506,74 @@
       const perk = e.target.closest("[data-shell-perk]");
       if (perk) { openShellPerk(Number(perk.dataset.shellPerk)); return; }
       SHELL_ACTIONS[e.target.closest("[data-shell-action]")?.dataset.shellAction]?.();
+    });
+  }
+
+  // ---- the Network (avatars.js): Display shows the avatar while they're in it; Running makes one, goes in, and comes out ----
+  // Going in and out saves right away and posts to Discord. The appearance and software open their sheet text.
+  // In the Network the avatar takes the Body section's place, and the shell buttons are out of reach.
+  function renderNetwork(el, { actions = null } = {}) {
+    const inside = C.inNetwork(current), avatar = current.avatar;
+    if (actions) actions.innerHTML = inside ? `
+      <wa-button size="s" appearance="outlined" data-network-action="leave">
+        <wa-icon slot="start" name="right-from-bracket"></wa-icon>Leave the Network</wa-button>` : `
+      <wa-button size="s" appearance="outlined" data-network-action="new">
+        <wa-icon slot="start" name="user-astronaut"></wa-icon>New Avatar</wa-button>
+      <wa-button size="s" appearance="outlined" data-network-action="enter">
+        <wa-icon slot="start" name="globe"></wa-icon>Enter the Network</wa-button>`;
+    if (!inside) {
+      el.innerHTML = actions ? `<p class="gear-empty">${C.hasAvatar(current) ? `Avatar: ${escapeHTML(V.label(current))}` : "No avatar yet"}</p>` : "";
+      return;
+    }
+    const software = V.softwareOf(avatar), look = V.APPEARANCES[avatar.appearance];
+    el.innerHTML = `<p class="shell-banner"><span class="shell-name">${escapeHTML(V.label(current))}</span>
+        <span class="gear-kind">${escapeHTML(V.kindLabel(avatar))}</span></p>
+      ${avatar.description ? `<p class="avatar-description">${escapeHTML(avatar.description)}</p>` : ""}
+      <ul class="ability-list shell-perks">
+        ${look ? `<li><button type="button" class="ability-name" data-avatar-appearance>${escapeHTML(look.name)}</button></li>` : ""}
+        ${software.map((id) => `<li><button type="button" class="ability-name" data-avatar-software="${escapeHTML(id)}">${escapeHTML(V.SOFTWARE[id].name)}</button></li>`).join("")}
+      </ul>`;
+  }
+  function openSheetText(name, tag, body) {
+    abilityDialog.label = name;
+    $("ability-body").innerHTML = `<p class="ability-tag">${escapeHTML(tag)}</p><div class="ability-text">${formatDescription(body, abilityIcon)}</div>`;
+    abilityDialog.open = true;
+  }
+  // New Avatar: outside the Network only. `then` runs once the character with it is saved (Enter the Network goes in).
+  function newAvatar(then = () => {}) {
+    if (state !== "running" || C.inNetwork(current)) return;
+    AVATAR_UI.open({ character: current, onCreate: (character) => {
+      if (!commit(character)) return false;
+      render();
+      then();
+      return true;
+    } });
+  }
+  function enterNetwork() {
+    if (state !== "running" || C.inNetwork(current)) return;
+    if (!C.hasAvatar(current)) { newAvatar(enterNetwork); return; }
+    if (!commit(V.enter(current))) return;
+    APP.postNetwork("enter");
+    render();
+  }
+  function leaveNetwork() {
+    if (state !== "running" || !C.inNetwork(current)) return;
+    if (!commit(V.leave(current))) return;
+    APP.postNetwork("leave");
+    render();
+  }
+  const NETWORK_ACTIONS = { new: () => newAvatar(), enter: enterNetwork, leave: leaveNetwork };
+  for (const el of [display, running]) {
+    el.addEventListener("click", (e) => {
+      const avatar = current?.avatar;
+      if (e.target.closest("[data-avatar-appearance]")) {
+        const look = V.APPEARANCES[avatar?.appearance];
+        if (look) openSheetText(look.name, `Appearance · ${V.KINDS[avatar.kind]?.name ?? "Avatar"}`, look.text);
+        return;
+      }
+      const sw = V.SOFTWARE[e.target.closest("[data-avatar-software]")?.dataset.avatarSoftware];
+      if (sw) { openSheetText(sw.name, "Installed Software", sw.text); return; }
+      NETWORK_ACTIONS[e.target.closest("[data-network-action]")?.dataset.networkAction]?.();
     });
   }
 
@@ -559,8 +635,8 @@
   // While running, an item with rolls (G.rollOf: weapons, kits, vehicles) has a dice button that opens the roll dialog,
   // or, for a kit's three skills, a menu of them to pick from first.
   const skillNameOf = (id) => C.SKILLS.find((s) => s.id === id)?.name ?? id;
-  function rollButtonHTML(item) {
-    const skills = G.rollOf(item)?.skills ?? [];
+  function rollButtonHTML(item, character) {
+    const skills = (G.rollOf(item)?.skills ?? []).filter((id) => !hiddenSkill(character, id));
     if (!skills.length) return "";
     const button = (attrs, title) => `<wa-button size="s" appearance="plain" ${attrs} title="${escapeHTML(title)}">
         <wa-icon name="dice-d20" label="Roll"></wa-icon></wa-button>`;
@@ -568,16 +644,18 @@
     return `<wa-dropdown class="gear-roll" data-gear-roll>${button(`slot="trigger" with-caret`, "Roll…")}${
       skills.map((id) => `<wa-dropdown-item value="${id}">${escapeHTML(skillNameOf(id))}</wa-dropdown-item>`).join("")}</wa-dropdown>`;
   }
-  // In a shell, gear installed in the default body (Cybernetic) says so, and can't be rolled.
+  // In a shell, gear installed in the default body (Cybernetic) says so, and can't be rolled; in the Network, neither can
+  // it, nor anything that rolls a physical skill (every weapon: there are no physical attacks there).
   function renderGear(el, character, { editable = false, running = false } = {}) {
     const items = C.gear(character);
     const changeable = editable || running;
-    const away = (g) => C.inShell(character) && S.isInstalled(g);
+    const away = (g) => (C.inNetwork(character) || C.inShell(character)) && S.isInstalled(g);
+    const awayBadge = C.inNetwork(character) ? "Not in the Network" : "In default body";
     el.innerHTML = items.length
       ? `<ul class="gear-list">${items.map((g) => `<li data-gear="${escapeHTML(g.id)}">
           ${GEAR_UI.rowHTML(g, { starter: !editable })}
           ${editable ? `<wa-switch size="small" class="gear-starter-toggle" data-gear-starter ${g.starter ? "checked" : ""}>Starting</wa-switch>` : ""}
-          ${away(g) ? `<wa-badge variant="neutral" appearance="outlined" class="gear-away">In default body</wa-badge>` : running ? rollButtonHTML(g) : ""}
+          ${away(g) ? `<wa-badge variant="neutral" appearance="outlined" class="gear-away">${awayBadge}</wa-badge>` : running ? rollButtonHTML(g, character) : ""}
           ${changeable ? `<wa-button size="s" appearance="plain" data-gear-action="condition" title="Add a condition">
             <wa-icon slot="start" name="plus"></wa-icon>condition</wa-button>` : ""}
           ${changeable ? `<wa-button size="s" appearance="plain" data-gear-action="edit" title="Change">
@@ -855,11 +933,14 @@
 
   // ---- abilities: Perks and Augmentations, each name opening its full text ----
   const ABILITY_TYPES = [["perk", "Perks"], ["augmentation", "Augmentations"]];
+  // In the Network the body's augmentations can't be used, and say so.
   function renderAbilities(el, list) {
+    const offline = C.inNetwork(current);
     el.innerHTML = ABILITY_TYPES.map(([type, heading]) => {
       const items = list.filter((a) => a.type === type);
       return items.length ? `<section class="ability-group"><h3>${heading}</h3><ul class="ability-list">${items.map((a) => `<li>
           <button type="button" class="ability-name" data-ability="${escapeHTML(a.id)}">${escapeHTML(a.name)}</button>
+          ${offline && type === "augmentation" ? `<wa-badge variant="neutral" appearance="outlined" class="gear-away">Not in the Network</wa-badge>` : ""}
           ${a.summary ? `<span class="ability-summary">${escapeHTML(a.summary)}</span>` : ""}
         </li>`).join("")}</ul></section>` : "";
     }).join("");
@@ -976,6 +1057,9 @@
         `<span class="${kind}">${icon(APP.KINDS[kind].die)}</span>`.repeat(st[kind])).join("")}</span>`
     : "";
 
+  // In the Network the avatar covers the physical skills and Initiative in the World: they're not shown or rolled.
+  const hiddenSkill = (character, id) => C.inNetwork(character)
+    && (C.SKILLS.find((s) => s.id === id)?.type === "physical" || id === "initiative-in-the-world");
   // Display: only skills with a value or intrinsic dice (and both initiatives, always), then "Anything else" at 50%.
   // When running, each skill name is a link that opens the roll dialog.
   const ANYTHING_ELSE = "anything-else";
@@ -985,7 +1069,7 @@
   function renderSkillsDisplay(el, { links = false } = {}) {
     const groups = columns((type) => {
       const title = GROUPS[type];
-      const items = C.SKILLS.filter((sk) => sk.type === type)
+      const items = C.SKILLS.filter((sk) => sk.type === type && !hiddenSkill(current, sk.id))
         .map((sk) => [sk, C.skill(current, sk.id)])
         .filter(([, st]) => type === "initiative" || C.isNotable(st));
       if (!items.length) return "";

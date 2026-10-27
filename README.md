@@ -12,9 +12,10 @@ One group of friends playing live, together, on a Discord video call. That shape
 - **The Administrator's camera is the shared state.** Heat, Group Influence, Day, Planning countdowns and initiative
   show on the OBS overlay on the Administrator's camera, which everyone is watching. They don't need to be posted to
   Discord as well.
-- **Discord gets only rolls, Influence and shells.** The page pushes to a webhook and never reads anything back. Wounds,
-  Luck and conditions are changed on the player's own sheet and said out loud at the table. Loading a shell posts too,
-  since its Shell Source may add heat for the Administrator to put in the pool.
+- **Discord gets only rolls, Influence, shells and the Network.** The page pushes to a webhook and never reads anything
+  back. Wounds, Luck and conditions are changed on the player's own sheet and said out loud at the table. Loading a shell
+  posts too, since its Shell Source may add heat for the Administrator to put in the pool, and so does going into or out
+  of the Network.
 - **No server, no global state.** Each browser keeps its own characters and settings; there's no syncing between players
   or with the Administrator.
 
@@ -105,7 +106,7 @@ jump about and whatever goes under it stays put.
 ## Tests
 
 ```
-node --test tests/dice.test.cjs tests/discord.test.cjs tests/characters.test.cjs tests/format.test.cjs tests/abilities.test.cjs tests/rules.test.cjs tests/databank.test.cjs tests/tables.test.cjs tests/enemies.test.cjs tests/hazards.test.cjs tests/gear.test.cjs tests/overlay-rules.test.cjs tests/advancement.test.cjs tests/profiles.test.cjs tests/scene-rules.test.cjs tests/sheet-pdf.test.cjs tests/shells.test.cjs
+node --test tests/dice.test.cjs tests/discord.test.cjs tests/characters.test.cjs tests/format.test.cjs tests/abilities.test.cjs tests/rules.test.cjs tests/databank.test.cjs tests/tables.test.cjs tests/enemies.test.cjs tests/hazards.test.cjs tests/gear.test.cjs tests/overlay-rules.test.cjs tests/advancement.test.cjs tests/profiles.test.cjs tests/scene-rules.test.cjs tests/sheet-pdf.test.cjs tests/shells.test.cjs tests/avatars.test.cjs
 ```
 
 ## What's here
@@ -124,6 +125,8 @@ node --test tests/dice.test.cjs tests/discord.test.cjs tests/characters.test.cjs
 | `conditions.js` | Conditions on anything that holds them (a character, a gear item, an enemy or a scene in the Scene Runner): adding, worsening, severity, removing, and the suggestions for each (testable in Node) |
 | `shells.js` | Shells: the shell sheets (Quick Shell, Mass-Produced Synth, Utility Robot, Total Conversion Cyborg), who can load which, the Load Shell choices, loading, going back and a destroyed shell (needs `characters.js`; testable in Node) |
 | `shell-ui.js` | The Load Shell dialog |
+| `avatars.js` | Avatars: the avatar sheet (the sheet pack's Anonymous Avatar, called Quick Avatar), Enhanced Avatars and Installation Wizard, the New Avatar choices, entering and leaving the Network (needs `characters.js`; testable in Node) |
+| `avatar-ui.js` | The New Avatar dialog |
 | `conditions-ui.js` | Conditions on the page: the chips, the New condition dialog and a condition's dialog, shared by the Character tab and the Scene Runner |
 | `roster.js` | Roster tab and the Character tab, including where its conditions go |
 | `create.js` | Create mode: a new character built step by step from `rules.js` (step header, the archetype and origin picked so far, Back/Next/Finish, Discard, each step's controls) |
@@ -341,6 +344,27 @@ Saves from before shells have no default body: opening one says so, and it can o
 
 The Total Conversion Cyborg's augmentation list is a placeholder in the book, so it offers every Synthetic
 augmentation except Synthetic Body. `tests/shells.test.cjs` checks the shells.
+
+## Avatars
+
+A scene in the Network has each character overlay an avatar, on top of a shell if one is loaded. The character keeps
+one avatar (`character.avatar`, the mind's, kept between jobs) and `character.inNetwork` says it's on. The avatar sheet
+is the sheet pack's Anonymous Avatar, called **Quick Avatar** as the perks do.
+
+- **New Avatar** (Run's Network row, outside the Network) asks for a Network username (it falls back to the handle), an
+  appearance (each puts 1 challenge die on a Gossip skill) and a description (it starts as the Network Default
+  appearance). With **Enhanced Avatars** it can be an Enhanced Avatar instead: 2 mental skills with 2 advantage dice, 2
+  more with 1, and 2 Installed Software boxes. **Installation Wizard** checks 1 box on a Quick Avatar. Giving an avatar
+  to a crewmate isn't handled.
+- **Enter the Network** (making an avatar first if there isn't one) and **Leave the Network** save right away and post
+  to Discord. 0 luck in the Network is just leaving: nothing is destroyed.
+- In the Network, mental skills roll with only the avatar's dice; physical skills and Initiative in the World are
+  hidden; augmentations and Cybernetic gear say **Not in the Network**; nothing rolls a physical skill (so no weapon
+  rolls). Wounds are the body's underneath, and say which. The shell buttons are hidden until they leave.
+- Start Job, Finish Job and Abandon Job take them out of the Network and keep the avatar. Edit and the PDF never show
+  the avatar. Installed Software and the appearances' other text aren't automated.
+
+`tests/avatars.test.cjs` checks the avatars.
 
 ## Conditions
 

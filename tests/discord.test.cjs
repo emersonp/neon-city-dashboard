@@ -125,6 +125,16 @@ test("shell messages: loading with its Shell Source, going back, and a destroyed
   assert.equal(shellMessage("Parker", { action: "destroyed", shell, memoryLoss: 2 }).content.endsWith("Memory Loss x2."), true);
 });
 
+test("network messages: entering and leaving", () => {
+  const { networkMessage } = globalThis.NCD_DISCORD;
+  assert.deepEqual(networkMessage("NullJack", "enter", { username: "NullJack" }), {
+    username: "NullJack",
+    allowed_mentions: { parse: [] },
+    content: "NullJack is HACKING THE PLANET!",
+  });
+  assert.equal(networkMessage("NullJack", "leave").content, "NullJack left the Network.");
+});
+
 test("messages never ping anyone", () => {
   const r = roll({ target: 50 }, seq(2, 4));
   assert.deepEqual(buildMessage(r, "@everyone").allowed_mentions, { parse: [] });

@@ -49,6 +49,15 @@
   // The body in effect: the shell while one is loaded, otherwise the default body.
   const body = (character) => (inShell(character) ? character.shell : defaultBody(character));
   const withoutShell = (character) => ({ ...character, shell: null });
+
+  // ---- the Network: the saved avatar (avatars.js) overlays whatever body the mind is in, while they're in the Network ----
+  // The avatar is the mind's and is kept between visits (and jobs); character.inNetwork says it's on. In the Network the
+  // mental skills' dice are only the avatar's, physical skills can't be used, and neither can the body's augmentations.
+  const hasAvatar = (character) => character?.avatar != null && typeof character.avatar === "object";
+  const inNetwork = (character) => character?.inNetwork === true && hasAvatar(character);
+  const withoutNetwork = (character) => ({ ...character, inNetwork: false });
+  // Out of the Network and the shell: the default body as the sheet has it.
+  const asDefault = (character) => withoutNetwork(withoutShell(character));
   // A body's half of some full skill states ({ id: { value, adv, chal } }), with skills that add nothing dropped.
   function bodySkills(full) {
     const out = {};
@@ -60,9 +69,10 @@
   }
 
   // A skill's state: value is null (untrained) or 55-95; adv/chal are intrinsic dice, 0-2. Each comes from its owner:
-  // the mind, or the body in effect.
+  // the mind, or the body in effect (in the Network, the avatar's dice in place of the body's mental ones).
   function skill(character, id) {
-    const mind = character?.skills?.[id] ?? {}, own = body(character).skills?.[id] ?? {};
+    const mind = character?.skills?.[id] ?? {};
+    const own = (inNetwork(character) && typeOf(id) === "mental" ? character.avatar : body(character)).skills?.[id] ?? {};
     const get = (key) => (isBodyPart(id, key) ? own : mind)[key];
     return { value: get("value") ?? null, adv: clampIntrinsic(get("adv")), chal: clampIntrinsic(get("chal")) };
   }
@@ -75,7 +85,7 @@
   // Returns a copy of the character with one skill changed, in the mind and the default body (never a shell, which is
   // fixed once loaded). Skills back at the default are dropped.
   function withSkill(character, id, changes) {
-    const next = { ...skill(withoutShell(character), id), ...changes };
+    const next = { ...skill(asDefault(character), id), ...changes };
     next.adv = clampIntrinsic(next.adv);
     next.chal = clampIntrinsic(next.chal);
     const put = (skills, ofBody) => {
@@ -235,9 +245,9 @@
   // ---- used skills: marked while running (by hand, or by rolling the skill) ----
   // Only trained skills (a value above 50) can be used; dice alone don't count. The initiatives are never used.
   const isInitiative = (id) => SKILLS.find((s) => s.id === id)?.type === "initiative";
-  // In a shell the physical skills are covered by the overlay, and covered skills can't be marked.
+  // In a shell or the Network the physical skills are covered by the overlay, and covered skills can't be marked.
   const canBeUsed = (character, id) => !isInitiative(id) && skill(character, id).value != null
-    && !(inShell(character) && typeOf(id) === "physical");
+    && !((inShell(character) || inNetwork(character)) && typeOf(id) === "physical");
   const isUsed = (character, id) => Boolean(character?.used?.[id]);
   function withUsed(character, id, used) {
     const next = { ...(character?.used ?? {}) };
@@ -269,7 +279,7 @@
   }
   const intrinsicOnly = (holder) => ({ ...holder, conditions: conditions(holder).filter((x) => x.intrinsic) });
   // Luck to max, Influence to starting (less any penalty), no wounds, no Used, only intrinsic conditions, only the
-  // starting gear, and back in the default body. Start Job, Finish Job and Abandon Job all use it.
+  // starting gear, and back in the default body, out of the Network. Start Job, Finish Job and Abandon Job all use it.
   function resetToStarting(character, { influencePenalty = 0, starters = starterGear(character) } = {}) {
     const { starting } = influence(character);
     return {
@@ -278,6 +288,7 @@
       currentInfluence: Math.max(0, starting - influencePenalty),
       defaultBody: { ...defaultBody(character), wounds: 0 },
       shell: null,
+      inNetwork: false,
       used: {},
       gear: starters.map(intrinsicOnly),
     };
@@ -315,7 +326,7 @@
   // What's missing before Finish Job can be confirmed ("liability", "improvement", "skill", "success", "reward", "feature",
   // "prop", "gear"), or null. A liability is only asked for when the character has none.
   function finishMissing(loaded, { liability: picked, improvement, skill: id, successful, reward, feature, prop, gearId } = {}) {
-    const character = withoutShell(loaded); // the job's over: the improvement and reward are the default body's
+    const character = asDefault(loaded); // the job's over: the improvement and reward are the default body's
     if (needsLiability(character) && !String(picked ?? "").trim()) return "liability";
     if (!IMPROVEMENTS.includes(improvement)) return "improvement";
     if (improvement === "skill" && !untrainedSkills(character).includes(id)) return "skill";
@@ -333,7 +344,7 @@
     if (finishMissing(character, choices)) return null;
     const { liability: picked, story: told, improvement, skill: id, successful, xp: earned, reward, feature, prop, gearId } = choices;
     let { character: next, bumped } = endSession(character);
-    next = withoutShell(next);
+    next = asDefault(next);
     if (needsLiability(next)) next = withLiability(next, picked);
     if (told != null) next = withStory(next, told);
     if (improvement === "skill") next = withSkill(next, id, { value: MIN_VALUE });
@@ -422,6 +433,8 @@
       skills: {},
       defaultBody: newBody(),
       shell: null,
+      avatar: null,
+      inNetwork: false,
       createdAt: now,
       updatedAt: now,
       creation: newCreation(),
@@ -584,7 +597,7 @@
     randomHandle, randomName, newCharacter, label, load, save, remove, toExport,
     STEPS, BUMP_COUNT, newCreation, fullCreation, ruleFor, isCreating, playingAs, applyCreation, withCreation, bumpable, placeable, stepComplete, firstIncomplete, finishCreation,
     skill, shownValue, isNotable, clampValue, increment, withSkill,
-    newBody, defaultBody, inShell, body, withoutShell, bodySkills,
+    newBody, defaultBody, inShell, body, withoutShell, bodySkills, hasAvatar, inNetwork, withoutNetwork, asDefault,
     DEFAULT_LUCK, luck, clampMaxLuck, clampCurrentLuck,
     DEFAULT_INFLUENCE, influence, clampInfluence,
     MAX_WOUNDS, wounds, clickWound, withWounds,

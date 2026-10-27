@@ -2,7 +2,7 @@
 (function () {
   const DICE = window.NCD_DICE;
   const C = window.NCD_CHARACTERS;
-  const { buildMessage, influenceMessage, shellMessage, isWebhookUrl, send } = window.NCD_DISCORD;
+  const { buildMessage, influenceMessage, shellMessage, networkMessage, isWebhookUrl, send } = window.NCD_DISCORD;
   const { svg: icon } = window.NCD_ICONS;
   const store = window.NCD_STORE;
   const SESSION = window.NCD_SESSION;
@@ -287,6 +287,12 @@
   function postShell(event) {
     const { username, avatarUrl } = sender();
     return post(shellMessage(playerName(), event, { emoji, username, avatarUrl }), "Shell changed");
+  }
+
+  // Going into the Network ("enter") or leaving it ("leave"), as the open character.
+  function postNetwork(action) {
+    const { character, username, avatarUrl } = sender();
+    return post(networkMessage(text(character?.handle) || playerName(), action, { username, avatarUrl }), "Network changed");
   }
 
   // ---- rolling ----
@@ -661,6 +667,6 @@
   }
 
   // For the Character tab (roster.js) and the Scene Runner (scene-runner.js).
-  window.NCD_APP = { KINDS, toast, targetField, makeRoller, playRoll, showResult, postRoll, postInfluence, postShell, clearResult, emptyResult, tablePicker,
+  window.NCD_APP = { KINDS, toast, targetField, makeRoller, playRoll, showResult, postRoll, postInfluence, postShell, postNetwork, clearResult, emptyResult, tablePicker,
     showCustomLists };
 })();

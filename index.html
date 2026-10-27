@@ -435,7 +435,7 @@
                   <wa-button size="s" appearance="outlined" data-influence="1" hidden>+1</wa-button>
                   <span class="stat-icon" data-icon="influence"></span>
                 </dd></div>
-              <div class="stat stat-wounds"><dt>Wounds</dt><dd id="wounds-fields" class="wounds"></dd></div>
+              <div class="stat stat-wounds"><dt id="wounds-label">Wounds</dt><dd id="wounds-fields" class="wounds"></dd></div>
               <div class="stat stat-xp" id="xp-stat"><dt>XP</dt>
                 <dd class="xp">
                   <span class="xp-part"><span class="sheet-label">Total</span><span data-field="xpTotal"></span></span>
@@ -453,6 +453,13 @@
                 <h3>Shell</h3>
               </div>
               <div id="shell-display"></div>
+            </section>
+            <!-- The avatar, while they're in the Network (roster.js; the rules are avatars.js's) -->
+            <section class="gear avatar" id="network-display-section" hidden>
+              <div class="gear-head">
+                <h3>In the Network</h3>
+              </div>
+              <div id="network-display"></div>
             </section>
             <section class="gear conditions" id="conditions-display-section">
               <div class="gear-head">
@@ -510,7 +517,7 @@
           <!-- Running -->
           <div id="character-running" hidden>
             <!-- The body the mind is in: the default body, or a loaded shell, with what can be done about it -->
-            <section class="gear shell">
+            <section class="gear shell" id="body-run-section">
               <div class="gear-head">
                 <h3>Body</h3>
                 <!-- in a shell: Return to Default Body and Shell Destroyed (roster.js) -->
@@ -521,6 +528,15 @@
                 </wa-button>
               </div>
               <div id="shell-run"></div>
+            </section>
+            <!-- The Network: the saved avatar with New Avatar and Enter the Network; in the Network, it takes the Body's place -->
+            <section class="gear avatar" id="network-run-section">
+              <div class="gear-head">
+                <h3>Network</h3>
+                <!-- New Avatar and Enter the Network, or Leave the Network (roster.js) -->
+                <div class="shell-actions" id="network-run-actions"></div>
+              </div>
+              <div id="network-run"></div>
             </section>
             <section class="gear conditions">
               <div class="gear-head">
@@ -951,6 +967,16 @@
     </wa-button>
   </wa-dialog>
 
+  <!-- Run: New Avatar (avatar-ui.js draws the choices the avatar sheet asks for; avatars.js has the rules) -->
+  <wa-dialog id="avatar-dialog" label="New Avatar" light-dismiss>
+    <div class="shell-form" id="avatar-form"></div>
+    <wa-button slot="footer" variant="neutral" data-dialog="close">Cancel</wa-button>
+    <wa-button slot="footer" id="avatar-create" variant="brand">
+      <wa-icon slot="start" name="user-astronaut"></wa-icon>
+      Create
+    </wa-button>
+  </wa-dialog>
+
   <!-- Run: confirms going back to the default body, or the shell being destroyed, since both save right away -->
   <wa-dialog id="shell-confirm-dialog" label="Shell">
     <p id="shell-confirm-text"></p>
@@ -1084,6 +1110,7 @@
   <script src="conditions.js"></script>
   <script src="characters.js"></script>
   <script src="shells.js"></script>
+  <script src="avatars.js"></script>
   <script src="rules.js"></script>
   <script src="databank.js"></script>
   <script src="tables.js"></script>
@@ -1104,6 +1131,7 @@
   <script src="create.js"></script>
   <script src="conditions-ui.js"></script>
   <script src="shell-ui.js"></script>
+  <script src="avatar-ui.js"></script>
   <script src="roster.js"></script>
   <script src="places.js"></script>
   <script src="scene-rules.js"></script>

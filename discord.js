@@ -118,6 +118,12 @@
     return { ...from({ username, avatarUrl }), content };
   }
 
+  // A plain one-line message for going into the Network (action "enter") or leaving it ("leave"). `handle` is the character's.
+  function networkMessage(handle, action, { username, avatarUrl } = {}) {
+    const content = action === "enter" ? `${handle} is HACKING THE PLANET!` : `${handle} left the Network.`;
+    return { ...from({ username, avatarUrl }), content };
+  }
+
   // A Discord webhook address: https://discord.com/api/webhooks/<id>/<token> (discordapp.com, ptb. and canary. work too).
   const isWebhookUrl = (value) =>
     /^https:\/\/(?:(?:ptb|canary)\.)?discord(?:app)?\.com\/api\/(?:v\d+\/)?webhooks\/\d+\/[\w-]+\/?$/.test(String(value ?? "").trim());
@@ -138,5 +144,5 @@
     return res.json();
   }
 
-  root.NCD_DISCORD = { COLORS, lines, buildMessage, influenceMessage, shellMessage, isWebhookUrl, send };
+  root.NCD_DISCORD = { COLORS, lines, buildMessage, influenceMessage, shellMessage, networkMessage, isWebhookUrl, send };
 })(globalThis);

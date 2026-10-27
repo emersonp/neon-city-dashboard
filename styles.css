@@ -826,6 +826,9 @@ button.condition:hover, button.condition:focus-visible { background: color-mix(i
 .shell-option-text, .shell-rules { color: var(--wa-color-text-quiet); font-size: var(--wa-font-size-s); }
 .shell-option-text p, .shell-rules p, .shell-perk p { margin: 0; }
 .shell-slots { display: grid; grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr)); gap: var(--wa-space-xs); }
+/* ---- avatars: the one in the Network on the sheet, and the New Avatar dialog's software boxes ---- */
+.avatar-description { margin: 0 0 var(--wa-space-xs); color: var(--wa-color-text-quiet); }
+.avatar-software { display: flex; flex-direction: column; gap: var(--wa-space-xs); }
 .condition-form { display: flex; flex-direction: column; gap: var(--wa-space-m); }
 .condition-for, .condition-intrinsic-note { margin: 0; }
 .condition-for { color: var(--wa-color-text-quiet); }
@@ -977,11 +980,13 @@ button.condition:hover, button.condition:focus-visible { background: color-mix(i
 #character-running > .gear { display: flex; flex-wrap: wrap; align-items: center; gap: var(--wa-space-xs) var(--wa-space-m);
   margin-bottom: var(--wa-space-s); }
 #character-running > .gear > .gear-head { display: contents; }
+#character-running > .gear[hidden] { display: none; }
 #character-running > .gear h3 { margin: 0; min-width: 7.5rem; }
 #character-running > .gear > :not(.gear-head) { flex: 1; min-width: 0; }
 #character-running > .gear > .gear-head > :not(h3) { order: 1; }
 #character-running > .shell:not(:has(#shell-run > .gear-empty)) > #shell-run { order: 2; flex-basis: 100%; }
-#shell-run-actions { margin: 0 0 0 auto; }
+#character-running > .avatar:not(:has(#network-run > .gear-empty)) > #network-run { order: 2; flex-basis: 100%; }
+#shell-run-actions, #network-run-actions { margin: 0 0 0 auto; }
 #shell-run-actions:empty { display: none; }
 #character-running .skills { gap: var(--wa-space-m) var(--wa-space-2xl); }
 #character-running .skill-column { gap: var(--wa-space-m); }
