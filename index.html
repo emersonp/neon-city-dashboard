@@ -443,6 +443,13 @@
                   <span class="xp-part"><span class="sheet-label">Spent</span><span data-field="xpSpent"></span></span>
                 </dd></div>
             </dl>
+            <!-- Running: the body the mind is in and the Network, a line each under the stats, with their buttons (roster.js) -->
+            <div class="sheet-status" id="sheet-status" hidden>
+              <div class="status-row"><span class="sheet-label">Body</span><span class="status-value" id="status-body"></span>
+                <span class="status-actions" id="shell-run-actions"></span></div>
+              <div class="status-row"><span class="sheet-label">Network</span><span class="status-value" id="status-network"></span>
+                <span class="status-actions" id="network-run-actions"></span></div>
+            </div>
           </div>
 
           <!-- Display -->
@@ -516,25 +523,16 @@
 
           <!-- Running -->
           <div id="character-running" hidden>
-            <!-- The body the mind is in: the default body, or a loaded shell, with what can be done about it -->
-            <section class="gear shell" id="body-run-section">
+            <!-- Only while it's on: the loaded shell's details, or the avatar's (the buttons are in the head's Body and Network lines) -->
+            <section class="gear shell" id="body-run-section" hidden>
               <div class="gear-head">
-                <h3>Body</h3>
-                <!-- in a shell: Return to Default Body and Shell Destroyed (roster.js) -->
-                <div class="shell-actions" id="shell-run-actions"></div>
-                <wa-button size="s" appearance="outlined" data-shell-action="load">
-                  <wa-icon slot="start" name="person-rays"></wa-icon>
-                  Load Shell
-                </wa-button>
+                <h3>Shell</h3>
               </div>
               <div id="shell-run"></div>
             </section>
-            <!-- The Network: the saved avatar with New Avatar and Enter the Network; in the Network, it takes the Body's place -->
-            <section class="gear avatar" id="network-run-section">
+            <section class="gear avatar" id="network-run-section" hidden>
               <div class="gear-head">
-                <h3>Network</h3>
-                <!-- New Avatar and Enter the Network, or Leave the Network (roster.js) -->
-                <div class="shell-actions" id="network-run-actions"></div>
+                <h3>Avatar</h3>
               </div>
               <div id="network-run"></div>
             </section>

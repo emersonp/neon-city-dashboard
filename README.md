@@ -351,7 +351,9 @@ A scene in the Network has each character overlay an avatar, on top of a shell i
 one avatar (`character.avatar`, the mind's, kept between jobs) and `character.inNetwork` says it's on. The avatar sheet
 is the sheet pack's Anonymous Avatar, called **Quick Avatar** as the perks do.
 
-- **New Avatar** (Run's Network row, outside the Network) asks for a Network username (it falls back to the handle), an
+- In Run, **Body** and **Network** are a line each in the head, under Luck, Influence and Wounds, with their buttons.
+  A loaded shell's or the avatar's details get a row below only while they're on.
+- **New Avatar** (Run's Network line, outside the Network) asks for a Network username (it falls back to the handle), an
   appearance (each puts 1 challenge die on a Gossip skill) and a description (it starts as the Network Default
   appearance). With **Enhanced Avatars** it can be an Enhanced Avatar instead: 2 mental skills with 2 advantage dice, 2
   more with 1, and 2 Installed Software boxes. **Installation Wizard** checks 1 box on a Quick Avatar. Giving an avatar

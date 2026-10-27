@@ -301,6 +301,7 @@
       if (state === "display") {
         display.querySelector("[data-run-label]").textContent = C.inJob(current) ? "Run" : "Start Job";
         $("shell-display-section").hidden = !C.inShell(current);
+        $("sheet-status").hidden = true;
         renderShell($("shell-display"));
         $("network-display-section").hidden = !C.inNetwork(current);
         renderNetwork($("network-display"));
@@ -314,9 +315,11 @@
         renderGear($("gear-display"), current);
         renderAbilities($("abilities-display"), C.abilities(current, ABILITIES));
       } else {
-        $("body-run-section").hidden = C.inNetwork(current);
-        renderShell($("shell-run"), { actions: $("shell-run-actions") });
-        renderNetwork($("network-run"), { actions: $("network-run-actions") });
+        renderStatus();
+        $("body-run-section").hidden = !C.inShell(current) || C.inNetwork(current);
+        renderShell($("shell-run"), { named: false });
+        $("network-run-section").hidden = !C.inNetwork(current);
+        renderNetwork($("network-run"), { named: false });
         renderConditions($("conditions-run"), current, { clickable: true });
         renderAppearance($("appearance-run"));
         renderStory($("story-run"));
@@ -374,8 +377,8 @@
       button.disabled = Number(button.dataset.influence) < 0 && values.currentInfluence <= 0;
     }
     woundsFields.innerHTML = woundBoxes(C.wounds(current), editable);
-    // In the Network the avatar has no wounds: these are the body's underneath, and say so.
-    $("wounds-label").textContent = C.inNetwork(current) ? `Wounds (${C.inShell(current) ? S.label(current) : "default body"})` : "Wounds";
+    // In the Network the avatar has no wounds: these are the body's underneath (the Body line names it), and say so.
+    $("wounds-label").textContent = C.inNetwork(current) ? "Body wounds" : "Wounds";
   }
 
   const SKULL = `<wa-icon name="skull"></wa-icon>`;
@@ -439,20 +442,41 @@
       + (liability ? field("Liability", C.liability(current), " liability") : "");
   }
 
+  // ---- Running's Body and Network lines, in the head under the stats: what the mind is in, and the buttons ----
+  // The details (a shell's conditions and perks, an avatar's software) go in their own rows below, only while they're on.
+  // In the Network the shell buttons are gone.
+  // `label` null makes it an icon button, named by its title.
+  const statusButton = (attr, icon, label, { title = label, danger = false } = {}) => `<wa-button size="s" appearance="outlined"
+      ${danger ? `variant="danger"` : ""} ${attr} title="${escapeHTML(title)}">${label
+        ? `<wa-icon slot="start" name="${icon}"></wa-icon>${escapeHTML(label)}` : `<wa-icon name="${icon}" label="${escapeHTML(title)}"></wa-icon>`}</wa-button>`;
+  function renderStatus() {
+    const shell = C.inShell(current), net = C.inNetwork(current);
+    $("sheet-status").hidden = false;
+    const value =(el, text, quiet) => { el.textContent = text; el.classList.toggle("is-default", quiet); };
+    value($("status-body"), shell ? current.shell.name || S.label(current) : "Default body", !shell);
+    $("shell-run-actions").innerHTML = net ? "" : [
+      shell && statusButton(`data-shell-action="return"`, "house-user", null, { title: "Return to Default Body" }),
+      shell && statusButton(`data-shell-action="destroyed"`, "skull", null, { title: "Shell Destroyed", danger: true }),
+      statusButton(`data-shell-action="load"`, "person-rays", "Load Shell"),
+    ].filter(Boolean).join("");
+    value($("status-network"), net ? `${V.label(current)} · ${V.kindLabel(current.avatar)}`
+      : C.hasAvatar(current) ? `Avatar: ${V.label(current)}` : "No avatar yet", !net);
+    $("network-run-actions").innerHTML = net
+      ? statusButton(`data-network-action="leave"`, "right-from-bracket", "Leave", { title: "Leave the Network" })
+      : statusButton(`data-network-action="new"`, "user-astronaut", "New Avatar")
+        + statusButton(`data-network-action="enter"`, "globe", "Enter", { title: "Enter the Network" });
+  }
+
   // ---- the shell (shells.js): Display and Running show the loaded one; Running loads one, goes back, or loses it ----
   // Each saves right away and posts to Discord. The shell's own body perks open in the ability dialog.
-  // Running, Return and Shell Destroyed go in the section's head, beside Load Shell (actions).
-  function renderShell(el, { actions = null } = {}) {
+  // `named` false leaves the name out (Running's Body line already says it).
+  function renderShell(el, { named = true } = {}) {
     const sheet = S.sheetOf(current);
-    if (actions) actions.innerHTML = C.inShell(current) ? `
-      <wa-button size="s" appearance="outlined" data-shell-action="return">
-        <wa-icon slot="start" name="house-user"></wa-icon>Return to Default Body</wa-button>
-      <wa-button size="s" appearance="outlined" variant="danger" data-shell-action="destroyed">
-        <wa-icon slot="start" name="skull"></wa-icon>Shell Destroyed</wa-button>` : "";
-    if (!C.inShell(current)) { el.innerHTML = actions ? `<p class="gear-empty">Default body</p>` : ""; return; }
+    if (!C.inShell(current)) { el.innerHTML = ""; return; }
     const source = S.SOURCES[current.shell.source];
-    el.innerHTML = `<p class="shell-banner"><span class="shell-name">${escapeHTML(S.label(current))}</span>
-        <span class="gear-kind">${escapeHTML([sheet?.kind, source?.name].filter(Boolean).join(" · "))}</span></p>
+    const about = named ? [sheet?.kind, source?.name] : [sheet?.name, source?.name];
+    el.innerHTML = `<p class="shell-banner">${named ? `<span class="shell-name">${escapeHTML(S.label(current))}</span>` : ""}
+        <span class="gear-kind">${escapeHTML(about.filter(Boolean).join(" · "))}</span></p>
       ${CUI.chipsHTML(current.shell)}
       ${sheet?.perks.length ? `<ul class="ability-list shell-perks">${sheet.perks.map((p, i) => `<li>
         <button type="button" class="ability-name" data-shell-perk="${i}">${escapeHTML(p.name)}</button></li>`).join("")}</ul>` : ""}`;
@@ -501,7 +525,7 @@
     render();
   });
   const SHELL_ACTIONS = { load: loadShell, return: () => confirmShell("return"), destroyed: () => confirmShell("destroyed") };
-  for (const el of [display, running]) {
+  for (const el of [display, running, fields]) {
     el.addEventListener("click", (e) => {
       const perk = e.target.closest("[data-shell-perk]");
       if (perk) { openShellPerk(Number(perk.dataset.shellPerk)); return; }
@@ -511,23 +535,13 @@
 
   // ---- the Network (avatars.js): Display shows the avatar while they're in it; Running makes one, goes in, and comes out ----
   // Going in and out saves right away and posts to Discord. The appearance and software open their sheet text.
-  // In the Network the avatar takes the Body section's place, and the shell buttons are out of reach.
-  function renderNetwork(el, { actions = null } = {}) {
-    const inside = C.inNetwork(current), avatar = current.avatar;
-    if (actions) actions.innerHTML = inside ? `
-      <wa-button size="s" appearance="outlined" data-network-action="leave">
-        <wa-icon slot="start" name="right-from-bracket"></wa-icon>Leave the Network</wa-button>` : `
-      <wa-button size="s" appearance="outlined" data-network-action="new">
-        <wa-icon slot="start" name="user-astronaut"></wa-icon>New Avatar</wa-button>
-      <wa-button size="s" appearance="outlined" data-network-action="enter">
-        <wa-icon slot="start" name="globe"></wa-icon>Enter the Network</wa-button>`;
-    if (!inside) {
-      el.innerHTML = actions ? `<p class="gear-empty">${C.hasAvatar(current) ? `Avatar: ${escapeHTML(V.label(current))}` : "No avatar yet"}</p>` : "";
-      return;
-    }
+  // `named` false leaves the username and kind out (Running's Network line already says them).
+  function renderNetwork(el, { named = true } = {}) {
+    const avatar = current.avatar;
+    if (!C.inNetwork(current)) { el.innerHTML = ""; return; }
     const software = V.softwareOf(avatar), look = V.APPEARANCES[avatar.appearance];
-    el.innerHTML = `<p class="shell-banner"><span class="shell-name">${escapeHTML(V.label(current))}</span>
-        <span class="gear-kind">${escapeHTML(V.kindLabel(avatar))}</span></p>
+    el.innerHTML = `${named ? `<p class="shell-banner"><span class="shell-name">${escapeHTML(V.label(current))}</span>
+        <span class="gear-kind">${escapeHTML(V.kindLabel(avatar))}</span></p>` : ""}
       ${avatar.description ? `<p class="avatar-description">${escapeHTML(avatar.description)}</p>` : ""}
       <ul class="ability-list shell-perks">
         ${look ? `<li><button type="button" class="ability-name" data-avatar-appearance>${escapeHTML(look.name)}</button></li>` : ""}
@@ -563,7 +577,7 @@
     render();
   }
   const NETWORK_ACTIONS = { new: () => newAvatar(), enter: enterNetwork, leave: leaveNetwork };
-  for (const el of [display, running]) {
+  for (const el of [display, running, fields]) {
     el.addEventListener("click", (e) => {
       const avatar = current?.avatar;
       if (e.target.closest("[data-avatar-appearance]")) {

@@ -829,6 +829,11 @@ button.condition:hover, button.condition:focus-visible { background: color-mix(i
 /* ---- avatars: the one in the Network on the sheet, and the New Avatar dialog's software boxes ---- */
 .avatar-description { margin: 0 0 var(--wa-space-xs); color: var(--wa-color-text-quiet); }
 .avatar-software { display: flex; flex-direction: column; gap: var(--wa-space-xs); }
+/* Running: the avatar's description, appearance and software on one wrapping line */
+#network-run { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--wa-space-3xs) var(--wa-space-m); }
+#network-run > p { margin: 0; }
+#network-run .ability-list { display: flex; flex-wrap: wrap; gap: var(--wa-space-3xs) var(--wa-space-m); margin: 0; }
+#network-run .ability-list li { border: 0; padding: 0; }
 .condition-form { display: flex; flex-direction: column; gap: var(--wa-space-m); }
 .condition-for, .condition-intrinsic-note { margin: 0; }
 .condition-for { color: var(--wa-color-text-quiet); }
@@ -975,8 +980,27 @@ button.condition:hover, button.condition:focus-visible { background: color-mix(i
   .sheet-head[data-state="running"] .sheet-stats { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) auto; }
   .sheet-head[data-state="running"] .stat-wounds { grid-column: auto; }
 }
-/* Body and Conditions are each one row: the heading, what's there, and the buttons at the right;
-   a loaded shell's details go under its row */
+/* Running's Body and Network: a line each under the stats, the buttons at the right (wrapping under on narrow screens).
+   Out of a shell and the Network the value is quiet. On wide screens the identity spans both rows, so the lines sit
+   right under the stats instead of below the whole head. */
+.sheet-status { display: grid; align-content: start; }
+.status-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--wa-space-3xs) var(--wa-space-s);
+  min-height: 2.5rem; border-bottom: 1px solid var(--wa-color-surface-border); }
+.status-row .sheet-label { min-width: 4.5rem; }
+.status-value { flex: 1 1 8rem; min-width: 0; font-size: var(--wa-font-size-s); font-weight: 700; overflow-wrap: anywhere; }
+.status-value.is-default { font-weight: 400; color: var(--wa-color-text-quiet); }
+.status-actions { display: flex; flex-wrap: wrap; gap: var(--wa-space-2xs); margin-left: auto; }
+.status-actions wa-button { white-space: nowrap; }
+@media (min-width: 801px) {
+  .sheet-head[data-state="running"] { grid-template-rows: auto 1fr; row-gap: var(--wa-space-xs); }
+  .sheet-head[data-state="running"] .sheet-who { grid-row: span 2; }
+}
+/* phones and narrow windows: who they are, then the stats, then Body and Network, in one column */
+@media (max-width: 800px) {
+  .sheet-head[data-state="running"] { grid-template-columns: minmax(0, 1fr); gap: var(--wa-space-m); }
+}
+/* Conditions (and a shell's or avatar's details, while on) are each one row: the heading, what's there, and the buttons
+   at the right */
 #character-running > .gear { display: flex; flex-wrap: wrap; align-items: center; gap: var(--wa-space-xs) var(--wa-space-m);
   margin-bottom: var(--wa-space-s); }
 #character-running > .gear > .gear-head { display: contents; }
@@ -984,10 +1008,6 @@ button.condition:hover, button.condition:focus-visible { background: color-mix(i
 #character-running > .gear h3 { margin: 0; min-width: 7.5rem; }
 #character-running > .gear > :not(.gear-head) { flex: 1; min-width: 0; }
 #character-running > .gear > .gear-head > :not(h3) { order: 1; }
-#character-running > .shell:not(:has(#shell-run > .gear-empty)) > #shell-run { order: 2; flex-basis: 100%; }
-#character-running > .avatar:not(:has(#network-run > .gear-empty)) > #network-run { order: 2; flex-basis: 100%; }
-#shell-run-actions, #network-run-actions { margin: 0 0 0 auto; }
-#shell-run-actions:empty { display: none; }
 #character-running .skills { gap: var(--wa-space-m) var(--wa-space-2xl); }
 #character-running .skill-column { gap: var(--wa-space-m); }
 #character-running .skills li { min-height: 2rem; padding: 0; }
