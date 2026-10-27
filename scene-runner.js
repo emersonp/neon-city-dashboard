@@ -61,7 +61,11 @@
     S.saveOpen(storage, open);
     builderTab.hidden = open?.mode !== "build";
     runnerTab.hidden = open?.mode !== "run";
+    syncSkin();
   }
+  // A running scene in the Network puts the Administrator's page in the Network's look (shared.js's NCD_SKIN).
+  const inNetwork = () => open?.mode === "run" && open.run.network;
+  const syncSkin = () => window.NCD_SKIN.set("scene", ADMIN.gm && inNetwork());
   // Shows a subtab once it's there to show (a tab that was hidden a moment ago needs the group to catch up).
   const show = (panel) => customElements.whenDefined("wa-tab-group").then(() => requestAnimationFrame(() => { tabs.active = panel; }));
 
@@ -325,6 +329,8 @@
   const sceneById = (id) => scenes.find((s) => s.id === id);
   const runningId = () => (open?.mode === "run" ? open.run.sceneId : null);
   const modeName = (mode) => (mode === "conflict" ? "Conflict" : "Legwork");
+  // "Legwork", or "Legwork · In the Network" (short: "Legwork · Network", for the list)
+  const kindName = (s, short = false) => `${modeName(s.mode)}${s.network ? (short ? " · Network" : " · In the Network") : ""}`;
 
   // An element's kind and what's set on its copy, in a line: "Antagonist · 70 luck", "Objective · Difficulty 30 · Urgent".
   function elementTag(e) {
@@ -337,7 +343,7 @@
   function renderSceneList() {
     $("scene-list").innerHTML = scenes.length ? `<ul class="scene-items">${[...scenes].sort((a, b) => (a.name || "").localeCompare(b.name || "")).map((s) =>
       `<li><button type="button" class="scene-item${selectedScene === s.id ? " on" : ""}" data-scene-pick="${esc(s.id)}">${esc(s.name || "Untitled scene")}<span class="scene-item-tag">${
-        runningId() === s.id ? "Running" : modeName(s.mode)}</span></button></li>`).join("")}</ul>`
+        runningId() === s.id ? "Running" : kindName(s, true)}</span></button></li>`).join("")}</ul>`
       : `<p class="scene-empty">No scenes yet.</p>`;
   }
 
@@ -347,7 +353,7 @@
     const running = runningId() === s.id;
     $("scene-detail").innerHTML = `<section class="sheet-column databank-section scene-card">
         <h2>${esc(s.name || "Untitled scene")}</h2>
-        <p class="ability-tag">${modeName(s.mode)}${running ? " · Running" : ""}</p>
+        <p class="ability-tag">${kindName(s)}${running ? " · Running" : ""}</p>
         ${P.placeLabel(s.place) ? `<p class="scene-where">${esc(P.placeLabel(s.place))}</p>` : ""}
         ${s.notes ? rich(s.notes) : ""}
         ${s.elements.length ? `<ul class="scene-elements">${s.elements.map((e) => `<li${e.id === s.mainGoal ? ' class="main-goal"' : ""}>
@@ -489,6 +495,7 @@
           <h2>${sceneById(scene.id) ? "Edit scene" : "New scene"}</h2>
           <wa-input label="Name" value="${esc(scene.name)}" data-scene-field="name" autocomplete="off"></wa-input>
           <wa-radio-group label="Kind" orientation="horizontal" value="${scene.mode}" data-scene-field="mode" data-radios="mode"></wa-radio-group>
+          <wa-checkbox data-scene-field="network" ${scene.network ? "checked" : ""} hint="While it runs, your page and the overlay take on the Network's look. You can also switch it in the Runner.">In the Network</wa-checkbox>
           ${placeFields(scene.place)}
           <wa-textarea label="Notes" value="${esc(scene.notes)}" rows="3" resize="auto" data-scene-field="notes"></wa-textarea>
           <p class="scene-hint">Mark one element as the Main Goal; everything else is an obstacle. Obstacles can be objectives or
@@ -529,7 +536,7 @@
   // Typing changes the draft (kept, so a reload loses nothing) without drawing it again.
   const onBuilderField = (e) => {
     const sceneField = e.target.closest("[data-scene-field]")?.dataset.sceneField;
-    if (sceneField) { changeDraft({ ...draft(), [sceneField]: e.target.value }); return; }
+    if (sceneField) { changeDraft({ ...draft(), [sceneField]: sceneField === "network" ? e.target.checked : e.target.value }); return; }
     const placeField = e.target.closest("[data-place-field]")?.dataset.placeField;
     if (placeField === "location") { changeDraft({ ...draft(), place: P.changePlace(draft().place, { location: e.target.value }) }); return; }
     if (placeField) {
@@ -577,10 +584,13 @@
   }
   // The run's initiative to the overlay (when there's a link). true if it went.
   const sendInitiative = (initiative) => linked && ADMIN.send("initiative", initiative);
+  // The overlay's look to match: the Network's while the running scene is in it.
+  const sendNetwork = () => linked && ADMIN.send("network", { on: Boolean(inNetwork()) });
 
   function startRun(scene) {
     setOpen({ mode: "run", run: S.apply(null, { type: "start", scene }) });
     sendInitiative(run().initiative);
+    sendNetwork();
     APP.emptyResult($("runner-result"));
     $("runner-roll-label").textContent = "Click an attack to roll it.";
     renderAll();
@@ -589,6 +599,7 @@
   function endRun() {
     sendInitiative(NO_CONFLICT);
     setOpen(null);
+    sendNetwork();
   }
   // A turn on or back: through the overlay when it's linked (the run follows what it reports), else here.
   // The round set by hand (here, or on the Initiative card): a correction, so no round starts anew. Then the overlay's
@@ -660,7 +671,7 @@
     const { conflict, phase, round } = state.initiative;
     $("runner-head").innerHTML = `<section class="runner-head">
         <div><h2>${esc(state.name || "Untitled scene")}</h2>
-          <p class="ability-tag">${modeName(state.mode)}${state.mode === "legwork" && conflict ? " · now a conflict" : ""}${linked ? "" : " · counting turns here (no overlay)"}</p>
+          <p class="ability-tag">${kindName(state)}${state.mode === "legwork" && conflict ? " · now a conflict" : ""}${linked ? "" : " · counting turns here (no overlay)"}</p>
           ${P.placeLabel(state.place) ? `<p class="scene-where">${esc(P.placeLabel(state.place))}</p>` : ""}
           ${state.notes ? rich(state.notes) : ""}
           ${runConditions(state, "")}</div>
@@ -674,6 +685,7 @@
               <button type="button" class="initiative-round" data-set-round title="Set the round">Round <b>${round}</b></button></div>
           </div>` : ""}
         <div class="scene-actions">
+          <wa-switch id="runner-network" ${state.network ? "checked" : ""}>In the Network</wa-switch>
           ${conflict ? "" : `<wa-button appearance="outlined" id="runner-conflict"><wa-icon slot="start" name="bolt"></wa-icon>Make it a conflict</wa-button>`}
           <wa-button variant="danger" appearance="outlined" id="runner-end"><wa-icon slot="start" name="stop"></wa-icon>End run</wa-button>
         </div>
@@ -744,6 +756,7 @@
     }
   });
   runnerPanel.addEventListener("change", (e) => {
+    if (e.target.closest("#runner-network") && open?.mode === "run") { dispatch({ type: "network", on: e.target.checked }); sendNetwork(); return; }
     const toggle = e.target.closest("[data-run-toggle]");
     if (toggle && open?.mode === "run") dispatch({ type: toggle.dataset.runToggle, id: toggle.dataset.id });
   });
@@ -808,8 +821,11 @@
 
   ADMIN.onLink(({ status }) => {
     linked = status === "connected";
+    // a fresh link: the overlay's look as the run has it (no run is out of the Network)
+    if (linked) sendNetwork();
     renderRunner();
   });
+  ADMIN.onGm(syncSkin);
   ADMIN.onOverlay((msg) => {
     if (msg.type !== "overlayState" || !msg.initiative || open?.mode !== "run") return;
     dispatch({ type: "initiative", initiative: msg.initiative });

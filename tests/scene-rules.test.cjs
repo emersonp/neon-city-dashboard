@@ -501,3 +501,21 @@ test("scenes: a scene has a place, kept through cleaning and copied into a run",
   assert.deepEqual(S.cleanScene({ ...scene, place: undefined }).place, S.newScene("n").place);
   assert.deepEqual(started(scene).place, place);
 });
+
+test("scenes: In the Network is off for a new scene, and only true turns it on when cleaned", () => {
+  assert.equal(S.newScene("n").network, false);
+  assert.equal(S.cleanScene({ ...heist(), network: true }).network, true);
+  for (const network of [undefined, "yes", 1, false]) assert.equal(S.cleanScene({ ...heist(), network }).network, false, String(network));
+});
+
+test("run: it starts in the Network if the scene is, and can go in or out of it once started", () => {
+  assert.equal(started().network, false);
+  const state = started({ ...heist(), network: true });
+  assert.equal(state.network, true);
+  assert.equal(run(state, { type: "network", on: false }).network, false);
+  assert.equal(run(started(), { type: "network", on: true }).network, true);
+  // a reload mid-run keeps it
+  const storage = memory();
+  S.saveOpen(storage, { mode: "run", run: state });
+  assert.equal(S.loadOpen(storage).run.network, true);
+});

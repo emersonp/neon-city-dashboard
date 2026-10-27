@@ -8,7 +8,7 @@ const { STATS, clampStat, cleanTicker, tidyTicker, PLANNING_MAX, planningLeft, p
   PHASES, cleanInitiative, stepPhase, stepInitiative } = globalThis.NCD_OVERLAY;
 
 const source = (file) => fs.readFileSync(path.join(__dirname, "..", file), "utf8");
-const TYPES = ["stat", "roll", "clearRoll", "ticker", "planning", "initiative", "ping", "overlayState"];
+const TYPES = ["stat", "roll", "clearRoll", "ticker", "planning", "initiative", "network", "ping", "overlayState"];
 
 test("stats are kept to whole numbers within their limits", () => {
   assert.equal(clampStat("heat", 12), 12);
@@ -147,4 +147,10 @@ test("stepping from Slow to Hazard starts the next round, and back again ends it
   assert.deepEqual(stepInitiative(at("hazard", 2), -1), at("slow", 1));
   assert.deepEqual(stepInitiative(at("fast", 2), -1), at("hazard", 2));
   assert.deepEqual(stepInitiative(at("hazard", 1), -1), at("slow", 1));
+});
+
+test("network messages say whether a scene in the Network is on", () => {
+  assert.deepEqual(make("network", { on: true }), { type: "network", on: true });
+  assert.deepEqual(make("network", { on: "yes" }), { type: "network", on: false });
+  assert.deepEqual(make("network"), { type: "network", on: false });
 });

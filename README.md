@@ -117,7 +117,8 @@ node --test tests/dice.test.cjs tests/discord.test.cjs tests/characters.test.cjs
 | `tokens.css` | Every colour and font: the night palette (amber interface, cyan second light), the day one, and Web Awesome's theme variables mapped onto them |
 | `atmosphere.css` | The air behind the page: two pools of neon light, smoke, and a faint still grain of rain |
 | `styles.css` | The Web Awesome components dressed as a holographic interface, using the tokens |
-| `shared.js` | Loaded first: localStorage access, the session (player, GM, open character), small helpers |
+| `network.css` | The Network's look over all of it (a grid to the horizon, everything edged in cyan light), while `<html>` has the `network` class; its colours and fonts are `tokens.css`'s `:root.network` |
+| `shared.js` | Loaded first: localStorage access, the session (player, GM, open character), the page's look (Day, Night, or the Network's while the open character or the Administrator's running scene is in it), small helpers |
 | `app.js` | Theme, tabs, settings, the dice pools, the roller and result panel, posting to Discord, and the Databank and GM Screen tabs |
 | `config.js` | Shared settings for everyone: Discord emoji codes and the published address (no webhook) |
 | `dice.js` | Dice rules (no page code, so it's testable in Node) |
@@ -218,7 +219,7 @@ Its page code is `scene-runner.js`; the rules are in `scene-rules.js`, and `test
   back, replacing them; a file it can't use is refused and nothing changes.
 - **List**: the saved scenes. **New**, **Edit**, **Duplicate**, **Delete** and **Run**. The running scene can't be edited,
   deleted or run again.
-- **Builder** (only while building): the scene's name, Legwork or Conflict, notes, and its elements: copies of enemies,
+- **Builder** (only while building): the scene's name, Legwork or Conflict, **In the Network**, notes, and its elements: copies of enemies,
   objectives (every tagged objective in `tables.js`, and yours) and hazards, each taken when it's added, so later changes to
   the lists don't change it. A copy can have its own name (two Bodyguards called Vex and Moth), a squad its own size, and an
   objective or hazard its own difficulty and Urgent or Timed. One element can be the **Main Goal**; the rest are obstacles.
@@ -232,7 +233,9 @@ Its page code is `scene-runner.js`; the rules are in `scene-rules.js`, and `test
   obstacles are left. The turn arrows step the overlay's initiative like the Initiative card, so the two stay in step;
   without OBS the Runner counts turns and rounds itself. Running a Conflict scene starts the overlay's conflict layout at
   Hazard, round 1; **Make it a conflict** does that for a Legwork one; **End run** turns it off and clears the tracking.
-  Copies added mid-run are for this run only, unless **Also add to the saved scene** is ticked.
+  Copies added mid-run are for this run only, unless **Also add to the saved scene** is ticked. **In the Network** (ticked
+  in the Builder, or switched in the Runner at any time) puts the Administrator's page and the overlay in the Network's
+  look while the scene runs; End run takes both out of it.
 
 Only one scene is open at a time, being built or running: starting another asks to Save, Discard (or End run) or Cancel.
 Everything stays in this browser (a reload mid-run brings it all back), so Export now and then.
@@ -365,6 +368,8 @@ is the sheet pack's Anonymous Avatar, called **Quick Avatar** as the perks do.
   rolls). Wounds are the body's underneath, and say which. The shell buttons are hidden until they leave.
 - Start Job, Finish Job and Abandon Job take them out of the Network and keep the avatar. Edit and the PDF never show
   the avatar. Installed Software and the appearances' other text aren't automated.
+- While the open character is in the Network, the whole page takes the Network's look (`network.css`): black, a grid
+  to the horizon, cyan light and orange programs, the same for Day and Night (the theme toggle hides until they leave).
 
 `tests/avatars.test.cjs` checks the avatars.
 

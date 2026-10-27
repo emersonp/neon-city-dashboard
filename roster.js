@@ -54,7 +54,12 @@
                           // mind's, and the default body's: never a shell's)
 
   // A character still in creation stays out of SESSION, so Dice-tab rolls don't post as it; Finish sets it.
-  const setCurrent = (character) => { current = character; SESSION.character = C.playingAs(character); };
+  // The open character in the Network puts the whole page in the Network's look (shared.js's NCD_SKIN).
+  const setCurrent = (character) => {
+    current = character;
+    SESSION.character = C.playingAs(character);
+    window.NCD_SKIN.set("character", Boolean(character) && C.inNetwork(character));
+  };
 
   // Saves the character right away (changes made while running, and Used). A failed save keeps the old one.
   function commit(next) {

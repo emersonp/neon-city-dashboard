@@ -1,3 +1,4 @@
 [
+  { "date": "2026-10-27", "macrostructure": "existing tabbed app (Network reskin in place)", "theme": "custom", "theme_axes": "dark / geometric-wide-sans / cool", "vibe": "light-cycle grid, cyan circuitry, black void", "enrichment": "Tier A CSS perspective grid floor + duotone portraits", "brief": "Neon City Dashboard · Tron look while in the Network (player, Administrator, overlay)" },
   { "date": "2026-10-21", "macrostructure": "existing tabbed app (redesign in place)", "theme": "custom", "theme_axes": "dark / display-condensed / warm", "vibe": "neon, rain and smoke; holo interface", "enrichment": "Tier A CSS haze + SVG-noise texture", "brief": "Neon City Dashboard · Blade Runner meets Mass Effect reskin" }
 ]

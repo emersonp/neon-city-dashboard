@@ -34,15 +34,13 @@
     }
   });
 
-  // ---- theme ----
-  const html = document.documentElement;
+  // ---- theme (shared.js's NCD_SKIN; in the Network the toggle is hidden, and the choice waits underneath) ----
+  const SKIN = window.NCD_SKIN;
   const themeIcon = $("theme-toggle").querySelector("wa-icon");
-  const syncThemeIcon = () => { themeIcon.name = html.classList.contains("wa-dark") ? "sun" : "moon"; };
+  const syncThemeIcon = () => { themeIcon.name = SKIN.dark ? "sun" : "moon"; };
   $("theme-toggle").addEventListener("click", () => {
-    const dark = !html.classList.contains("wa-dark");
-    html.classList.toggle("wa-dark", dark);
-    html.classList.toggle("wa-light", !dark);
-    store.set("theme", dark ? "dark" : "light");
+    SKIN.setDark(!SKIN.dark);
+    store.set("theme", SKIN.dark ? "dark" : "light");
     syncThemeIcon();
   });
   syncThemeIcon();

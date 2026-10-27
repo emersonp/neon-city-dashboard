@@ -133,6 +133,113 @@
   --color-rain: oklch(40% 0.03 245 / 0.06);
 }
 
+/* ---- The Network: one look for day and night (shared.js's NCD_SKIN puts .network on <html>, over wa-dark) ----
+ * Hallmark · route: custom (tuned) · vibe: "light-cycle grid, cyan circuitry, black void" (Tron)
+ * paper: oklch(8% 0.022 230) · accent: oklch(86% 0.15 200) cyan · secondary: oklch(76% 0.17 55) program orange
+ * display: Orbitron · body: Exo 2 · mono: Share Tech Mono · axes: dark / geometric-wide-sans / cool
+ * Cyan is the interface (and users); orange is the second light (and programs: enemy portraits, conditions).
+ * :root.network outranks .wa-dark and .wa-light, and sits on the same element, so everything below that reads these
+ * tokens (Web Awesome's mapping included) follows. The overlay (overlay.html) uses it too. */
+:root.network {
+  --font-display: "Orbitron", "Exo 2", sans-serif;
+  --font-body: "Exo 2", sans-serif;
+  --font-mono: "Share Tech Mono", ui-monospace, monospace;
+
+  --cyan-95: oklch(97% 0.03 200);
+  --cyan-90: oklch(94% 0.06 200);
+  --cyan-80: oklch(90% 0.11 200);
+  --cyan-70: oklch(88% 0.14 200);
+  --cyan-60: oklch(86% 0.15 200);
+  --cyan-50: oklch(72% 0.13 205);
+  --cyan-40: oklch(58% 0.11 208);
+  --cyan-30: oklch(46% 0.09 210);
+  --cyan-20: oklch(34% 0.07 212);
+  --cyan-10: oklch(24% 0.05 215);
+  --cyan-05: oklch(17% 0.04 218);
+
+  /* the void's neutrals: black with a cyan cast */
+  --void-95: oklch(95% 0.02 205);
+  --void-90: oklch(89% 0.03 205);
+  --void-80: oklch(80% 0.045 207);
+  --void-70: oklch(70% 0.055 208);
+  --void-60: oklch(60% 0.06 210);
+  --void-50: oklch(50% 0.06 212);
+  --void-40: oklch(40% 0.055 214);
+  --void-30: oklch(30% 0.05 216);
+  --void-20: oklch(21% 0.04 218);
+  --void-10: oklch(14% 0.03 222);
+  --void-05: oklch(9% 0.025 225);
+
+  --color-sky: oklch(5% 0.018 235);
+  --color-sky-2: oklch(9% 0.035 222);
+  --color-paper: oklch(8% 0.022 230);
+  --color-paper-2: oklch(8% 0.028 228 / 0.8);    /* panels: the grid shows faintly through */
+  --color-paper-solid: oklch(9% 0.03 228);
+  --color-paper-3: oklch(4% 0.018 230 / 0.9);
+  --color-rule: oklch(74% 0.13 205 / 0.6);        /* every edge is a line of light */
+  --color-rule-2: oklch(62% 0.1 205 / 0.32);
+  --color-ink: oklch(96% 0.025 200);
+  --color-ink-2: oklch(79% 0.07 205);
+  --color-accent: var(--cyan-60);
+  --color-accent-text: oklch(89% 0.12 200);
+  --color-accent-ink: oklch(10% 0.03 225);        /* text on a cyan fill */
+  --color-holo: oklch(76% 0.17 55);
+  --color-holo-text: oklch(81% 0.14 60);
+  --color-focus: oklch(97% 0.07 195);
+  --color-good: oklch(88% 0.17 165);
+  --color-bad: oklch(66% 0.23 27);
+  --color-heat: oklch(70% 0.2 38);
+  --color-turn-hazard: oklch(91% 0.16 100);
+  --color-turn-fast: var(--color-bad);
+  --color-turn-antagonists: oklch(72% 0.24 330);
+  --color-turn-slow: var(--color-accent);
+  --color-shade: oklch(3% 0.02 230 / 0.7);
+  --color-scanline: oklch(86% 0.15 200 / 0.05);
+  --color-bracket: oklch(86% 0.15 200 / 0.9);
+  --color-row-hover: oklch(86% 0.15 200 / 0.09);
+
+  --glow-accent: color-mix(in oklch, var(--color-accent) 60%, transparent);
+  --glow-holo: color-mix(in oklch, var(--color-holo) 55%, transparent);
+
+  /* the grid behind the page (network.css), and the overlay's panel */
+  --color-grid: oklch(82% 0.15 203 / 0.55);
+  --color-grid-faint: oklch(82% 0.15 203 / 0.07);
+  --color-horizon: oklch(80% 0.15 200 / 0.5);
+  --color-neon-warm: oklch(62% 0.17 55 / 0.16);
+  --color-neon-cool: oklch(72% 0.14 205 / 0.3);
+  --color-smoke: transparent;
+  --color-rain: transparent;
+  --color-sweep: oklch(86% 0.15 200 / 0.1);
+  --color-sweep-core: oklch(97% 0.05 200 / 0.2);
+
+  --wa-color-brand-95: var(--cyan-95);
+  --wa-color-brand-90: var(--cyan-90);
+  --wa-color-brand-80: var(--cyan-80);
+  --wa-color-brand-70: var(--cyan-70);
+  --wa-color-brand-60: var(--cyan-60);
+  --wa-color-brand-50: var(--cyan-50);
+  --wa-color-brand-40: var(--cyan-40);
+  --wa-color-brand-30: var(--cyan-30);
+  --wa-color-brand-20: var(--cyan-20);
+  --wa-color-brand-10: var(--cyan-10);
+  --wa-color-brand-05: var(--cyan-05);
+
+  --wa-color-neutral-95: var(--void-95);
+  --wa-color-neutral-90: var(--void-90);
+  --wa-color-neutral-80: var(--void-80);
+  --wa-color-neutral-70: var(--void-70);
+  --wa-color-neutral-60: var(--void-60);
+  --wa-color-neutral-50: var(--void-50);
+  --wa-color-neutral-40: var(--void-40);
+  --wa-color-neutral-30: var(--void-30);
+  --wa-color-neutral-20: var(--void-20);
+  --wa-color-neutral-10: var(--void-10);
+  --wa-color-neutral-05: var(--void-05);
+
+  --wa-form-control-background-color: var(--color-paper-3);
+  --wa-form-control-border-color: var(--color-rule-2);
+}
+
 /* ---- Web Awesome, mapped onto the tokens (unlayered, so these win over its theme layer) ---- */
 :root, .wa-dark, .wa-light {
   --wa-font-family-body: var(--font-body);

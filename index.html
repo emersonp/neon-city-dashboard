@@ -12,9 +12,12 @@
   (function () {
     const saved = NCD_STORE.get("theme");
     const dark = saved ? saved === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
-    document.documentElement.classList.add(dark ? "wa-dark" : "wa-light");
+    NCD_SKIN.setDark(dark);
     // Administrator-only parts (data-admin) show from the start; admin.js keeps the class in step with Settings.
-    document.documentElement.classList.toggle("gm", NCD_STORE.get("gm") === "1");
+    const gm = NCD_STORE.get("gm") === "1";
+    document.documentElement.classList.toggle("gm", gm);
+    // the Administrator's running scene in the Network: its look from the start too (scene-runner.js keeps it in step)
+    try { NCD_SKIN.set("scene", gm && JSON.parse(NCD_STORE.get("sceneOpen", "null"))?.run?.network === true); } catch {}
   })();
 </script>
 
@@ -23,11 +26,14 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Saira+Condensed:wght@500;700;800&display=swap" rel="stylesheet">
-<!-- tokens.css: every colour and font; atmosphere.css: the haze and neon light behind the page -->
+<!-- Orbitron, Exo 2 and Share Tech Mono are the Network's (network.css); browsers fetch them only once they're used -->
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Exo+2:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@500;700&family=Orbitron:wght@500;700;800;900&family=Saira+Condensed:wght@500;700;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<!-- tokens.css: every colour and font; atmosphere.css: the haze and neon light behind the page; network.css: the
+     Network's look over all of it, while the page is in the Network -->
 <link rel="stylesheet" href="tokens.css">
 <link rel="stylesheet" href="atmosphere.css">
 <link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="network.css">
 <!-- Cut corners: Chrome draws them natively (corner-shape); Firefox and Safari get the clip-path version in styles.css -->
 <script>document.documentElement.classList.toggle("bevel", CSS.supports("corner-shape: bevel"));</script>
 </head>
@@ -36,6 +42,8 @@
     <div class="brand">
       <span class="brand-icon" data-icon="advantage-die"></span>
       <h1>Neon City <span>Dashboard</span></h1>
+      <!-- shown only in the Network (network.css) -->
+      <span class="network-mark">In the Network</span>
     </div>
     <wa-button id="theme-toggle" appearance="plain" size="s" title="Toggle light/dark">
       <wa-icon name="moon" label="Toggle light/dark"></wa-icon>

@@ -5,8 +5,9 @@
 <title>Neon City Overlay</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Saira+Condensed:wght@500;700;800&display=swap" rel="stylesheet">
-<!-- the dashboard's colours, fonts and easings (only the night palette applies: there's no light mode on stream) -->
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Orbitron:wght@500;700;800;900&family=Saira+Condensed:wght@500;700;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<!-- the dashboard's colours, fonts and easings (only the night palette applies: there's no light mode on stream), and
+     the Network's while the Administrator's running scene is in it (the network class on <html>) -->
 <link rel="stylesheet" href="tokens.css">
 <!-- OBS browser source: the Administrator's Dashboard tab drives this page through OBS (see README). obs-config.js is gitignored. -->
 <script src="obs-config.js"></script>
@@ -537,6 +538,50 @@
   .status { flex: none; text-align: center; font-size: 0.75vw; color: var(--color-bad); letter-spacing: 0.1em; opacity: 0.85; }
   .status:empty { display: none; }
 
+  /* ---------- The Network: the Administrator's running scene is in it (the network class on <html>) ----------
+     tokens.css's :root.network does the colours and fonts (cyan light, orange programs, Orbitron); here the panel
+     becomes a pane of the grid with a lit horizon at its foot, every edge a line of light, and the camera is framed by
+     four corner brackets. The wide face needs tighter labels to fit the same boxes. */
+  html.network .panel {
+    background:
+      linear-gradient(transparent calc(100% - 22vh), var(--color-neon-cool) 100%),
+      linear-gradient(var(--color-grid-faint) 1px, transparent 1px),
+      linear-gradient(90deg, var(--color-grid-faint) 1px, transparent 1px),
+      linear-gradient(var(--color-sky), var(--color-sky-2));
+    background-size: 100% 100%, 2.4vw 2.4vw, 2.4vw 2.4vw, 100% 100%;
+    box-shadow: 0 0 8px var(--color-accent), 0 0 32px var(--glow-accent), inset -16px 0 40px -20px var(--color-accent);
+  }
+  html.network body.right .panel { box-shadow: 0 0 8px var(--color-accent), 0 0 32px var(--glow-accent), inset 16px 0 40px -20px var(--color-accent); }
+  html.network .card { --edge: color-mix(in oklch, var(--color-accent) 55%, transparent); --edge-tl: var(--color-accent); }
+  html.network .card-title { font-weight: 900; letter-spacing: 0.18em; text-shadow: 0 0 10px var(--glow-accent); }
+  html.network .card-title::before { width: 1.2vw; height: 0.2vw; }
+  html.network .stat .label { font-size: 0.85vw; letter-spacing: 0.1em; }
+  html.network .panel.conflict .stat .label { letter-spacing: 0.04em; font-size: 0.75vw; }
+  html.network .stat-value.broker { font-size: 2.1vw; letter-spacing: 0.04em; }
+  html.network .panel.conflict .stat-value.broker { font-size: 1.5vw; }
+  html.network :is(.heat-value, .stat-value, .total, .turn, .clock) { font-weight: 900; }
+  html.network .turn { font-size: 4vw; letter-spacing: 0.08em; }
+  html.network .turn-track li { font-size: 0.75vw; letter-spacing: 0.06em; padding-left: 0.06em; }
+  html.network .verdict { letter-spacing: 0.4em; }
+  /* the camera, framed: an L of light in each corner */
+  html.network .cam-sweep::before {
+    --b: 0.25vw; --l: 4vw; --c: var(--color-accent);
+    content: ""; position: absolute; inset: 1.6vw;
+    background:
+      linear-gradient(var(--c), var(--c)) top left / var(--l) var(--b), linear-gradient(var(--c), var(--c)) top left / var(--b) var(--l),
+      linear-gradient(var(--c), var(--c)) top right / var(--l) var(--b), linear-gradient(var(--c), var(--c)) top right / var(--b) var(--l),
+      linear-gradient(var(--c), var(--c)) bottom left / var(--l) var(--b), linear-gradient(var(--c), var(--c)) bottom left / var(--b) var(--l),
+      linear-gradient(var(--c), var(--c)) bottom right / var(--l) var(--b), linear-gradient(var(--c), var(--c)) bottom right / var(--b) var(--l);
+    background-repeat: no-repeat;
+    filter: drop-shadow(0 0 6px var(--c)) drop-shadow(0 0 16px var(--glow-accent));
+  }
+  /* the ticker's along the bottom: the frame's lower corners sit above it */
+  html.network .cam-sweep:has(~ .ticker:not(.off))::before { bottom: calc(3.4vw + 1.6vw); }
+  html.network .ticker { border-top-color: var(--color-accent); box-shadow: 0 0 10px var(--color-accent), 0 0 30px var(--glow-accent); }
+  html.network .ticker-item { font-weight: 700; letter-spacing: 0.06em; font-size: 1.5vw; }
+  html.network .sign { --sc: var(--color-holo); }
+  html.network .sign-word { font-weight: 900; letter-spacing: 0.24em; padding-left: 0.24em; }
+
   /* the idle ambience stops for reduced motion (OBS doesn't ask for it, so the stream keeps it);
      rolls, the ticker and the countdown still play */
   @media (prefers-reduced-motion: reduce) {
@@ -954,11 +999,17 @@
 
   // ---- Sign ----
   // CONSUME for 50s with one small slip somewhere in the middle, then a hard glitch into OBEY for 10s, and a hard
-  // glitch back. The word swaps halfway through each hard glitch.
+  // glitch back. The word swaps halfway through each hard glitch. In the Network it's ONLINE and TRACED.
   const signEl = document.getElementById("sign");
   const signWord = document.getElementById("signWord");
-  const SIGN = [{ word: "CONSUME", ms: 50000 }, { word: "OBEY", ms: 10000 }];
+  const signCaption = signEl.querySelector(".sign-caption");
+  const SIGN = [{ word: "CONSUME", net: "ONLINE", ms: 50000 }, { word: "OBEY", net: "TRACED", ms: 10000 }];
   const HARD_MS = 700;
+  let signAt = 0;
+  function showSignText() {
+    signWord.textContent = signWord.dataset.text = network ? SIGN[signAt].net : SIGN[signAt].word;
+    signCaption.textContent = network ? "NETWORK · SYSTEM NOTICE" : "NBN · CIVIC NOTICE";
+  }
 
   function glitchSign(kind, ms) {
     signEl.classList.remove(kind);
@@ -967,15 +1018,31 @@
     setTimeout(() => signEl.classList.remove(kind), ms);
   }
   function showSign(i) {
-    const { word, ms } = SIGN[i];
-    signWord.textContent = signWord.dataset.text = word;
-    signEl.classList.toggle("obey", word === "OBEY");
-    if (word === "CONSUME") setTimeout(() => glitchSign("blip", 300), 15000 + Math.random() * 25000);
+    const { ms } = SIGN[i];
+    signAt = i;
+    showSignText();
+    signEl.classList.toggle("obey", i === 1);
+    if (i === 0) setTimeout(() => glitchSign("blip", 300), 15000 + Math.random() * 25000);
     setTimeout(() => {
       glitchSign("hard", HARD_MS);
       setTimeout(() => showSign((i + 1) % SIGN.length), HARD_MS / 2);
     }, ms - HARD_MS / 2);
   }
+
+  // ---- The Network ----
+  // A scene in the Network: the whole overlay takes the Network's look (tokens.css's .network, and the styles above),
+  // and the sign tears into its Network words.
+  let network = store.get("nco.network", false) === true;
+  function setNetwork(on) {
+    const changed = network !== on;
+    network = on;
+    store.set("nco.network", network);
+    document.documentElement.classList.toggle("network", network);
+    if (!changed) return;
+    glitchSign("hard", HARD_MS);
+    setTimeout(showSignText, HARD_MS / 2);
+  }
+  document.documentElement.classList.toggle("network", network);
   showSign(0);
 
   // ---- OBS link ----
@@ -1001,6 +1068,7 @@
       else if (msg.type === "ticker") setTicker(msg.items);
       else if (msg.type === "planning") planningAction(msg);
       else if (msg.type === "initiative") setInitiative(msg);
+      else if (msg.type === "network") setNetwork(msg.on);
       else if (msg.type === "ping") reportState();
     },
   });
@@ -1015,6 +1083,7 @@
     else if (e.key === "d") setStat("day", (stats.day + 1) % 11);
     else if (e.key === "p") planningAction({ action: planning ? "stop" : "start", seconds: 5 });
     else if (e.key === "o") planningAction({ action: planning?.running ? "pause" : "play" });
+    else if (e.key === "n") setNetwork(!network);
     else if (e.key === "c") setInitiative({ conflict: !initiative.conflict, phase: PHASES[0], round: 1 });
     else if (e.key === "[" || e.key === "]") setInitiative(stepInitiative(initiative, e.key === "]" ? 1 : -1));
     else if (e.key === " " || e.key === "r") {

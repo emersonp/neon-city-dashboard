@@ -9,7 +9,9 @@
 // planning      { action, seconds }               dashboard → overlay: start, pause, play, stop or add to the countdown
 // initiative    { conflict, phase, round }        dashboard → overlay: a conflict scene on or off, whose turn it is, and
 //                                                   which round
-// ping          {}                                dashboard → overlay: ask what it's showing
+// network       { on }                            dashboard → overlay: a scene in the Network on or off (the overlay
+//                                                   goes to the Network's look)
+// ping         {}                                dashboard → overlay: ask what it's showing
 // overlayState  { heat, influence, day, ticker,   overlay → dashboard: what it's showing (on connect, on ping, and
 //                 planning, initiative }            whenever the countdown or initiative changes)
 //
@@ -120,6 +122,7 @@
       ? { action, seconds: clampMs(seconds * 1000) / 1000 }
       : null),
     initiative: cleanInitiative,
+    network: ({ on }) => ({ on: on === true }),
     ping: () => ({}),
     // stats it doesn't report stay null; so does the ticker. planning is null when no countdown is on; initiative
     // is null when it doesn't say.
