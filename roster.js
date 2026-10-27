@@ -310,7 +310,7 @@
         renderGear($("gear-display"), current);
         renderAbilities($("abilities-display"), C.abilities(current, ABILITIES));
       } else {
-        renderShell($("shell-run"), { running: true });
+        renderShell($("shell-run"), { actions: $("shell-run-actions") });
         renderConditions($("conditions-run"), current, { clickable: true });
         renderAppearance($("appearance-run"));
         renderStory($("story-run"));
@@ -433,21 +433,21 @@
 
   // ---- the shell (shells.js): Display and Running show the loaded one; Running loads one, goes back, or loses it ----
   // Each saves right away and posts to Discord. The shell's own body perks open in the ability dialog.
-  function renderShell(el, { running = false } = {}) {
+  // Running, Return and Shell Destroyed go in the section's head, beside Load Shell (actions).
+  function renderShell(el, { actions = null } = {}) {
     const sheet = S.sheetOf(current);
-    if (!C.inShell(current)) { el.innerHTML = running ? `<p class="gear-empty">Default body</p>` : ""; return; }
+    if (actions) actions.innerHTML = C.inShell(current) ? `
+      <wa-button size="s" appearance="outlined" data-shell-action="return">
+        <wa-icon slot="start" name="house-user"></wa-icon>Return to Default Body</wa-button>
+      <wa-button size="s" appearance="outlined" variant="danger" data-shell-action="destroyed">
+        <wa-icon slot="start" name="skull"></wa-icon>Shell Destroyed</wa-button>` : "";
+    if (!C.inShell(current)) { el.innerHTML = actions ? `<p class="gear-empty">Default body</p>` : ""; return; }
     const source = S.SOURCES[current.shell.source];
     el.innerHTML = `<p class="shell-banner"><span class="shell-name">${escapeHTML(S.label(current))}</span>
         <span class="gear-kind">${escapeHTML([sheet?.kind, source?.name].filter(Boolean).join(" · "))}</span></p>
       ${CUI.chipsHTML(current.shell)}
       ${sheet?.perks.length ? `<ul class="ability-list shell-perks">${sheet.perks.map((p, i) => `<li>
-        <button type="button" class="ability-name" data-shell-perk="${i}">${escapeHTML(p.name)}</button></li>`).join("")}</ul>` : ""}
-      ${running ? `<div class="shell-actions">
-        <wa-button size="s" appearance="outlined" data-shell-action="return">
-          <wa-icon slot="start" name="house-user"></wa-icon>Return to Default Body</wa-button>
-        <wa-button size="s" appearance="outlined" variant="danger" data-shell-action="destroyed">
-          <wa-icon slot="start" name="skull"></wa-icon>Shell Destroyed</wa-button>
-      </div>` : ""}`;
+        <button type="button" class="ability-name" data-shell-perk="${i}">${escapeHTML(p.name)}</button></li>`).join("")}</ul>` : ""}`;
   }
   function openShellPerk(i) {
     const perk = S.sheetOf(current)?.perks[i];

@@ -954,6 +954,38 @@ button.condition:hover, button.condition:focus-visible { background: color-mix(i
 /* the buttons keep their size; the value between them gives way */
 .luck-steps wa-button { flex: none; font-family: var(--wa-font-family-body); }
 .luck-steps wa-button::part(base) { padding-inline: var(--wa-space-xs); }
+/* ---- Running: tighter all round, so the skills are on screen ---- */
+.character-actions.top:has(+ .sheet-head[data-state="running"]) { margin-bottom: var(--wa-space-s); }
+.sheet-head[data-state="running"] { grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: var(--wa-space-l);
+  margin-bottom: var(--wa-space-m); padding-bottom: var(--wa-space-m); }
+.sheet-head[data-state="running"] .sheet-who { grid-template-columns: 5rem minmax(0, 1fr); gap: var(--wa-space-m); }
+.sheet-head[data-state="running"] .portrait-missing wa-icon { font-size: 2rem; }
+/* handle; then name, archetype and origin on one row; then what they know */
+.sheet-head[data-state="running"] .sheet-identity { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--wa-space-xs) var(--wa-space-m); }
+.sheet-head[data-state="running"] .sheet-field { gap: 0; padding-bottom: var(--wa-space-3xs); }
+.sheet-head[data-state="running"] .sheet-field:has([data-field="name"]) { grid-column: auto; }
+.sheet-head[data-state="running"] .sheet-field dd { font-size: var(--wa-font-size-s); }
+.sheet-head[data-state="running"] .sheet-field dd[data-field="handle"] { font-size: var(--wa-font-size-l); }
+.sheet-head[data-state="running"] .stat { gap: var(--wa-space-3xs); }
+/* Luck, Influence and Wounds on one row when there's room for them */
+@media (min-width: 1100px), (min-width: 560px) and (max-width: 800px) {
+  .sheet-head[data-state="running"] .sheet-stats { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) auto; }
+  .sheet-head[data-state="running"] .stat-wounds { grid-column: auto; }
+}
+/* Body and Conditions are each one row: the heading, what's there, and the buttons at the right;
+   a loaded shell's details go under its row */
+#character-running > .gear { display: flex; flex-wrap: wrap; align-items: center; gap: var(--wa-space-xs) var(--wa-space-m);
+  margin-bottom: var(--wa-space-s); }
+#character-running > .gear > .gear-head { display: contents; }
+#character-running > .gear h3 { margin: 0; min-width: 7.5rem; }
+#character-running > .gear > :not(.gear-head) { flex: 1; min-width: 0; }
+#character-running > .gear > .gear-head > :not(h3) { order: 1; }
+#character-running > .shell:not(:has(#shell-run > .gear-empty)) > #shell-run { order: 2; flex-basis: 100%; }
+#shell-run-actions { margin: 0 0 0 auto; }
+#shell-run-actions:empty { display: none; }
+#character-running .skills { gap: var(--wa-space-m) var(--wa-space-2xl); }
+#character-running .skill-column { gap: var(--wa-space-m); }
+#character-running .skills li { min-height: 2rem; padding: 0; }
 /* on phones the luck controls get the whole row while running */
 @media (max-width: 480px) {
   .sheet-head[data-state="running"] .sheet-stats { grid-template-columns: minmax(0, 1fr); }
