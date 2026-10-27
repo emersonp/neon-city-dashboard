@@ -67,7 +67,8 @@ go into the Network, so a player in a Network scene still sees (and rolls) their
    - Physical skills can't be rolled or marked Used.
    - Initiative in the World is hidden; Initiative in the Network is the mind's, as the sheet says to copy it.
    - Augmentations (the body's and a shell's) and Cybernetic gear are shown as unavailable, with no roll buttons.
-   - Weapons can't roll unless they have the Software keyword (digital attacks only); other gear is unaffected.
+   - Weapons can't roll (no physical attacks; digital attacks are skill rolls, and the databank has no digital
+     weapons). Other gear is unaffected.
 6. **Wounds**: the avatar has none. The wounds of the body underneath (the shell if one is loaded, else the default body)
    stay visible and editable, labelled as that body's, since a Network attack can wound the user.
 7. **Shells and the Network** don't mix: you're in the real world (default body or a shell) or in the Network. While in
@@ -87,8 +88,8 @@ go into the Network, so a player in a Network scene still sees (and rolls) their
 10. **Shown**: Display and Run show an "In the Network" banner with the username, appearance and software. In Run, the
     Body section's place shows the avatar while in the Network. Outside the Network, Run shows a line "Avatar:
     <username>" beside Enter the Network and New Avatar (just the two buttons if there's no avatar yet).
-11. **Discord**: entering and leaving the Network post, as shell events do ("<player> entered the Network as
-    <username>." / "<player> left the Network.").
+11. **Discord**: entering and leaving the Network post, as shell events do. Entering: "<handle> is HACKING THE
+    PLANET!" Leaving: "<handle> left the Network."
 
 ## Out of scope
 
