@@ -132,7 +132,7 @@ test("network messages: entering and leaving", () => {
     allowed_mentions: { parse: [] },
     content: "NullJack is HACKING THE PLANET!",
   });
-  assert.equal(networkMessage("NullJack", "leave").content, "NullJack left the Network.");
+  assert.equal(networkMessage("NullJack", "leave").content, "NullJack has entered the desert of the real.");
 });
 
 test("messages never ping anyone", () => {

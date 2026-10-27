@@ -89,7 +89,7 @@ go into the Network, so a player in a Network scene still sees (and rolls) their
     Body section's place shows the avatar while in the Network. Outside the Network, Run shows a line "Avatar:
     <username>" beside Enter the Network and New Avatar (just the two buttons if there's no avatar yet).
 11. **Discord**: entering and leaving the Network post, as shell events do. Entering: "<handle> is HACKING THE
-    PLANET!" Leaving: "<handle> left the Network."
+    PLANET!" Leaving: "<handle> has entered the desert of the real."
 
 ## Out of scope
 

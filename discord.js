@@ -120,7 +120,7 @@
 
   // A plain one-line message for going into the Network (action "enter") or leaving it ("leave"). `handle` is the character's.
   function networkMessage(handle, action, { username, avatarUrl } = {}) {
-    const content = action === "enter" ? `${handle} is HACKING THE PLANET!` : `${handle} left the Network.`;
+    const content = action === "enter" ? `${handle} is HACKING THE PLANET!` : `${handle} has entered the desert of the real.`;
     return { ...from({ username, avatarUrl }), content };
   }
 
