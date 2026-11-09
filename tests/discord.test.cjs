@@ -171,13 +171,13 @@ test("a success with an impact shows it on the main line", () => {
 
 test("initiative: a success goes Fast, a failure Slow", () => {
   const fast = roll({ target: 70, advantage: 1 }, seq(3, 2, 0));
-  assert.deepEqual(lines(fast, { player: "Parker", luck: 50, skill: "Initiative in the World", initiative: true, handle: "Zero" }), {
+  assert.deepEqual(lines(fast, { player: "Parker", luck: 50, skill: "Initiative in the World", initiative: true, pseudonym: "Zero" }), {
     intro: "Parker rolled for Initiative in the World",
     result: "Zero will go Fast",
     detail: "Rolled 32 with one boon",
   });
   const slow = roll({ target: 30 }, seq(5, 5));
-  const m = buildMessage(slow, "Parker", { skill: "Initiative in the Network", initiative: true, handle: "Zero" });
+  const m = buildMessage(slow, "Parker", { skill: "Initiative in the Network", initiative: true, pseudonym: "Zero" });
   assert.equal(m.components[0].accent_color, 0x00f0ff);
   assert.equal(m.components[0].components[0].content, "-# Parker rolled for Initiative in the Network\n## Zero will go Slow");
   assert.equal(m.components[0].components[2].content, "-# Rolled 55");
@@ -186,7 +186,7 @@ test("initiative: a success goes Fast, a failure Slow", () => {
 
 test("initiative with emoji, and with no target", () => {
   const r = roll({ advantage: 0, challenge: 1 }, seq(4, 1, 0));
-  const l = lines(r, { player: "Parker", emoji: EMOJI, skill: "Initiative in the World", initiative: true, handle: "Zero" });
+  const l = lines(r, { player: "Parker", emoji: EMOJI, skill: "Initiative in the World", initiative: true, pseudonym: "Zero" });
   assert.equal(l.result, "41");
   assert.equal(l.detail, "Rolled 41 · <:ncd_drawback:2>");
 });

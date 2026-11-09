@@ -400,7 +400,7 @@
           </wa-button>
         </div>
         <table class="roster">
-          <thead><tr><th>Handle</th><th>Archetype</th><th>Origin</th><th></th></tr></thead>
+          <thead><tr><th>Pseudonym</th><th>Archetype</th><th>Origin</th><th></th></tr></thead>
           <tbody id="roster-rows"></tbody>
         </table>
       </wa-tab-panel>
@@ -415,7 +415,7 @@
               <span class="portrait-frame"><img id="portrait" class="portrait" alt=""><span class="portrait portrait-missing"
                 role="img" aria-label="No portrait"><wa-icon name="user"></wa-icon></span></span>
               <dl class="sheet-identity">
-                <div class="sheet-field wide"><dt>Handle</dt><dd data-field="handle"></dd></div>
+                <div class="sheet-field wide"><dt>Pseudonym</dt><dd data-field="pseudonym"></dd></div>
                 <div class="sheet-field wide"><dt>Name</dt><dd data-field="name"></dd></div>
                 <div class="sheet-field"><dt>Archetype</dt><dd data-field="archetype"></dd></div>
                 <div class="sheet-field"><dt>Origin</dt><dd data-field="origin"></dd></div>
@@ -699,9 +699,9 @@
                   <input type="hidden" name="portrait">
                 </div>
                 <div class="sheet-identity">
-                  <wa-input class="wide" name="handle" label="Handle" autocomplete="off">
-                    <wa-button slot="end" appearance="plain" size="s" data-reroll="handle" title="New random handle">
-                      <wa-icon name="dice" label="New random handle"></wa-icon>
+                  <wa-input class="wide" name="pseudonym" label="Pseudonym" autocomplete="off">
+                    <wa-button slot="end" appearance="plain" size="s" data-reroll="pseudonym" title="New random pseudonym">
+                      <wa-icon name="dice" label="New random pseudonym"></wa-icon>
                     </wa-button>
                   </wa-input>
                   <wa-input class="wide" name="name" label="Name" autocomplete="off">
@@ -1000,10 +1000,10 @@
     </wa-button>
   </wa-dialog>
 
-  <!-- Roster: confirms deleting a character; Delete turns on once the handle is typed -->
+  <!-- Roster: confirms deleting a character; Delete turns on once the pseudonym is typed -->
   <wa-dialog id="delete-dialog" label="Delete character">
     <p id="delete-text"></p>
-    <wa-input id="delete-handle" autocomplete="off"></wa-input>
+    <wa-input id="delete-pseudonym" autocomplete="off"></wa-input>
     <wa-button slot="footer" variant="neutral" data-dialog="close">Keep</wa-button>
     <wa-button slot="footer" id="delete-confirm" variant="danger" disabled>
       <wa-icon slot="start" name="trash"></wa-icon>

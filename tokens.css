@@ -270,7 +270,7 @@
   --wa-color-neutral-10: var(--steel-10);
   --wa-color-neutral-05: var(--steel-05);
 
-  /* the brand colour as text (handles, links, picked cards) */
+  /* the brand colour as text (pseudonyms, links, picked cards) */
   --wa-color-brand: var(--color-accent-text);
   --wa-color-text-link: var(--color-accent-text);
   --wa-color-text-normal: var(--color-ink);

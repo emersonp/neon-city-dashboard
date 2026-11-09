@@ -1,4 +1,4 @@
-// Draws sheet-pdf.js's layout with pdf-lib and saves it as "<handle>.pdf". pdf-lib and its font add-on are only
+// Draws sheet-pdf.js's layout with pdf-lib and saves it as "<pseudonym>.pdf". pdf-lib and its font add-on are only
 // fetched the first time a PDF is made; the fonts are ours (fonts/, SIL Open Font License) and only the letters a
 // sheet uses are embedded. build() returns the PDF's bytes, so they can be posted somewhere as well as downloaded.
 (function (root) {
@@ -124,7 +124,7 @@
     for (const [role, data] of Object.entries(files)) fonts[role] = await doc.embedFont(data, { subset: true });
     const measure = (text, size, role) => (fonts[role] ?? fonts.body).widthOfTextAtSize(text, size);
     draw(L, doc, fonts, P.layout(character, { abilities: root.NCD_ABILITIES ?? [], measure }));
-    doc.setTitle(`${P.winAnsi(String(character?.handle ?? "").trim() || "Character")}: character sheet`);
+    doc.setTitle(`${P.winAnsi(String(character?.pseudonym ?? "").trim() || "Character")}: character sheet`);
     doc.setCreator("Neon City Dashboard");
     return doc.save();
   }

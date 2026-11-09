@@ -19,7 +19,7 @@ const texts = (ops) => ops.filter((o) => o.kind === "text");
 const allText = (pages) => pages.flat().filter((o) => o.kind === "text").map((o) => o.text).join(" ");
 const near = (a, b, msg) => assert.ok(Math.abs(a - b) <= 0.5, `${msg}: ${a} is not ${b}`);
 
-const base = () => ({ ...C.newCharacter(), handle: "Glitch", name: "Mara Voss", archetype: "Bruiser", origin: "Synthetic" });
+const base = () => ({ ...C.newCharacter(), pseudonym: "Glitch", name: "Mara Voss", archetype: "Bruiser", origin: "Synthetic" });
 
 test("two landscape Letter pages", () => {
   const { pages, width, height } = layout(base());
@@ -81,10 +81,10 @@ test("every area to know about has a box, and only the known ones are checked", 
   assert.deepEqual(checks.filter((o) => o.checked).map((o) => o.label), ["AI", "Weapons"]);
 });
 
-test("Handle and Name both print; Appearance has Pronouns, Physical Appearance and Network Default", () => {
+test("Pseudonym and Name both print; Appearance has Pronouns, Physical Appearance and Network Default", () => {
   const c = { ...C.withPhysical(base(), "Chrome jaw."), appearance: { pronouns: "she/her", network: "A paper crane." } };
   const text = allText(layout(c).pages);
-  for (const s of ["Glitch", "Mara Voss", "HANDLE", "NAME", "PRONOUNS", "she/her", "PHYSICAL APPEARANCE", "Chrome jaw.",
+  for (const s of ["Glitch", "Mara Voss", "PSEUDONYM", "NAME", "PRONOUNS", "she/her", "PHYSICAL APPEARANCE", "Chrome jaw.",
     "NETWORK DEFAULT", "A paper crane."]) assert.ok(text.includes(s), s);
 });
 
@@ -198,8 +198,8 @@ test("the grey background art never sits over a skill row: the rows are drawn af
   assert.ok(lastArt >= 0 && firstRow > lastArt);
 });
 
-test("the PDF is named after the handle", () => {
-  assert.equal(P.fileName({ handle: "Null Fox" }), "Null Fox.pdf");
-  assert.equal(P.fileName({ handle: " a/b:c " }), "a-b-c.pdf");
+test("the PDF is named after the pseudonym", () => {
+  assert.equal(P.fileName({ pseudonym: "Null Fox" }), "Null Fox.pdf");
+  assert.equal(P.fileName({ pseudonym: " a/b:c " }), "a-b-c.pdf");
   assert.equal(P.fileName({}), "Character.pdf");
 });

@@ -175,7 +175,7 @@ html.network .stat dd.wounds { font-size: var(--wa-font-size-m); }
 html.network .luck-steps { gap: 2px; }
 html.network .luck-steps wa-button::part(base) { padding-inline: var(--wa-space-2xs); }
 html.network .sheet-field { border-bottom-color: var(--color-rule-2); }
-html.network .sheet-field dd[data-field="handle"] { font-family: var(--font-display); font-weight: 800; letter-spacing: 0.1em; color: var(--color-ink); text-shadow: 0 0 10px var(--color-accent), 0 0 26px var(--glow-accent); }
+html.network .sheet-field dd[data-field="pseudonym"] { font-family: var(--font-display); font-weight: 800; letter-spacing: 0.1em; color: var(--color-ink); text-shadow: 0 0 10px var(--color-accent), 0 0 26px var(--glow-accent); }
 
 /* ---- portraits: digitized. Duotone cyan for the crew, orange for the programs (enemies) ---- */
 html.network img.portrait {

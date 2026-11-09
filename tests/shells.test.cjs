@@ -11,7 +11,7 @@ require("../shells.js");
 const C = globalThis.NCD_CHARACTERS, S = globalThis.NCD_SHELLS, CAT = globalThis.NCD_ABILITIES;
 // A character in its default body; `skills` (full states) go through withSkill.
 const char = ({ skills = {}, ...fields } = {}) => Object.entries(skills).reduce((c, [id, s]) => C.withSkill(c, id, s),
-  { ...C.newCharacter(), creation: undefined, handle: "Vex", origin: "Cybernetic", currentInfluence: 1, ...fields });
+  { ...C.newCharacter(), creation: undefined, pseudonym: "Vex", origin: "Cybernetic", currentInfluence: 1, ...fields });
 const synth = (fields) => char({ origin: "Synthetic", ...fields });
 const quick = (changes = {}) => ({ shell: "quick", identity: "specific", name: "Night Janitor", source: "scene",
   major: ["analyze-data", "convince-someone", "sneak-around", "shoot-someone"], minor: ["goad-someone", "run-like-hell"], ...changes });

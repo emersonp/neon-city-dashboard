@@ -17,7 +17,7 @@
   //   current()          the character as it is now (use this in event handlers)
   //   choose(changes, focus?)  saves creation choices: withCreation (resets and re-derives the sheet), then commit.
   //                      The step body is rebuilt, so `focus` (a selector in the new body) gets focus back afterwards.
-  //   save(character)    saves a changed character as is (handle, name, appearance, portrait)
+  //   save(character)    saves a changed character as is (pseudonym, name, appearance, portrait)
   //   hooks, rules, catalog
   const ctx = {
     current: () => shown.character,
@@ -372,7 +372,7 @@
             title="Choose portrait" ${portraits().length ? "" : "hidden"}><wa-icon name="pen" label="Choose portrait"></wa-icon></wa-button></span>
         </div>
         <div class="sheet-identity">
-          <wa-input class="wide" data-detail="handle" label="Handle" autocomplete="off" required>${reroll("handle", "New random handle")}</wa-input>
+          <wa-input class="wide" data-detail="pseudonym" label="Pseudonym" autocomplete="off" required>${reroll("pseudonym", "New random pseudonym")}</wa-input>
           <wa-input class="wide" data-detail="name" label="Name" autocomplete="off">${reroll("name", "New random name")}</wa-input>
         </div>
       </div>
@@ -387,7 +387,7 @@
     const look = C.appearance(character);
     for (const el of body.querySelectorAll("[data-detail]")) {
       const key = el.dataset.detail;
-      el.value = key === "handle" || key === "name" ? character[key] ?? "" : look[key];
+      el.value = key === "pseudonym" || key === "name" ? character[key] ?? "" : look[key];
     }
     showPortrait(body, C.portraitFile(character, portraits()));
 
@@ -402,7 +402,7 @@
 
     const saveDetail = (key, value) => {
       const c = ctx.current();
-      ctx.save(key === "handle" || key === "name" ? { ...c, [key]: text(value) }
+      ctx.save(key === "pseudonym" || key === "name" ? { ...c, [key]: text(value) }
         : key === "physical" ? C.withPhysical(c, value)
         : { ...c, appearance: { ...c.appearance, [key]: text(value) } });
     };
@@ -413,7 +413,7 @@
     body.addEventListener("click", (e) => {
       const name = e.target.closest("[data-reroll]")?.dataset.reroll;
       if (name) {
-        const value = name === "handle" ? C.randomHandle() : C.randomName();
+        const value = name === "pseudonym" ? C.randomPseudonym() : C.randomName();
         body.querySelector(`[data-detail="${name}"]`).value = value;
         saveDetail(name, value);
       } else if (e.target.closest("[data-portrait]")) {

@@ -101,7 +101,7 @@
   const defaultDescription = (character) => C.appearance(character).network;
 
   // ---- reading the saved avatar ----
-  // Its username, or the character's handle when it has none.
+  // Its username, or the character's pseudonym when it has none.
   const label = (character) => (C.hasAvatar(character) && character.avatar.username) || C.label(character);
   // "Quick Avatar · Abstract Form"
   const kindLabel = (avatar) => [KINDS[avatar?.kind]?.name, APPEARANCES[avatar?.appearance]?.name].filter(Boolean).join(" · ");

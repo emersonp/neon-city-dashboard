@@ -239,14 +239,14 @@
     return file && base ? new URL(C.PORTRAIT_DIR + file, base).href : undefined;
   }
 
-  // Who a message is from: the character open in the Character tab (its handle and portrait), "Administrator"
+  // Who a message is from: the character open in the Character tab (its pseudonym and portrait), "Administrator"
   // for the GM, or "Neon City Dashboard" with no character open. The GM never has a character, so their
   // messages leave out Luck and Influence.
   function sender() {
     const character = SESSION.gm ? null : SESSION.character;
     return {
       character,
-      username: SESSION.gm ? "Administrator" : text(character?.handle) || "Neon City Dashboard",
+      username: SESSION.gm ? "Administrator" : text(character?.pseudonym) || "Neon City Dashboard",
       avatarUrl: avatarUrl(character),
     };
   }
@@ -263,13 +263,13 @@
     }
   }
 
-  // initiative is { handle } for an Initiative roll (the character going Fast or Slow), or null.
+  // initiative is { pseudonym } for an Initiative roll (the character going Fast or Slow), or null.
   // `as` is { name, portrait (a file in portraits/, or none) } for a roll made as someone else (an enemy in the Scene
   // Runner): the message is from them, under their name and face. `damage` is what the attack does on a hit.
   function postRoll(r, skill, initiative = null, { as = null, damage = null } = {}) {
     const { character, ...from } = as ? { character: null, username: as.name, avatarUrl: portraitLink(as.portrait) } : sender();
     return post(buildMessage(r, as ? as.name : playerName(), {
-      skill, emoji, ...from, damage, initiative: Boolean(initiative), handle: initiative?.handle,
+      skill, emoji, ...from, damage, initiative: Boolean(initiative), pseudonym: initiative?.pseudonym,
       luck: character ? C.luck(character).current : null,
       influence: character ? C.influence(character).current : null,
     }), "Rolled");
@@ -290,7 +290,7 @@
   // Going into the Network ("enter") or leaving it ("leave"), as the open character.
   function postNetwork(action) {
     const { character, username, avatarUrl } = sender();
-    return post(networkMessage(text(character?.handle) || playerName(), action, { username, avatarUrl }), "Network changed");
+    return post(networkMessage(text(character?.pseudonym) || playerName(), action, { username, avatarUrl }), "Network changed");
   }
 
   // ---- rolling ----
@@ -309,7 +309,7 @@
   // Plays a roll that's been made: on the overlay (the Administrator's, admin.js), spinning then landing in `result`, then
   // posted to Discord. `hidden` keeps it to `result` alone (the Scene Runner's keep-hidden rolls). `scroll` brings the
   // result into view where it's off screen (on phones it stacks below the roll button). `onRoll` runs once the result
-  // shows; `skill` names the skill for the message, if any; `initiative` is { handle } for an Initiative roll (so the
+  // shows; `skill` names the skill for the message, if any; `initiative` is { pseudonym } for an Initiative roll (so the
   // message says Fast or Slow), else null. `as` and `damage` are postRoll's.
   async function playRoll(r, { result, scroll = false, onRoll = () => {}, skill, initiative = null, hidden = false, as = null, damage = null }) {
     const reveal = () => { if (scroll) result.scrollIntoView({ block: "nearest" }); };
@@ -325,7 +325,7 @@
   }
 
   // A roll button's whole job: roll, reset the pools, then play it (playRoll). One roll at a time.
-  // `skill` names the skill for the message, if any; `readImpact` gives the impact, if any; `initiative` gives { handle }
+  // `skill` names the skill for the message, if any; `readImpact` gives the impact, if any; `initiative` gives { pseudonym }
   // when it's an Initiative roll, else null.
   function makeRoller({ button, readTarget, pools, result, resetPools, scroll = false, onRoll = () => {}, skill = () => undefined,
     readImpact = () => null, initiative = () => null }) {

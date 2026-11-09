@@ -122,7 +122,7 @@ node --test tests/dice.test.cjs tests/discord.test.cjs tests/characters.test.cjs
 | `app.js` | Theme, tabs, settings, the dice pools, the roller and result panel, posting to Discord, and the Databank and GM Screen tabs |
 | `config.js` | Shared settings for everyone: Discord emoji codes and the published address (no webhook) |
 | `dice.js` | Dice rules (no page code, so it's testable in Node) |
-| `characters.js` | Archetypes, origins, random handles and names, gear items and their conditions, Create's choices, saving characters (needs `dice.js` and `conditions.js`; testable in Node) |
+| `characters.js` | Archetypes, origins, random pseudonyms and names, gear items and their conditions, Create's choices, saving characters (needs `dice.js` and `conditions.js`; testable in Node) |
 | `conditions.js` | Conditions on anything that holds them (a character, a gear item, an enemy or a scene in the Scene Runner): adding, worsening, severity, removing, and the suggestions for each (testable in Node) |
 | `shells.js` | Shells: the shell sheets (Quick Shell, Mass-Produced Synth, Utility Robot, Total Conversion Cyborg), who can load which, the Load Shell choices, loading, going back and a destroyed shell (needs `characters.js`; testable in Node) |
 | `shell-ui.js` | The Load Shell dialog |
@@ -143,7 +143,7 @@ node --test tests/dice.test.cjs tests/discord.test.cjs tests/characters.test.cjs
 | `gear-ui.js` | Gear on the page: item rows, keyword chips, rules text, and the keyword picker the gear dialog and Create share |
 | `format.js` | Turns ability descriptions into HTML: paragraphs, bold, italic, lists, icon tokens (testable in Node) |
 | `sheet-pdf.js` | The character sheet PDF's layout: both pages as drawing ops, with the skills block where the official sheet has it so Quick Shell and Quick Avatar overlays line up (testable in Node) |
-| `sheet-pdf-ui.js` | Draws that layout with pdf-lib and its font add-on (fetched from a CDN the first time) and saves `<handle>.pdf`; the Character tab's **PDF** button. |
+| `sheet-pdf-ui.js` | Draws that layout with pdf-lib and its font add-on (fetched from a CDN the first time) and saves `<pseudonym>.pdf`; the Character tab's **PDF** button. |
 | `fonts/` | The PDF's fonts, Chakra Petch and Barlow Semi Condensed, as base64 in `sheet-fonts.js` (a script, so it loads even from `file://`), with their SIL Open Font License files |
 | `docs/character-sheet.md` | Markdown version of the paper character sheet (the two-page one with overlay sheets) |
 | `discord.js` | Builds the Discord message and posts it to the webhook |
@@ -281,7 +281,7 @@ book line and the items it gives, with a picker for each "of your choice" (a cat
 item can have, weapon or gear, positive or negative). Weapon Mount picks a starting weapon and its keyword on the
 Origin step. Next waits until every pick is made.
 
-Create's **Details** step needs a handle and a physical appearance. Under the appearance, the distinctive visual traits
+Create's **Details** step needs a pseudonym and a physical appearance. Under the appearance, the distinctive visual traits
 table (`tables.js`, also on the GM Screen tab) adds a trait to the end of the physical appearance, as a sentence: click a
 row, or roll d100 with the dice button. Picking again swaps that trait while it's still at the end of the text.
 
@@ -356,7 +356,7 @@ is the sheet pack's Anonymous Avatar, called **Quick Avatar** as the perks do.
 
 - In Run, **Body** and **Network** are a line each in the head, under Luck, Influence and Wounds, with their buttons.
   A loaded shell's or the avatar's details get a row below only while they're on.
-- **New Avatar** (Run's Network line, outside the Network) asks for a Network username (it falls back to the handle), an
+- **New Avatar** (Run's Network line, outside the Network) asks for a Network username (it falls back to the pseudonym), an
   appearance (each puts 1 challenge die on a Gossip skill) and a description (it starts as the Network Default
   appearance). With **Enhanced Avatars** it can be an Enhanced Avatar instead: 2 mental skills with 2 advantage dice, 2
   more with 1, and 2 Installed Software boxes. **Installation Wizard** checks 1 box on a Quick Avatar. Giving an avatar
@@ -432,7 +432,7 @@ green for success, red for failure, and cyan when there's no target, holding thr
 
 The player name comes from **Settings** ("Player" if blank). The footer shows the Current Luck and Current Influence of
 the character open in the Character tab (neither if no character is open), except for the **Administrator (GM)**,
-whose rolls leave them out. Messages post as that character's handle, as "Administrator" for the GM, or as "Neon City Dashboard" with no
+whose rolls leave them out. Messages post as that character's pseudonym, as "Administrator" for the GM, or as "Neon City Dashboard" with no
 character open. `Rolled:` lists every Boon and
 Drawback that came up, before cancelling, and is left out when none did. A GM roll with no symbols has no footer.
 

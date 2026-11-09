@@ -33,9 +33,16 @@
   }
 
   // Checkboxes for every keyword the item could take, in a weapon group and a gear group, each with its rules text in a
-  // tooltip on an info button (hover, or focus, which a tap gives). Built-in keywords are ticked and locked; ones the rules forbid are
+  // tooltip on an info button (hover, focus, or a tap: below). Built-in keywords are ticked and locked; ones the rules forbid are
   // disabled. With a limit, once that many of `pickable` are ticked the rest of `pickable` lock too.
   let pickers = 0;
+  // A tap doesn't focus a button on mobile Safari, so hover/focus alone never opens the tip there: a click on the info
+  // button opens its tip (never closes it, since hover already opened it on desktop), and a click anywhere else closes it.
+  document.addEventListener("click", (e) => {
+    const tip = e.target.closest?.(".keyword-info")?.nextElementSibling;
+    document.querySelectorAll(".keyword-option wa-tooltip[open]").forEach((t) => { if (t !== tip) t.open = false; });
+    if (tip?.localName === "wa-tooltip") tip.open = true;
+  });
   function keywordPickerHTML(item, { limit = null, pickable = null } = {}) {
     const n = ++pickers, choices = G.keywordChoices(item);
     const counted = choices.filter((k) => k.checked && !k.builtIn && (!pickable || pickable.includes(k.name))).length;

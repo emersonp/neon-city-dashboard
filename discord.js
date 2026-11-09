@@ -15,7 +15,7 @@
 
   // emoji: { boon: "<:ncd_boon:123>", drawback: "<:ncd_drawback:456>" }, both or neither,
   // plus an optional influence: "<:ncd_influence:789>".
-  // Player names and handles are typed in by hand, so messages never ping anyone (no @everyone).
+  // Player names and pseudonyms are typed in by hand, so messages never ping anyone (no @everyone).
   const hasEmoji = (emoji) => Boolean(emoji?.boon && emoji?.drawback);
 
   // Leftover symbols after Boons and Drawbacks cancel, to follow the total: " · [boon]" or " with one boon".
@@ -36,11 +36,11 @@
 
   // An initiative roll's three lines: who rolled for which initiative, Fast or Slow, and what came up.
   // A success is a Fast turn and a failure a Slow one; with no target there's no telling, so the total stands in.
-  function initiativeLines(r, { player, emoji, skill, handle }) {
+  function initiativeLines(r, { player, emoji, skill, pseudonym }) {
     const turn = r.success == null ? null : r.success ? "Fast" : "Slow";
     return {
       intro: `${player} rolled for ${skill}${r.pushed ? `, pushed ${r.pushed.luck} Luck` : ""}`,
-      result: turn ? `${handle || player} will go ${turn}` : String(r.total),
+      result: turn ? `${pseudonym || player} will go ${turn}` : String(r.total),
       detail: `Rolled ${r.total}${netSuffix(r, emoji)}`,
     };
   }
@@ -48,10 +48,10 @@
   // The three lines: small intro, big result (with the impact, on a success with one), and a subtle footer.
   // `luck` and `influence` are null for the GM (or with no character open), so the footer can end up empty.
   // `skill` is the skill's name, if any. A pushed roll (dice.js's push) says how much Luck it spent. With `initiative` (an Initiative skill), they're initiativeLines, and
-  // `handle` names the character going Fast or Slow. `damage` is what an attack (the Scene Runner's) does on a hit
+  // `pseudonym` names the character going Fast or Slow. `damage` is what an attack (the Scene Runner's) does on a hit
   // ("45 physical damage"), shown after the total when it hits.
-  function lines(r, { player, emoji, luck = null, influence = null, skill, initiative = false, handle, damage } = {}) {
-    if (initiative) return initiativeLines(r, { player, emoji, skill, handle });
+  function lines(r, { player, emoji, luck = null, influence = null, skill, initiative = false, pseudonym, damage } = {}) {
+    if (initiative) return initiativeLines(r, { player, emoji, skill, pseudonym });
     const verdict = { success: "Success!", failure: "Failure.", none: "" }[outcomeOf(r)];
     return {
       intro: `${player} rolled${skill ? ` *${skill}*` : ""}${r.target == null ? "" : ` against ${r.target}`}${
@@ -71,8 +71,8 @@
     allowed_mentions: NO_PINGS,
   });
 
-  function buildMessage(r, player, { emoji, username, avatarUrl, luck, influence, skill, initiative, handle, damage } = {}) {
-    const l = lines(r, { player, emoji, luck, influence, skill, initiative, handle, damage });
+  function buildMessage(r, player, { emoji, username, avatarUrl, luck, influence, skill, initiative, pseudonym, damage } = {}) {
+    const l = lines(r, { player, emoji, luck, influence, skill, initiative, pseudonym, damage });
     const accent = initiative && r.success != null ? TURN_COLORS[r.success ? "fast" : "slow"] : COLORS[outcomeOf(r)];
     return {
       ...from({ username, avatarUrl }),
@@ -118,9 +118,9 @@
     return { ...from({ username, avatarUrl }), content };
   }
 
-  // A plain one-line message for going into the Network (action "enter") or leaving it ("leave"). `handle` is the character's.
-  function networkMessage(handle, action, { username, avatarUrl } = {}) {
-    const content = action === "enter" ? `${handle} is HACKING THE PLANET!` : `${handle} has entered the desert of the real.`;
+  // A plain one-line message for going into the Network (action "enter") or leaving it ("leave"). `pseudonym` is the character's.
+  function networkMessage(pseudonym, action, { username, avatarUrl } = {}) {
+    const content = action === "enter" ? `${pseudonym} is HACKING THE PLANET!` : `${pseudonym} has entered the desert of the real.`;
     return { ...from({ username, avatarUrl }), content };
   }
 

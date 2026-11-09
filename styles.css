@@ -7,7 +7,7 @@
 /* Web Awesome, dressed as a holographic interface in the neon, rain and smoke of atmosphere.css.
    Colours and fonts come from tokens.css: amber is the interface (brand, the Roll button, the tens die),
    cyan is the second light (the ones die, portraits, conditions). Glows are for things that emit light
-   (dice, verdicts, the Roll button, handles) and only at night; panels get their depth from lightness. */
+   (dice, verdicts, the Roll button, pseudonyms) and only at night; panels get their depth from lightness. */
 
 body {
   margin: 0;
@@ -76,7 +76,7 @@ wa-tab::part(tab) {
 wa-tab:hover::part(tab) { color: var(--color-ink); }
 wa-tab[active]::part(tab) { color: var(--color-accent-text); }
 .wa-dark wa-tab[active]::part(tab) { text-shadow: 0 0 12px var(--glow-accent); }
-/* the Character tab is the character's handle, not a place: italic, in the holo cyan, glowing when open */
+/* the Character tab is the character's pseudonym, not a place: italic, in the holo cyan, glowing when open */
 #character-tab::part(tab) { font-style: italic; color: var(--color-holo-text); }
 #character-tab:hover::part(tab) { color: var(--color-ink); }
 #character-tab[active]::part(tab) { color: var(--color-holo-text); }
@@ -537,8 +537,8 @@ wa-tab[hidden], wa-radio[hidden] { display: none; }
 .sheet-field { display: flex; flex-direction: column; gap: var(--wa-space-3xs); padding-bottom: var(--wa-space-2xs); border-bottom: 1px solid var(--color-rule); }
 .sheet-field.wide { grid-column: 1 / -1; }
 .sheet-field dd { font-size: var(--wa-font-size-m); }
-.sheet-field dd[data-field="handle"] { font-family: var(--font-display); font-size: var(--wa-font-size-xl); letter-spacing: 0.06em; color: var(--wa-color-brand); }
-.wa-dark .sheet-field dd[data-field="handle"] { text-shadow: 0 0 10px var(--glow-accent); }
+.sheet-field dd[data-field="pseudonym"] { font-family: var(--font-display); font-size: var(--wa-font-size-xl); letter-spacing: 0.06em; color: var(--wa-color-brand); }
+.wa-dark .sheet-field dd[data-field="pseudonym"] { text-shadow: 0 0 10px var(--glow-accent); }
 
 /* stats: boxes with the label on top; every value row is the same height, so Running doesn't shift anything */
 .sheet-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--wa-space-s); align-content: start; }
@@ -968,12 +968,12 @@ button.condition:hover, button.condition:focus-visible { background: color-mix(i
   margin-bottom: var(--wa-space-m); padding-bottom: var(--wa-space-m); }
 .sheet-head[data-state="running"] .sheet-who { grid-template-columns: 5rem minmax(0, 1fr); gap: var(--wa-space-m); }
 .sheet-head[data-state="running"] .portrait-missing wa-icon { font-size: 2rem; }
-/* handle; then name, archetype and origin on one row; then what they know */
+/* pseudonym; then name, archetype and origin on one row; then what they know */
 .sheet-head[data-state="running"] .sheet-identity { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--wa-space-xs) var(--wa-space-m); }
 .sheet-head[data-state="running"] .sheet-field { gap: 0; padding-bottom: var(--wa-space-3xs); }
 .sheet-head[data-state="running"] .sheet-field:has([data-field="name"]) { grid-column: auto; }
 .sheet-head[data-state="running"] .sheet-field dd { font-size: var(--wa-font-size-s); }
-.sheet-head[data-state="running"] .sheet-field dd[data-field="handle"] { font-size: var(--wa-font-size-l); }
+.sheet-head[data-state="running"] .sheet-field dd[data-field="pseudonym"] { font-size: var(--wa-font-size-l); }
 .sheet-head[data-state="running"] .stat { gap: var(--wa-space-3xs); }
 /* Luck, Influence and Wounds on one row when there's room for them */
 @media (min-width: 1100px), (min-width: 560px) and (max-width: 800px) {

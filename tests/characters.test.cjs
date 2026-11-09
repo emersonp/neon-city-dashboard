@@ -100,14 +100,14 @@ test("a new character starts in creation with no archetype or origin", () => {
   assert.equal(C.isCreating(c), true);
   assert.equal(C.isCreating({ id: "x" }), false);
   assert.ok(c.id && typeof c.id === "string");
-  assert.ok(c.handle.trim().length >= 3);
+  assert.ok(c.pseudonym.trim().length >= 3);
   assert.match(c.name, /^\S+(\s\S+)+$/); // at least two parts
 });
 
-test("random handles and names vary", () => {
-  const handles = new Set(Array.from({ length: 50 }, () => C.randomHandle()));
+test("random pseudonyms and names vary", () => {
+  const pseudonyms = new Set(Array.from({ length: 50 }, () => C.randomPseudonym()));
   const names = new Set(Array.from({ length: 50 }, () => C.randomName()));
-  assert.ok(handles.size > 30, `only ${handles.size} distinct handles`);
+  assert.ok(pseudonyms.size > 30, `only ${pseudonyms.size} distinct pseudonyms`);
   assert.ok(names.size > 30, `only ${names.size} distinct names`);
 });
 
@@ -120,23 +120,23 @@ test("family-name-first cultures put the family name first", () => {
   assert.ok(C.CULTURES.some((c) => c.familyFirst), "expected at least one family-name-first culture");
 });
 
-test("tab label is the handle, or Character when blank", () => {
-  assert.equal(C.label({ handle: "NullJack" }), "NullJack");
-  assert.equal(C.label({ handle: "   " }), "Character");
-  assert.equal(C.label({ handle: null }), "Character");
+test("tab label is the pseudonym, or Character when blank", () => {
+  assert.equal(C.label({ pseudonym: "NullJack" }), "NullJack");
+  assert.equal(C.label({ pseudonym: "   " }), "Character");
+  assert.equal(C.label({ pseudonym: null }), "Character");
   assert.equal(C.label(null), "Character");
 });
 
 test("save adds or replaces by id, and load reads them back", () => {
   const storage = memoryStorage();
   assert.deepEqual(C.load(storage), []);
-  const a = { ...C.newCharacter(), handle: "A" };
-  const b = { ...C.newCharacter(), handle: "B" };
+  const a = { ...C.newCharacter(), pseudonym: "A" };
+  const b = { ...C.newCharacter(), pseudonym: "B" };
   C.save(storage, a);
   C.save(storage, b);
-  C.save(storage, { ...a, handle: "A2" });
+  C.save(storage, { ...a, pseudonym: "A2" });
   const all = C.load(storage);
-  assert.deepEqual(all.map((c) => c.handle), ["A2", "B"]);
+  assert.deepEqual(all.map((c) => c.pseudonym), ["A2", "B"]);
   assert.ok(all[0].updatedAt >= all[0].createdAt);
 });
 
@@ -146,12 +146,12 @@ test("load survives broken or missing storage", () => {
   assert.deepEqual(C.load(null), []);
 });
 
-test("export is pretty JSON with a filename from the handle", () => {
-  const c = { ...C.newCharacter(), handle: "Null Jack/2" };
+test("export is pretty JSON with a filename from the pseudonym", () => {
+  const c = { ...C.newCharacter(), pseudonym: "Null Jack/2" };
   const { filename, json } = C.toExport(c);
   assert.equal(filename, "Null-Jack-2.json");
   assert.deepEqual(JSON.parse(json), c);
-  assert.equal(C.toExport({ ...c, handle: "  " }).filename, "character.json");
+  assert.equal(C.toExport({ ...c, pseudonym: "  " }).filename, "character.json");
 });
 
 // ---- skills ----
@@ -242,7 +242,7 @@ test("in a shell, the shell's half of each skill counts; withSkill still changes
 });
 
 test("a save from before shells throws when it's read", () => {
-  assert.throws(() => C.skill({ handle: "Old", skills: {} }, "analyze-data"), /Old has no default body/);
+  assert.throws(() => C.skill({ pseudonym: "Old", skills: {} }, "analyze-data"), /Old has no default body/);
 });
 
 test("intrinsic dice go up to 2 of each, and older saves read back clamped", () => {
@@ -420,7 +420,7 @@ test("initiatives are rolled like skills, but never marked used", () => {
 
 // ---- Create mode ----
 const R = globalThis.NCD_RULES, CAT = globalThis.NCD_ABILITIES;
-const make = (changes = {}) => ({ ...C.withPhysical(C.newCharacter(), "Tall"), handle: "Zed", creation: { ...C.newCreation(), ...changes } });
+const make = (changes = {}) => ({ ...C.withPhysical(C.newCharacter(), "Tall"), pseudonym: "Zed", creation: { ...C.newCreation(), ...changes } });
 const applied = (changes) => C.applyCreation(make(changes), R, CAT);
 const sk = (c, id) => C.skill(c, id);
 const clone = (x) => JSON.parse(JSON.stringify(x));
@@ -438,9 +438,9 @@ test("applyCreation: archetype sets skills, initiative, gear, luck, influence", 
   assert.equal(sk(c, "initiative-in-the-network").value, null);
   assert.equal(c.archetype, "Assassin");
   assert.deepEqual([c.maxLuck, c.currentLuck, c.startingInfluence, c.currentInfluence], [100, 100, 1, 1]);
-  // handle and name are left alone
-  const d = C.applyCreation({ ...make({ archetype: "Doc" }), handle: "Keep", name: "Me" }, R, CAT);
-  assert.deepEqual([d.handle, d.name], ["Keep", "Me"]);
+  // pseudonym and name are left alone
+  const d = C.applyCreation({ ...make({ archetype: "Doc" }), pseudonym: "Keep", name: "Me" }, R, CAT);
+  assert.deepEqual([d.pseudonym, d.name], ["Keep", "Me"]);
 });
 
 test("applyCreation: bumps add 5, untrained becomes 55, capped at 95", () => {
@@ -583,12 +583,12 @@ test("stepComplete", () => {
   assert.equal(ok({ ...chop, optionBumps: ["run-like-hell"] }, "origin"), false); // option has no bumps
   // details
   assert.equal(ok({}, "details"), true);
-  assert.equal(C.stepComplete({ ...make(done), handle: "  " }, "details", R, CAT), false);
+  assert.equal(C.stepComplete({ ...make(done), pseudonym: "  " }, "details", R, CAT), false);
   assert.equal(C.stepComplete(C.withPhysical(make(done), " "), "details", R, CAT), false); // physical appearance required
   // review
   assert.equal(ok({}, "review"), true);
   assert.equal(ok({ perk: null }, "review"), false);
-  assert.equal(C.stepComplete({ ...make(done), handle: "" }, "review", R, CAT), false);
+  assert.equal(C.stepComplete({ ...make(done), pseudonym: "" }, "review", R, CAT), false);
   assert.equal(ok({}, "nonsense"), false);
 });
 
@@ -609,10 +609,16 @@ test("finishCreation drops creation and keeps the sheet", () => {
   assert.equal(C.isCreating(c), true); // original untouched
 });
 
+test("a character saved with a handle loads with it as its pseudonym", () => {
+  const storage = memoryStorage();
+  storage.setItem("ncd.characters", JSON.stringify([{ id: "old", handle: "Old" }, { id: "new", pseudonym: "New" }]));
+  assert.deepEqual(C.load(storage), [{ id: "old", pseudonym: "Old" }, { id: "new", pseudonym: "New" }]);
+});
+
 test("remove deletes one saved character and leaves the rest", () => {
   const storage = memoryStorage();
-  C.save(storage, { id: "a", handle: "A" });
-  C.save(storage, { id: "b", handle: "B" });
+  C.save(storage, { id: "a", pseudonym: "A" });
+  C.save(storage, { id: "b", pseudonym: "B" });
   C.remove(storage, "a");
   assert.deepEqual(C.load(storage).map((c) => c.id), ["b"]);
   C.remove(storage, "missing");
@@ -643,7 +649,7 @@ test("inherited names like constructor aren't archetypes or origins", () => {
 test("the Dice tab never rolls as a character in creation", () => {
   const creating = C.newCharacter();
   assert.equal(C.playingAs(creating), null);
-  const finished = C.finishCreation({ ...creating, handle: "Ace" });
+  const finished = C.finishCreation({ ...creating, pseudonym: "Ace" });
   assert.equal(C.playingAs(finished), finished);
   assert.equal(C.playingAs(null), null);
   assert.equal(C.playingAs(undefined), null);

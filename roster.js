@@ -100,7 +100,7 @@
     ? { name, load: (c) => C.defaultBody(c).appearance ?? "", save: (e, v) => { e.defaultBody = C.withPhysical(e, v).defaultBody; } }
     : { name, load: (c) => C.appearance(c)[name], save: (e, v) => { e.appearance = { ...e.appearance, [name]: text(v) }; } };
   const FIELDS = [
-    ...["handle", "name", "archetype", "origin"].map(textField),
+    ...["pseudonym", "name", "archetype", "origin"].map(textField),
     { name: "maxLuck", load: (c) => C.luck(c).max, save: (e, v) => { e.maxLuck = C.clampMaxLuck(v); } },
     { name: "currentLuck", load: (c) => C.luck(c).current, save: (e, v) => { e.currentLuck = C.clampCurrentLuck(v, e.maxLuck); } },
     { name: "startingInfluence", load: (c) => C.influence(c).starting, save: (e, v) => { e.startingInfluence = C.clampInfluence(v); } },
@@ -199,22 +199,22 @@
     renderRoster();
   });
 
-  // Delete asks for the character's handle (C.label: "Character" when there's none) before it turns on.
+  // Delete asks for the character's pseudonym (C.label: "Character" when there's none) before it turns on.
   const deleteDialog = $("delete-dialog");
-  const deleteHandle = $("delete-handle");
+  const deletePseudonym = $("delete-pseudonym");
   const deleteConfirm = $("delete-confirm");
   let deleting = null;
-  const handleTyped = () => deleting && deleteHandle.value.trim() === C.label(deleting);
+  const pseudonymTyped = () => deleting && deletePseudonym.value.trim() === C.label(deleting);
   function openDelete(character) {
     deleting = character;
     $("delete-text").textContent = `Type ${C.label(character)} to delete them. This can't be undone.`;
-    deleteHandle.value = "";
+    deletePseudonym.value = "";
     deleteConfirm.disabled = true;
     deleteDialog.open = true;
   }
-  deleteHandle.addEventListener("input", () => { deleteConfirm.disabled = !handleTyped(); });
+  deletePseudonym.addEventListener("input", () => { deleteConfirm.disabled = !pseudonymTyped(); });
   deleteConfirm.addEventListener("click", () => {
-    if (!handleTyped()) return;
+    if (!pseudonymTyped()) return;
     try {
       C.remove(storage, deleting.id);
     } catch (err) {
@@ -237,7 +237,7 @@
   });
 
   // ---- character tab ----
-  const setLabel = (handle) => { tab.textContent = C.label({ handle }); };
+  const setLabel = (pseudonym) => { tab.textContent = C.label({ pseudonym }); };
 
   function show(character, mode, { activate = true } = {}) {
     setCurrent(character);
@@ -245,7 +245,7 @@
     state = C.isCreating(character) ? "creating" : A.isSpending(character) ? "spending"
       : mode === "creating" || mode === "spending" ? "display" : mode;
     tab.hidden = false;
-    setLabel(current.handle);
+    setLabel(current.pseudonym);
     try {
       render();
     } catch (err) {
@@ -352,7 +352,7 @@
     store.set("sheetTab", sheetTab);
   });
 
-  // Handle, name, etc. Current Luck, Current Influence, and Wounds can be changed while running, and are saved right away.
+  // Pseudonym, name, etc. Current Luck, Current Influence, and Wounds can be changed while running, and are saved right away.
   function renderFields() {
     showPortrait($("portrait"), C.portraitFile(current, portraits), `Portrait of ${C.label(current)}`);
     const values = Object.fromEntries(FIELDS.map((f) => [f.name, f.load(current)]));
@@ -629,7 +629,7 @@
     state = "running";
     render();
   }
-  // PDF: the character sheet, saved as "<handle>.pdf" (sheet-pdf-ui.js fetches pdf-lib the first time).
+  // PDF: the character sheet, saved as "<pseudonym>.pdf" (sheet-pdf-ui.js fetches pdf-lib the first time).
   function downloadPdf() {
     window.NCD_SHEET_PDF_UI.download(current).catch((err) => {
       console.error(err);
@@ -1517,7 +1517,7 @@
     offerPush(null);
     renderFields();
     APP.showResult(r, true, rollResult, { adv: before.adv.length, chal: before.chal.length });
-    APP.postRoll(r, rollSkill.name, C.isInitiative(rollSkill.id) ? { handle: text(current.handle) } : null);
+    APP.postRoll(r, rollSkill.name, C.isInitiative(rollSkill.id) ? { pseudonym: text(current.pseudonym) } : null);
   });
 
   let rolledImpact = null; // the impact the roll in progress was made with, for pushing it
@@ -1530,7 +1530,7 @@
     scroll: true,
     onRoll: (r) => { setUsed(rollSkill.id, true); offerPush(r, rolledImpact); },
     skill: () => rollSkill.name,
-    initiative: () => (C.isInitiative(rollSkill.id) ? { handle: text(current.handle) } : null),
+    initiative: () => (C.isInitiative(rollSkill.id) ? { pseudonym: text(current.pseudonym) } : null),
     readImpact: () => {
       offerPush(null); // a new roll takes the last one's push away
       return (rolledImpact = DICE.cleanImpact(rollImpact.value));
@@ -1550,10 +1550,10 @@
     const button = e.target.closest("[data-reroll]");
     if (!button) return;
     const name = button.dataset.reroll;
-    field(name).value = name === "handle" ? C.randomHandle() : C.randomName();
-    if (name === "handle") setLabel(field("handle").value);
+    field(name).value = name === "pseudonym" ? C.randomPseudonym() : C.randomName();
+    if (name === "pseudonym") setLabel(field("pseudonym").value);
   });
-  field("handle").addEventListener("input", () => setLabel(field("handle").value));
+  field("pseudonym").addEventListener("input", () => setLabel(field("pseudonym").value));
   for (const name of ["xpAvailable", "xpSpent"]) field(name).addEventListener("input", showXpTotal);
 
   // ---- portrait picker: a dialog showing every portrait; picking one closes it ----
@@ -1606,7 +1606,7 @@
     if (!commit(edited)) return;
     store.set("openCharacter", current.id);
     state = "display";
-    setLabel(current.handle);
+    setLabel(current.pseudonym);
     render();
     renderRoster();
   });
@@ -1637,7 +1637,7 @@
   const createHooks = {
     change(next) {
       if (!commit(next)) return;
-      setLabel(current.handle);
+      setLabel(current.pseudonym);
       render();
       renderRoster();
     },

@@ -12,7 +12,7 @@ require("../avatars.js");
 const C = globalThis.NCD_CHARACTERS, S = globalThis.NCD_SHELLS, V = globalThis.NCD_AVATARS, CAT = globalThis.NCD_ABILITIES;
 // A character in its default body; `skills` (full states) go through withSkill.
 const char = ({ skills = {}, ...fields } = {}) => Object.entries(skills).reduce((c, [id, s]) => C.withSkill(c, id, s),
-  { ...C.newCharacter(), creation: undefined, handle: "Vex", origin: "Cybernetic", ...fields });
+  { ...C.newCharacter(), creation: undefined, pseudonym: "Vex", origin: "Cybernetic", ...fields });
 const quick = (changes = {}) => ({ kind: "quick", appearance: "abstract", username: "pie_hacker", description: "A talking pie", ...changes });
 const enhanced = (changes = {}) => quick({ kind: "enhanced", major: ["crash-a-system", "gossip-with-citizens"],
   minor: ["analyze-data", "lie-to-someone"], software: ["keychain", "daemon"], ...changes });
@@ -79,7 +79,7 @@ test("New Avatar replaces the saved one; entering needs one, and leaving keeps i
   assert.equal(C.inNetwork(made), false);
   const replaced = V.create(made, quick({ appearance: "featureless", username: "" }));
   assert.equal(replaced.avatar.appearance, "featureless");
-  assert.equal(V.label(replaced), "Vex"); // no username: the handle
+  assert.equal(V.label(replaced), "Vex"); // no username: the pseudonym
   assert.equal(V.label(made), "pie_hacker");
   const inside = V.enter(made);
   assert.equal(C.inNetwork(inside), true);

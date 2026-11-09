@@ -1,4 +1,4 @@
-// Characters: rulebook lists, random handles and names, and saving to localStorage.
+// Characters: rulebook lists, random pseudonyms and names, and saving to localStorage.
 // No page code here, so it can be tested in Node.
 (function (root) {
   const ARCHETYPES = ["Assassin", "Bruiser", "Doc", "Gearhead", "Grifter", "Hacker", "Mastermind", "Merc", "Operator", "Thief"];
@@ -362,15 +362,15 @@
 
   const pick = (list, rng = Math.random) => list[Math.floor(rng() * list.length)];
 
-  // ---- hacker handles ----
-  const HANDLE_A = ["Null", "Zero", "Ghost", "Static", "Byte", "Neon", "Glitch", "Hex", "Crypt", "Vanta", "Echo", "Proxy",
+  // ---- hacker pseudonyms ----
+  const PSEUDONYM_A = ["Null", "Zero", "Ghost", "Static", "Byte", "Neon", "Glitch", "Hex", "Crypt", "Vanta", "Echo", "Proxy",
     "Rogue", "Cipher", "Volt", "Chrome", "Shade", "Kernel", "Daemon", "Pixel", "Razor", "Flux", "Void", "Lucid", "Nova"];
-  const HANDLE_B = ["Runner", "Jack", "Wire", "Burn", "Fox", "Viper", "Spark", "Shift", "Loop", "Trace", "Lock", "Mantis",
+  const PSEUDONYM_B = ["Runner", "Jack", "Wire", "Burn", "Fox", "Viper", "Spark", "Shift", "Loop", "Trace", "Lock", "Mantis",
     "Wraith", "Drift", "Blade", "Signal", "Root", "Patch", "Moth", "Kite", "Hound", "Fang", "Sync", "Pulse"];
   const LEET = { a: "4", e: "3", i: "1", o: "0", s: "5" };
 
-  function randomHandle(rng = Math.random) {
-    const a = pick(HANDLE_A, rng), b = pick(HANDLE_B, rng);
+  function randomPseudonym(rng = Math.random) {
+    const a = pick(PSEUDONYM_A, rng), b = pick(PSEUDONYM_B, rng);
     switch (Math.floor(rng() * 5)) {
       case 0: return `${a}_${b}`.toLowerCase();
       case 1: return `${a}${Math.floor(rng() * 90) + 10}`;
@@ -412,7 +412,7 @@
     const now = Date.now();
     return {
       id: newId(),
-      handle: randomHandle(),
+      pseudonym: randomPseudonym(),
       name: randomName(),
       archetype: null,
       origin: null,
@@ -530,7 +530,7 @@
 
   const isDistinctSet = (list, size, allowed) =>
     Array.isArray(list) && list.length === size && new Set(list).size === size && list.every((id) => allowed.includes(id));
-  // Takes the whole character because the details step needs its handle and physical appearance.
+  // Takes the whole character because the details step needs its pseudonym and physical appearance.
   function stepComplete(character, step, rules, catalog) {
     const cr = fullCreation(character.creation), arch = ruleFor(rules.archetypes, cr.archetype);
     switch (step) {
@@ -554,7 +554,7 @@
         return isDistinctSet(cr.optionBumps, bumps?.count ?? 0, SKILLS.filter((s) => s.type === bumps?.category).map((s) => s.id))
           && root.NCD_GEAR.gearComplete(cr, rules, "origin");
       }
-      case "details": return String(character.handle ?? "").trim() !== "" && appearance(character).physical.trim() !== "";
+      case "details": return String(character.pseudonym ?? "").trim() !== "" && appearance(character).physical.trim() !== "";
       case "review": return STEPS.slice(0, -1).every((s) => stepComplete(character, s, rules, catalog));
       default: return false;
     }
@@ -562,13 +562,15 @@
   const firstIncomplete = (character, rules, catalog) => STEPS.find((s) => !stepComplete(character, s, rules, catalog)) ?? null;
   const finishCreation = ({ creation, ...character }) => character;
 
-  const label = (c) => (c?.handle && String(c.handle).trim()) || "Character";
+  const label = (c) => (c?.pseudonym && String(c.pseudonym).trim()) || "Character";
 
   // ---- storage (pass in localStorage, or anything with getItem/setItem) ----
+  // Characters saved before the "handle" became the "pseudonym" come back with it renamed.
+  const renamed = ({ handle, ...c }) => (handle === undefined || "pseudonym" in c ? c : { ...c, pseudonym: handle });
   function load(storage) {
     try {
       const list = JSON.parse(storage?.getItem(KEY) ?? "[]");
-      return Array.isArray(list) ? list : [];
+      return Array.isArray(list) ? list.map(renamed) : [];
     } catch {
       return [];
     }
@@ -588,13 +590,13 @@
   }
 
   function toExport(character) {
-    const base = String(character.handle ?? "").trim().replace(/[^\w.-]+/g, "-").replace(/^-+|-+$/g, "");
+    const base = String(character.pseudonym ?? "").trim().replace(/[^\w.-]+/g, "-").replace(/^-+|-+$/g, "");
     return { filename: `${base || "character"}.json`, json: JSON.stringify(character, null, 2) };
   }
 
   root.NCD_CHARACTERS = {
     ARCHETYPES, ORIGINS, CULTURES, SKILLS, UNTRAINED, MIN_VALUE, MAX_VALUE, STEP, MAX_INTRINSIC,
-    randomHandle, randomName, newCharacter, label, load, save, remove, toExport,
+    randomPseudonym, randomName, newCharacter, label, load, save, remove, toExport,
     STEPS, BUMP_COUNT, newCreation, fullCreation, ruleFor, isCreating, playingAs, applyCreation, withCreation, bumpable, placeable, stepComplete, firstIncomplete, finishCreation,
     skill, shownValue, isNotable, clampValue, increment, withSkill,
     newBody, defaultBody, inShell, body, withoutShell, bodySkills, hasAvatar, inNetwork, withoutNetwork, asDefault,

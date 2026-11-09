@@ -258,7 +258,7 @@
       ops.push({ kind: "line", x1, y1, x2, y2, stroke, color });
     }
   }
-  // A barcode from the handle: the same handle always draws the same bars.
+  // A barcode from the pseudonym: the same pseudonym always draws the same bars.
   function barcode(ops, text, x, y, w, h) {
     let seed = 7;
     for (const ch of String(text)) seed = (seed * 31 + ch.charCodeAt(0)) >>> 0;
@@ -328,8 +328,8 @@
       ops.push(...placed.ops);
       return placed.overflow;
     };
-    const handle = winAnsi(String(character.handle ?? "").trim());
-    const sheetMark = (n) => `NC-OUTLAWS // ${handle.toUpperCase() || "OPERATIVE"} // SHEET 0${n}`;
+    const pseudonym = winAnsi(String(character.pseudonym ?? "").trim());
+    const sheetMark = (n) => `NC-OUTLAWS // ${pseudonym.toUpperCase() || "OPERATIVE"} // SHEET 0${n}`;
 
     backgroundArt(page1, 1);
     frame(page1, ctx, "PRINT AT 100% (ACTUAL SIZE) // OVERLAY SHEETS LINE UP WITH THE SKILLS", sheetMark(1));
@@ -338,7 +338,7 @@
     page1.push({ kind: "text", text: "NEON CITY OUTLAWS", x: 18, y: 27, size: 13, font: "display" });
     page1.push({ kind: "text", text: "OPERATIVE DOSSIER", x: 18, y: 35, size: 6, font: "label", color: "muted" });
     const barX = 18 + measure("NEON CITY OUTLAWS", 13, "display") + 12;
-    barcode(page1, handle || "operative", barX, 17, 218 - barX, 13);
+    barcode(page1, pseudonym || "operative", barX, 17, 218 - barX, 13);
     const luck = C.luck(character), influence = C.influence(character), xp = C.xp(character);
     // What changes in play is left blank for pencil: current luck, current influence, XP to spend.
     const field = (labelText, value, x, w, lineY, size = 15, font = "display") => {
@@ -352,7 +352,7 @@
       page1.push({ kind: "text", text: `/ ${of}`, x: x + w * 0.56, y: lineY - 3.5, size: 15, font: "display" });
     };
     field("NAME", String(character.name ?? "").trim(), 18, 200, 56, 12, "strong");
-    field("HANDLE", handle, 18, 200.2, 85.5, 20);
+    field("PSEUDONYM", pseudonym, 18, 200.2, 85.5, 20);
     field("ARCHETYPE", character.archetype ?? "", 18, 97.2, 114.1);
     field("ORIGIN", character.origin ?? "", 121, 97.2, 114.1);
     outOf("INFLUENCE  CURRENT / STARTING", influence.starting, 18, 97.2, 144.0);
@@ -507,10 +507,10 @@
     return { width: WIDTH, height: HEIGHT, half: HALF, pages, boxes };
   }
 
-  // "<handle>.pdf", without characters file names can't have.
+  // "<pseudonym>.pdf", without characters file names can't have.
   function fileName(character) {
-    const handle = String(character?.handle ?? "").trim().replace(/[\\/:*?"<>|]+/g, "-").replace(/^-+|-+$/g, "");
-    return `${handle || "Character"}.pdf`;
+    const pseudonym = String(character?.pseudonym ?? "").trim().replace(/[\\/:*?"<>|]+/g, "-").replace(/^-+|-+$/g, "");
+    return `${pseudonym || "Character"}.pdf`;
   }
 
   root.NCD_SHEET_PDF = { WIDTH, HEIGHT, ANYTHING_ELSE, skillRows, winAnsi, paragraphs, wrap, fit, layout, fileName };
