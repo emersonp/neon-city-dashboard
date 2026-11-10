@@ -276,10 +276,11 @@ one-handed melee weapon (always Silent) can't be Concussive. On a weapon, Compac
 category's allowed list. Keywords an ability grants against these rules (Butcher's Gauntlet's Mounted) are kept as
 **fixed** and never checked or removed.
 
-**Create** builds the starting gear from the templates in `rules.js` (`archetypes[*].gear` and `augmentationGear`): each
-book line and the items it gives, with a picker for each "of your choice" (a category, a vehicle, or keywords: any the
-item can have, weapon or gear, positive or negative). Weapon Mount picks a starting weapon and its keyword on the
-Origin step. Next waits until every pick is made.
+**Create** builds the starting gear from the templates in `rules.js` (`archetypes[*].gear` and `augmentationGear`) on
+its own **Gear** step, after Origin (so the augmentations' gear is known) and before Details: each book line and the
+items it gives, each with what's still to pick and a **Define** / **Edit** button that opens a dialog with the pickers
+for each "of your choice" (a category, a vehicle, or keywords: any the item can have, weapon or gear, positive or
+negative). Weapon Mount's weapon and keyword are picked the same way. Next waits until every pick is made.
 
 Create's **Details** step needs a pseudonym and a physical appearance. Under the appearance, the distinctive visual traits
 table (`tables.js`, also on the GM Screen tab) adds a trait to the end of the physical appearance, as a sentence: click a

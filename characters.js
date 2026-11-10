@@ -442,7 +442,7 @@
   }
 
   // ---- Create mode: choices live in character.creation; applyCreation derives the sheet from them ----
-  const STEPS = ["archetype", "skills", "perk", "origin", "details", "review"];
+  const STEPS = ["archetype", "skills", "perk", "origin", "gear", "details", "review"];
   const BUMP_COUNT = 4;
   const isCreating = (character) => character?.creation != null && typeof character.creation === "object";
   const newCreation = () => ({ step: "archetype", archetype: null, knows: [], bumps: [], perk: null, gear: {}, gearPicks: {}, origin: null,
@@ -539,9 +539,7 @@
         && isDistinctSet(cr.bumps, BUMP_COUNT, bumpable(cr, rules));
       case "perk": {
         const perk = catalog.find((a) => a.id === cr.perk);
-        return Boolean(arch) && perk?.type === "perk" && perk.archetype === cr.archetype
-          && arch.gear.every((line, i) => !line.choose || (Number.isInteger(cr.gear?.[i]) && cr.gear[i] >= 0 && cr.gear[i] < line.choose.length))
-          && root.NCD_GEAR.gearComplete(cr, rules, "perk");
+        return Boolean(arch) && perk?.type === "perk" && perk.archetype === cr.archetype;
       }
       case "origin": {
         if (!arch || !ruleFor(rules.origins, cr.origin)) return false;
@@ -551,9 +549,12 @@
         if (!isDistinctSet(cr.augmentations, option?.extraAugmentation ? 2 : 1, fits)) return false;
         if (!(option?.placements ?? []).every((p) => placeable(cr, p.key, rules).includes(cr.placements?.[p.key]))) return false;
         const bumps = option?.bumps;
-        return isDistinctSet(cr.optionBumps, bumps?.count ?? 0, SKILLS.filter((s) => s.type === bumps?.category).map((s) => s.id))
-          && root.NCD_GEAR.gearComplete(cr, rules, "origin");
+        return isDistinctSet(cr.optionBumps, bumps?.count ?? 0, SKILLS.filter((s) => s.type === bumps?.category).map((s) => s.id));
       }
+      // every "choose one" line answered, and every starting item (the archetype's and the augmentations') fully picked
+      case "gear": return Boolean(arch)
+        && arch.gear.every((line, i) => !line.choose || (Number.isInteger(cr.gear?.[i]) && cr.gear[i] >= 0 && cr.gear[i] < line.choose.length))
+        && root.NCD_GEAR.gearComplete(cr, rules);
       case "details": return String(character.pseudonym ?? "").trim() !== "" && appearance(character).physical.trim() !== "";
       case "review": return STEPS.slice(0, -1).every((s) => stepComplete(character, s, rules, catalog));
       default: return false;

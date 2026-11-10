@@ -426,7 +426,7 @@ const sk = (c, id) => C.skill(c, id);
 const clone = (x) => JSON.parse(JSON.stringify(x));
 
 test("STEPS and newCreation", () => {
-  assert.deepEqual(C.STEPS, ["archetype", "skills", "perk", "origin", "details", "review"]);
+  assert.deepEqual(C.STEPS, ["archetype", "skills", "perk", "origin", "gear", "details", "review"]);
   assert.deepEqual(C.newCreation(), { step: "archetype", archetype: null, knows: [], bumps: [], perk: null, gear: {}, gearPicks: {},
     origin: null, augmentations: [], option: null, placements: {}, optionBumps: [] });
 });
@@ -559,8 +559,12 @@ test("stepComplete", () => {
   assert.equal(ok({ perk: null }, "perk"), false);
   assert.equal(ok({ perk: "virus" }, "perk"), false); // a Hacker perk
   assert.equal(ok({ perk: "installation-wizard" }, "perk"), false);
-  assert.equal(ok({ gear: {} }, "perk"), false); // choice unanswered
-  assert.equal(ok({ gear: { 0: 5 } }, "perk"), false);
+  assert.equal(ok({ gear: {} }, "perk"), true); // gear is its own step
+  // gear
+  assert.equal(ok({}, "gear"), true);
+  assert.equal(ok({ gear: {} }, "gear"), false); // choice unanswered
+  assert.equal(ok({ gear: { 0: 5 } }, "gear"), false);
+  assert.equal(ok({ archetype: null }, "gear"), false);
   // origin
   assert.equal(ok({}, "origin"), true);
   assert.equal(ok({ origin: null }, "origin"), false);
@@ -596,6 +600,7 @@ test("firstIncomplete returns the first unfinished step, or null", () => {
   assert.equal(C.firstIncomplete(make(), R, CAT), "archetype");
   assert.equal(C.firstIncomplete(make({ ...done, perk: null }), R, CAT), "perk");
   assert.equal(C.firstIncomplete(make({ ...done, bumps: [] }), R, CAT), "skills");
+  assert.equal(C.firstIncomplete(make({ ...done, gear: {} }), R, CAT), "gear");
   assert.equal(C.firstIncomplete(make(done), R, CAT), null);
 });
 
@@ -692,12 +697,13 @@ test("create gear: slotOpen says what's left", () => {
   assert.deepEqual(G.slotOpen(slots[1], undefined), { keywords: 0 });
 });
 
-test("create gear: Perk & Gear isn't complete until every pick is made", () => {
+test("create gear: the Gear step isn't complete until every pick is made", () => {
   const base = { archetype: "Doc", perk: CAT.find((a) => a.type === "perk" && a.archetype === "Doc").id };
-  assert.equal(ok(base, "perk"), false);
-  assert.equal(ok({ ...base, gearPicks: { "create-gear-0-0-0": { keywords: ["Laser"] } } }, "perk"), true);
-  assert.equal(ok({ ...base, gearPicks: { "create-gear-0-0-0": { keywords: ["Laser", "Rail"] } } }, "perk"), false);
-  assert.equal(ok({ ...base, gearPicks: { "create-gear-0-0-0": { keywords: ["Cybernetic"] } } }, "perk"), false); // not allowed
+  assert.equal(ok(base, "perk"), true); // the perk step is only the perk
+  assert.equal(ok(base, "gear"), false);
+  assert.equal(ok({ ...base, gearPicks: { "create-gear-0-0-0": { keywords: ["Laser"] } } }, "gear"), true);
+  assert.equal(ok({ ...base, gearPicks: { "create-gear-0-0-0": { keywords: ["Laser", "Rail"] } } }, "gear"), false);
+  assert.equal(ok({ ...base, gearPicks: { "create-gear-0-0-0": { keywords: ["Cybernetic"] } } }, "gear"), false); // not allowed
 });
 
 test("create gear: augmentation gear, Butcher's Gauntlet exception, Weapon Mount", () => {
@@ -709,19 +715,22 @@ test("create gear: augmentation gear, Butcher's Gauntlet exception, Weapon Mount
   const mounted = applied({ ...doc, gearPicks: { "weapon-mount": { target: "create-gear-0-0-0", keywords: ["Shock"] } } }).gear[0];
   assert.ok(["Mounted", "Shock"].every((k) => mounted.keywords.includes(k)));
   const gone = { ...doc, gearPicks: { "weapon-mount": { target: "gone", keywords: ["Shock"] } } };
-  assert.equal(ok(gone, "origin"), false);
+  assert.equal(ok(gone, "gear"), false);
+  assert.equal(ok(gone, "origin"), true); // the origin step doesn't wait on gear
   assert.doesNotThrow(() => applied(gone));
-  assert.equal(ok({ ...doc, gearPicks: { "weapon-mount": { target: "create-gear-0-0-0", keywords: [] } } }, "origin"), false);
-  assert.equal(ok({ ...doc, gearPicks: { "weapon-mount": { target: "create-gear-0-0-0", keywords: ["Shock"] } } }, "origin"), true);
+  const pistol = { "create-gear-0-0-0": { keywords: ["Laser"] } }; // the Doc's own pick
+  assert.equal(ok({ ...doc, gearPicks: { ...pistol, "weapon-mount": { target: "create-gear-0-0-0", keywords: [] } } }, "gear"), false);
+  assert.equal(ok({ ...doc, gearPicks: { ...pistol, "weapon-mount": { target: "create-gear-0-0-0", keywords: ["Shock"] } } }, "gear"), true);
   // a weapon that already has Mounted isn't a target
   const merc = { archetype: "Merc", origin: "Synthetic", augmentations: ["transfigurable-weapon"] };
   assert.ok(!G.weaponMountTargets({ ...make(merc).creation, augmentations: ["transfigurable-weapon", "weapon-mount"] }, R).includes("create-aug-transfigurable-weapon-0"));
 });
 
-test("create gear: origin step needs the augmentation gear picks", () => {
+test("create gear: the Gear step needs the augmentation gear picks", () => {
   const bruiser = { archetype: "Bruiser", origin: "Synthetic", augmentations: ["butcher-s-gauntlet"] };
-  assert.equal(ok(bruiser, "origin"), false);
-  assert.equal(ok({ ...bruiser, gearPicks: { "create-aug-butcher-s-gauntlet-0": { keywords: ["Jagged"] } } }, "origin"), true);
+  const melee = { "create-gear-0-0-0": { keywords: ["Jagged"] }, "create-gear-0-0-1": { keywords: ["Jagged"] } }; // the Bruiser's own picks
+  assert.equal(ok({ ...bruiser, gearPicks: melee }, "gear"), false);
+  assert.equal(ok({ ...bruiser, gearPicks: { ...melee, "create-aug-butcher-s-gauntlet-0": { keywords: ["Jagged"] } } }, "gear"), true);
 });
 
 test("create gear: old creation shape still loads", () => {

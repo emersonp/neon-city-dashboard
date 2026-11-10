@@ -1159,6 +1159,11 @@ html:not(.bevel).wa-dark .portrait-frame { filter: drop-shadow(0 0 6px color-mix
 .create-gear-name { font-weight: 600; }
 .create-gear-keywords { display: flex; flex-direction: column; gap: var(--wa-space-xs); }
 .create-gear-mount { display: flex; flex-direction: column; gap: var(--wa-space-s); margin-top: var(--wa-space-m); }
+/* the Gear step's row: the item and its Define / Edit button on one line, then what's still to pick */
+.create-gear-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--wa-space-xs) var(--wa-space-s); }
+.create-gear-define { flex: none; }
+.create-gear-todo { font-size: var(--wa-font-size-s); color: var(--wa-color-brand); }
+#create-gear-dialog .create-gear-item { margin-top: 0; gap: var(--wa-space-m); }
 
 /* the gear pop-up: description, then the keywords folded away */
 #gear-info-body .ability-text > :is(p, ul) { margin-block: 0 var(--wa-space-s); }

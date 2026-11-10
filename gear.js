@@ -257,16 +257,16 @@
     return legalize({ ...item, keywords: [...(t.keywords ?? []), ...strings(pick?.keywords).slice(0, t.pick ?? 0)] });
   }
 
-  // Every starting item, before Weapon Mount: archetype lines (step "perk"), then augmentation gear (step "origin").
+  // Every starting item, before Weapon Mount: archetype lines (source "archetype"), then augmentation gear (source "augmentation").
   function baseSlots(cr, rules) {
     const picks = picksOf(cr), slots = [];
-    const add = (id, step, template) => slots.push({ id, step, template, item: fromTemplate(template, id, picks[id]) });
+    const add = (id, source, template) => slots.push({ id, source, template, item: fromTemplate(template, id, picks[id]) });
     (C.ruleFor(rules.archetypes, cr?.archetype)?.gear ?? []).forEach((line, i) => {
       const n = line.choose ? cr.gear?.[i] : 0;
       const option = line.choose ? (Number.isInteger(n) ? line.choose[n] : null) : line;
-      option?.items.forEach((t, j) => add(`create-gear-${i}-${n}-${j}`, "perk", t));
+      option?.items.forEach((t, j) => add(`create-gear-${i}-${n}-${j}`, "archetype", t));
     });
-    for (const aug of augmentationsOf(cr, rules)) (C.ruleFor(rules.augmentationGear, aug) ?? []).forEach((t, j) => add(`create-aug-${aug}-${j}`, "origin", t));
+    for (const aug of augmentationsOf(cr, rules)) (C.ruleFor(rules.augmentationGear, aug) ?? []).forEach((t, j) => add(`create-aug-${aug}-${j}`, "augmentation", t));
     return slots;
   }
 
@@ -275,7 +275,7 @@
     && stats(item).hands === 1 && !keywordsOf(item).includes("Mounted")).map((s) => s.id);
   const weaponMountTargets = (creation, rules) => mountable(baseSlots(creation, rules));
 
-  // [{ id, step, template, item }] for every starting item, with Weapon Mount applied to its target.
+  // [{ id, source, template, item }] for every starting item, with Weapon Mount applied to its target.
   function starterSlots(creation, rules) {
     const slots = baseSlots(creation, rules), mount = picksOf(creation)[MOUNT];
     if (augmentationsOf(creation, rules).includes(MOUNT) && mountable(slots).includes(mount?.target)) {
@@ -291,14 +291,14 @@
     return { keywords: (t.pick ?? 0) - picked.length, ...(t.categories && { category: !item.category }), ...(t.vehicles && { vehicle: !item.vehicle }) };
   }
 
-  // Whether every starting item from that step ("perk" or "origin") has all its picks, and none extra.
-  function gearComplete(creation, rules, step) {
+  // Whether every starting item has all its picks, and none extra, and Weapon Mount (if taken) its weapon and keyword.
+  function gearComplete(creation, rules) {
     const picks = picksOf(creation), slots = starterSlots(creation, rules);
-    const done = slots.filter((s) => s.step === step).every((s) => {
+    const done = slots.every((s) => {
       const open = slotOpen(s, picks[s.id]);
       return !open.category && !open.vehicle && open.keywords === 0 && strings(picks[s.id]?.keywords).length === (s.template.pick ?? 0);
     });
-    if (!done || step !== "origin" || !augmentationsOf(creation, rules).includes(MOUNT)) return done;
+    if (!done || !augmentationsOf(creation, rules).includes(MOUNT)) return done;
     const mount = picks[MOUNT], k = strings(mount?.keywords);
     if (!weaponMountTargets(creation, rules).includes(mount?.target) || k.length !== 1) return false;
     const before = baseSlots(creation, rules).find((s) => s.id === mount.target).item;
