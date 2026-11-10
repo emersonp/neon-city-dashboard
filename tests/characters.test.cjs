@@ -67,7 +67,7 @@ test("conditions: labels hide x1", () => {
   assert.deepEqual([1, 2, 3, 4].map(C.severityLabel), ["", "x2", "x3", "x4"]);
 });
 
-test("conditions: junk and old saves load cleanly, on characters and gear", () => {
+test("conditions: junk loads cleanly, on characters and gear", () => {
   const C = globalThis.NCD_CHARACTERS;
   assert.deepEqual(C.conditions({ conditions: "nope" }), []);
   assert.deepEqual(C.conditions({ conditions: [null, { id: "a", name: " " }, { id: "b", name: "Poisoned", severity: "9", intrinsic: "yes" }] }),
@@ -241,11 +241,7 @@ test("in a shell, the shell's half of each skill counts; withSkill still changes
   assert.equal(C.skill(C.withoutShell(edited), "sneak-around").value, 70);
 });
 
-test("a save from before shells throws when it's read", () => {
-  assert.throws(() => C.skill({ pseudonym: "Old", skills: {} }, "analyze-data"), /Old has no default body/);
-});
-
-test("intrinsic dice go up to 2 of each, and older saves read back clamped", () => {
+test("intrinsic dice go up to 2 of each, and read back clamped", () => {
   assert.equal(C.MAX_INTRINSIC, 2);
   const c = { ...blank(), skills: { "sneak-around": { adv: 4, chal: 3 } }, defaultBody: { ...C.newBody(), skills: { "sneak-around": { value: 60 } } } };
   assert.deepEqual(C.skill(c, "sneak-around"), { value: 60, adv: 2, chal: 2 });
@@ -269,7 +265,7 @@ test("new characters start with full luck", () => {
   assert.equal(c.currentLuck, 100);
 });
 
-test("older saves without luck start full", () => {
+test("missing luck reads as full", () => {
   assert.deepEqual(C.luck({}), { max: 100, current: 100 });
   assert.deepEqual(C.luck({ maxLuck: 80 }), { max: 80, current: 80 });
   assert.deepEqual(C.luck({ maxLuck: 80, currentLuck: 30 }), { max: 80, current: 30 });
@@ -334,7 +330,7 @@ test("only trained skills can be marked used, and in a shell, no physical ones",
 
 // ---- influence ----
 
-test("influence starts at 1, and older saves without it start there too", () => {
+test("influence starts at 1, and missing influence reads as 1", () => {
   const c = C.newCharacter();
   assert.equal(c.startingInfluence, 1);
   assert.equal(c.currentInfluence, 1);
@@ -614,12 +610,6 @@ test("finishCreation drops creation and keeps the sheet", () => {
   assert.equal(C.isCreating(c), true); // original untouched
 });
 
-test("a character saved with a handle loads with it as its pseudonym", () => {
-  const storage = memoryStorage();
-  storage.setItem("ncd.characters", JSON.stringify([{ id: "old", handle: "Old" }, { id: "new", pseudonym: "New" }]));
-  assert.deepEqual(C.load(storage), [{ id: "old", pseudonym: "Old" }, { id: "new", pseudonym: "New" }]);
-});
-
 test("remove deletes one saved character and leaves the rest", () => {
   const storage = memoryStorage();
   C.save(storage, { id: "a", pseudonym: "A" });
@@ -733,7 +723,7 @@ test("create gear: the Gear step needs the augmentation gear picks", () => {
   assert.equal(ok({ ...bruiser, gearPicks: { ...melee, "create-aug-butcher-s-gauntlet-0": { keywords: ["Jagged"] } } }, "gear"), true);
 });
 
-test("create gear: old creation shape still loads", () => {
+test("create gear: a choose-one answer with no picks builds the book's item", () => {
   const c = C.applyCreation({ ...blank(), id: "x", creation: { archetype: "Assassin", gear: { 0: 0 } } }, R, CAT);
   assert.equal(c.gear[0].category, "Pistol");
   assert.deepEqual(c.gear[0].keywords, ["Compact", "Rail"]);

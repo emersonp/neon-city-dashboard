@@ -138,7 +138,7 @@ test("jobs leave the Network and keep the avatar", () => {
   assert.ok(C.hasAvatar(finished));
 });
 
-test("an old save has no avatar and isn't in the Network", () => {
+test("a character without an avatar isn't in the Network", () => {
   const { avatar, inNetwork, ...old } = char();
   assert.equal(C.hasAvatar(old), false);
   assert.equal(C.inNetwork({ ...old, inNetwork: true }), false);

@@ -246,15 +246,7 @@
       : mode === "creating" || mode === "spending" ? "display" : mode;
     tab.hidden = false;
     setLabel(current.pseudonym);
-    try {
-      render();
-    } catch (err) {
-      // a save from before shells (characters.js): it can only be deleted
-      console.error(err);
-      APP.toast(err.message, "danger");
-      closeCharacter();
-      return;
-    }
+    render();
     if (activate) customElements.whenDefined("wa-tab-group").then(() => { tabs.active = "character"; });
   }
 

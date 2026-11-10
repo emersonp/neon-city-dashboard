@@ -252,7 +252,7 @@ A character's gear is a list of items. Each has a **name**, a **quantity** (show
 | Equipment | any other entry in Gear Basics (skill software, stimulants, computer gear, biotechnology, other tools), plus a skill or option when the entry needs one | `Equipment · Computer gear` |
 | Armor | Armored x1 to x4; each level's keywords come with it | `Armor · Armored x2` |
 | Vehicle | a vehicle from the Garage | `Vehicle · Muscle Car · Medium ground vehicle` |
-| Prop | nothing more (characters saved before gear types have only props, and still do) | `prop` |
+| Prop | nothing more | `prop` |
 
 Under each item is a line of its keywords in small capitals (set apart from the outlined condition chips): built-in ones
 (a weapon category's intrinsic keywords, armor's, and ones an ability grants) in *italics*, negative
@@ -334,7 +334,6 @@ A character is a mind and a default body (`characters.js`). The sheet's right ha
 chances, the mental skills' intrinsic dice, augmentations, the physical appearance, and wounds (`character.defaultBody`).
 The rest is the mind's, on the character. While a shell is loaded (`character.shell`, the same shape plus its type, name,
 choices and own conditions), its half of each skill counts instead, as a shell sheet laid over the right half would.
-Saves from before shells have no default body: opening one says so, and it can only be deleted.
 
 - **Load Shell** (Run's Body section) opens a dialog: pick a shell the character can load (synthetic minds only
   synthetic shells, human minds only human ones), then make its sheet's choices: Shell Identity, Capabilities (4

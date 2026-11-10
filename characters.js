@@ -35,16 +35,11 @@
   // The sheet's right half is the body: the physical skills' values, the mental skills' intrinsic dice, augmentations,
   // the physical appearance, and wounds. The rest is the mind's, on the character itself (character.skills holds the
   // mind's half of each skill: mental values, physical dice, the initiatives). A shell is a body with a few more fields.
-  // Saves from before shells have no defaultBody; they aren't migrated, they throw when opened.
   const BODY_PARTS = { mental: ["adv", "chal"], physical: ["value"], initiative: [] };
   const typeOf = (id) => SKILLS.find((s) => s.id === id)?.type;
   const isBodyPart = (id, key) => (BODY_PARTS[typeOf(id)] ?? []).includes(key);
   const newBody = () => ({ skills: {}, augmentations: [], appearance: "", wounds: 0 });
-  function defaultBody(character) {
-    const b = character?.defaultBody;
-    if (!b || typeof b !== "object") throw new Error(`${label(character)} has no default body (saved before shells): delete them.`);
-    return b;
-  }
+  const defaultBody = (character) => character.defaultBody;
   const inShell = (character) => character?.shell != null && typeof character.shell === "object";
   // The body in effect: the shell while one is loaded, otherwise the default body.
   const body = (character) => (inShell(character) ? character.shell : defaultBody(character));
@@ -102,7 +97,7 @@
   const DEFAULT_LUCK = 100;
   const clampMaxLuck = (v) => clampInt(v, { fallback: DEFAULT_LUCK });
   const clampCurrentLuck = (v, max) => clampInt(v, { max, fallback: max });
-  // Older saves have no luck yet; they start full.
+  // Missing or junk luck reads as full.
   function luck(character) {
     const max = clampMaxLuck(character?.maxLuck);
     return { max, current: clampCurrentLuck(character?.currentLuck, max) };
@@ -111,7 +106,7 @@
   // ---- influence: whole numbers, 0 or more ----
   const DEFAULT_INFLUENCE = 1;
   const clampInfluence = (v, fallback = DEFAULT_INFLUENCE) => clampInt(v, { fallback });
-  // Older saves have no influence yet; current starts at the starting value.
+  // Missing or junk influence reads as the default; current, as the starting value.
   function influence(character) {
     const starting = clampInfluence(character?.startingInfluence);
     return { starting, current: clampInfluence(character?.currentInfluence, starting) };
@@ -566,12 +561,10 @@
   const label = (c) => (c?.pseudonym && String(c.pseudonym).trim()) || "Character";
 
   // ---- storage (pass in localStorage, or anything with getItem/setItem) ----
-  // Characters saved before the "handle" became the "pseudonym" come back with it renamed.
-  const renamed = ({ handle, ...c }) => (handle === undefined || "pseudonym" in c ? c : { ...c, pseudonym: handle });
   function load(storage) {
     try {
       const list = JSON.parse(storage?.getItem(KEY) ?? "[]");
-      return Array.isArray(list) ? list.map(renamed) : [];
+      return Array.isArray(list) ? list : [];
     } catch {
       return [];
     }
